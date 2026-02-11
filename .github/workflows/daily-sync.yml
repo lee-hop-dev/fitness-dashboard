@@ -1,0 +1,64 @@
+name: Daily Data Sync
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: 'Number of days to fetch'
+        required: false
+        default: '7'
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Setup Google credentials
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" | base64 -d > config/google_credentials.json
+      
+      - name: Create .env file
+        env:
+          INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
+          CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
+          CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: |
+          cat > .env << EOF
+          INTERVALS_API_KEY=$INTERVALS_API_KEY
+          CONCEPT2_USERNAME=$CONCEPT2_USERNAME
+          CONCEPT2_PASSWORD=$CONCEPT2_PASSWORD
+          GOOGLE_DRIVE_FOLDER_ID=$GOOGLE_DRIVE_FOLDER_ID
+          EOF
+      
+      - name: Collect data from APIs
+        run: |
+          DAYS=${{ github.event.inputs.days_back || '7' }}
+          python workflows/collect_data.py --days $DAYS
+      
+      - name: Sync to Google Drive
+        run: |
+          python workflows/sync_to_drive.py --all
+      
+      - name: Summary
+        if: success()
+        run: |
+          echo "✅ Data sync completed successfully!"
+          echo "📊 Files synced to Google Drive"
