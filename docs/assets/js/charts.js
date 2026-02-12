@@ -1,152 +1,123 @@
 /* ============================================
-   FITNESS DASHBOARD — CHARTS v2
+   FITNESS DASHBOARD — CHARTS
    ============================================ */
 
-Chart.defaults.color = '#6b7590';
+Chart.defaults.color = '#8891a4';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.font.size = 11;
 
-const C = {
-  accent: '#00e5ff', green: '#00ff87', orange: '#ff6b2b',
-  purple: '#a855f7', yellow: '#ffd600', red: '#ff3b5c',
-  gold: '#ffd700', silver: '#c0c8d8', bronze: '#cd7f32'
+const COLORS = {
+  accent:  '#00e5ff',
+  green:   '#00ff87',
+  orange:  '#ff6b2b',
+  purple:  '#a855f7',
+  yellow:  '#ffd600',
+  red:     '#ff3b5c',
+  muted:   '#4a5168'
 };
 
-function areaGradient(ctx, color, a1 = 0.25, a2 = 0) {
-  if (!ctx.chart?.chartArea) return 'transparent';
-  const { top, bottom } = ctx.chart.chartArea;
-  const g = ctx.chart.ctx.createLinearGradient(0, top, 0, bottom);
-  const rgb = hexToRgb(color);
-  g.addColorStop(0, `rgba(${rgb},${a1})`);
-  g.addColorStop(1, `rgba(${rgb},${a2})`);
-  return g;
+function buildGradient(ctx, color, alpha1 = 0.3, alpha2 = 0) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+  gradient.addColorStop(0, color.replace(')', `,${alpha1})`).replace('rgb', 'rgba'));
+  gradient.addColorStop(1, color.replace(')', `,${alpha2})`).replace('rgb', 'rgba'));
+  return gradient;
 }
 
 function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `${r},${g},${b}`;
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgb(${r},${g},${b})`;
 }
 
-const TOOLTIP_DEFAULTS = {
-  backgroundColor: '#161920',
-  borderColor: 'rgba(255,255,255,0.1)',
-  borderWidth: 1,
-  padding: 10,
-  titleColor: '#b8c0d0',
-  bodyColor: '#f4f6fa',
-  cornerRadius: 6
-};
-
 // ============================================
-// FITNESS TREND — with toggle + PB markers
+// FITNESS TREND CHART (CTL/ATL/TSB)
 // ============================================
-function buildFitnessChart(canvasId, data, pbMarkers = []) {
+function buildFitnessChart(canvasId, data) {
   const ctx = document.getElementById(canvasId);
-  if (!ctx) return null;
+  if (!ctx) return;
 
-  const chart = new Chart(ctx, {
+  const labels = data.map(d => d.date.slice(5)); // MM-DD
+  const ctl = data.map(d => d.ctl);
+  const atl = data.map(d => d.atl);
+  const tsb = data.map(d => d.tsb);
+
+  return new Chart(ctx, {
     type: 'line',
     data: {
-      labels: data.map(d => d.date.slice(5)),
+      labels,
       datasets: [
         {
-          label: 'CTL', data: data.map(d => d.ctl),
-          borderColor: C.accent, borderWidth: 2, fill: true,
-          backgroundColor: ctx2 => areaGradient(ctx2, C.accent, 0.12),
-          tension: 0.4, pointRadius: 0, pointHoverRadius: 4,
-          pointHoverBackgroundColor: C.accent
+          label: 'CTL',
+          data: ctl,
+          borderColor: COLORS.accent,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: COLORS.accent
         },
         {
-          label: 'ATL', data: data.map(d => d.atl),
-          borderColor: C.orange, borderWidth: 2, fill: false,
-          tension: 0.4, pointRadius: 0, pointHoverRadius: 4,
-          pointHoverBackgroundColor: C.orange
+          label: 'ATL',
+          data: atl,
+          borderColor: COLORS.orange,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: COLORS.orange
         },
         {
-          label: 'TSB', data: data.map(d => d.tsb),
-          borderColor: C.green, borderWidth: 1.5,
-          borderDash: [4, 4], fill: false,
-          tension: 0.4, pointRadius: 0, pointHoverRadius: 4,
+          label: 'TSB',
+          data: tsb,
+          borderColor: COLORS.green,
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: COLORS.green,
           yAxisID: 'yTSB'
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      animation: { duration: 600 },
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TOOLTIP_DEFAULTS,
+          backgroundColor: '#181b22',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10,
           callbacks: {
             label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`
           }
         }
       },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxTicksLimit: 7 }
+        },
         y: {
           position: 'left',
           grid: { color: 'rgba(255,255,255,0.04)' },
           ticks: { maxTicksLimit: 5 }
         },
         yTSB: {
-          position: 'right', grid: { display: false },
-          ticks: { maxTicksLimit: 5, color: C.green }
+          position: 'right',
+          grid: { display: false },
+          ticks: { maxTicksLimit: 5, color: COLORS.green }
         }
       }
-    },
-    plugins: [{
-      id: 'pbMarkers',
-      afterDraw(chart) {
-        if (!pbMarkers.length) return;
-        const { ctx: c, chartArea, scales } = chart;
-        pbMarkers.forEach(pb => {
-          const idx = data.findIndex(d => d.date === pb.date);
-          if (idx < 0) return;
-          const x = scales.x.getPixelForIndex(idx);
-          const y = chartArea.bottom + 4;
-          const color = pb.tier === 'gold' ? C.gold : pb.tier === 'silver' ? C.silver : C.bronze;
-          const emoji = pb.type === 'cycling' ? '⚡' : '🏃';
-          c.save();
-          c.font = '10px sans-serif';
-          c.fillStyle = color;
-          c.textAlign = 'center';
-          c.shadowColor = color;
-          c.shadowBlur = 4;
-          c.fillText(emoji, x, y + 12);
-          c.restore();
-        });
-      }
-    }]
-  });
-
-  return chart;
-}
-
-// ============================================
-// FITNESS CHART TOGGLE (42d / 365d)
-// ============================================
-function setupFitnessToggle(canvasId, allData, pbMarkers) {
-  let chart = buildFitnessChart(canvasId, allData.slice(-42), pbMarkers.filter(p => {
-    const d = new Date(p.date);
-    return d >= new Date(allData.slice(-42)[0]?.date);
-  }));
-
-  document.querySelectorAll('[data-fitness-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-fitness-toggle]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const days = parseInt(btn.dataset.fitnessToggle);
-      const sliced = allData.slice(-days);
-      const slicedPBs = pbMarkers.filter(p => p.date >= sliced[0]?.date);
-      chart.destroy();
-      chart = buildFitnessChart(canvasId, sliced, slicedPBs);
-    });
+    }
   });
 }
 
@@ -157,123 +128,121 @@ function buildTSSChart(canvasId, data) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
-  const recent = data.slice(-24);
-
   return new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: recent.map(d => d.week),
-      datasets: [
-        { label:'Ride',  data: recent.map(d => d.ride),  backgroundColor:'rgba(0,229,255,0.75)',  borderRadius:2, borderSkipped:false },
-        { label:'Run',   data: recent.map(d => d.run),   backgroundColor:'rgba(0,255,135,0.75)',  borderRadius:2, borderSkipped:false },
-        { label:'Row',   data: recent.map(d => d.row),   backgroundColor:'rgba(168,85,247,0.75)', borderRadius:2, borderSkipped:false },
-        { label:'Other', data: recent.map(d => d.other), backgroundColor:'rgba(255,107,43,0.6)',  borderRadius:2, borderSkipped:false }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      animation: { duration: 400 },
-      plugins: { legend: { display: false }, tooltip: TOOLTIP_DEFAULTS },
-      scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { maxTicksLimit: 10 } },
-        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 4 } }
-      }
-    }
-  });
-}
-
-// ============================================
-// HRV + SLEEP COMBINED CHART (dual axis)
-// ============================================
-function buildHRVSleepChart(canvasId, wellnessTrend, days = 42) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return null;
-
-  const sliced = {
-    dates: wellnessTrend.dates.slice(-days),
-    hrv:   wellnessTrend.hrv.slice(-days),
-    sleep: wellnessTrend.sleep.slice(-days)
-  };
-
-  const chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: sliced.dates.map(d => d.slice(5)),
+      labels: data.map(d => d.week),
       datasets: [
         {
-          label: 'Sleep (hrs)',
-          data: sliced.sleep,
-          backgroundColor: 'rgba(255,214,0,0.35)',
-          borderColor: 'rgba(255,214,0,0.6)',
-          borderWidth: 1,
-          borderRadius: 2,
-          type: 'bar',
-          yAxisID: 'ySleep',
-          order: 2
+          label: 'Ride',
+          data: data.map(d => d.ride),
+          backgroundColor: 'rgba(0,229,255,0.7)',
+          borderRadius: 2
         },
         {
-          label: 'HRV (ms)',
-          data: sliced.hrv,
-          borderColor: C.accent,
-          borderWidth: 2,
-          fill: true,
-          backgroundColor: ctx2 => areaGradient(ctx2, C.accent, 0.15),
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: C.accent,
-          type: 'line',
-          yAxisID: 'yHRV',
-          order: 1
+          label: 'Run',
+          data: data.map(d => d.run),
+          backgroundColor: 'rgba(0,255,135,0.7)',
+          borderRadius: 2
+        },
+        {
+          label: 'Row',
+          data: data.map(d => d.row),
+          backgroundColor: 'rgba(168,85,247,0.7)',
+          borderRadius: 2
+        },
+        {
+          label: 'Other',
+          data: data.map(d => d.other),
+          backgroundColor: 'rgba(255,107,43,0.7)',
+          borderRadius: 2
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      animation: { duration: 400 },
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TOOLTIP_DEFAULTS,
-          callbacks: {
-            label: ctx => ctx.datasetIndex === 0
-              ? ` Sleep: ${ctx.parsed.y}h`
-              : ` HRV: ${ctx.parsed.y}ms`
-          }
+          backgroundColor: '#181b22',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
-        yHRV: {
-          position: 'left',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 4, callback: v => v + 'ms', color: C.accent }
-        },
-        ySleep: {
-          position: 'right',
+        x: {
+          stacked: true,
           grid: { display: false },
-          min: 0, max: 10,
-          ticks: { maxTicksLimit: 4, callback: v => v + 'h', color: C.yellow }
+          ticks: { maxTicksLimit: 8 }
+        },
+        y: {
+          stacked: true,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxTicksLimit: 4 }
         }
       }
     }
   });
-
-  return chart;
 }
 
-function setupHRVSleepToggle(canvasId, wellnessTrend) {
-  let chart = buildHRVSleepChart(canvasId, wellnessTrend, 42);
+// ============================================
+// HRV / SLEEP LINE CHARTS
+// ============================================
+function buildWellnessChart(canvasId, labels, data, color, label) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
 
-  document.querySelectorAll('[data-wellness-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-wellness-toggle]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      chart.destroy();
-      chart = buildHRVSleepChart(canvasId, wellnessTrend, parseInt(btn.dataset.wellnessToggle));
-    });
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label,
+        data,
+        borderColor: color,
+        borderWidth: 2,
+        fill: true,
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx: c, chartArea } = chart;
+          if (!chartArea) return 'transparent';
+          const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          const rgb = hexToRgb(color);
+          gradient.addColorStop(0, rgb.replace('rgb', 'rgba').replace(')', ',0.3)'));
+          gradient.addColorStop(1, rgb.replace('rgb', 'rgba').replace(')', ',0)'));
+          return gradient;
+        },
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: color,
+        pointBorderColor: '#0a0b0e',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#181b22',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxTicksLimit: 4 }
+        }
+      }
+    }
   });
 }
 
@@ -290,45 +259,74 @@ function buildPowerBestsChart(canvasId, data) {
       labels: data.map(d => d.label),
       datasets: [
         {
-          label: 'Power (W)', data: data.map(d => d.value),
-          borderColor: C.accent, borderWidth: 2.5,
-          fill: true, backgroundColor: ctx2 => areaGradient(ctx2, C.accent, 0.15),
-          tension: 0.4, pointRadius: 4,
-          pointBackgroundColor: C.accent, pointBorderColor: '#080a0d', pointBorderWidth: 2,
+          label: 'Power (W)',
+          data: data.map(d => d.value),
+          borderColor: COLORS.accent,
+          borderWidth: 2.5,
+          fill: true,
+          backgroundColor: 'rgba(0,229,255,0.08)',
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: COLORS.accent,
+          pointBorderColor: '#0a0b0e',
+          pointBorderWidth: 2,
           yAxisID: 'yPower'
         },
         {
-          label: 'HR (bpm)', data: data.map(d => d.hr),
-          borderColor: C.red, borderWidth: 1.5, borderDash: [4, 4],
-          fill: false, tension: 0.4, pointRadius: 0, pointHoverRadius: 3,
+          label: 'HR (bpm)',
+          data: data.map(d => d.hr),
+          borderColor: COLORS.red,
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 3,
           yAxisID: 'yHR'
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
-        tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: c => c.datasetIndex === 0 ? ` ${c.parsed.y}W` : ` ${c.parsed.y}bpm` } }
+        tooltip: {
+          backgroundColor: '#181b22',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: ctx => ctx.datasetIndex === 0
+              ? ` ${ctx.parsed.y}W`
+              : ` ${ctx.parsed.y} bpm`
+          }
+        }
       },
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' } },
-        yPower: { position: 'left', grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => v + 'W', maxTicksLimit: 5 } },
-        yHR:    { position: 'right', grid: { display: false }, ticks: { maxTicksLimit: 5, color: C.red } }
+        yPower: {
+          position: 'left',
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { maxTicksLimit: 5, callback: v => v + 'W' }
+        },
+        yHR: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { maxTicksLimit: 5, color: COLORS.red }
+        }
       }
     }
   });
 }
 
 // ============================================
-// PACE BESTS CHART (fixed: sec/km from totalSec/distM)
+// PACE BESTS CHART (inverted - lower is better)
 // ============================================
 function buildPaceBestsChart(canvasId, data) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-
-  const paceData = data.map(d => Math.round((d.totalSec / d.distM) * 1000));
 
   return new Chart(ctx, {
     type: 'line',
@@ -336,130 +334,120 @@ function buildPaceBestsChart(canvasId, data) {
       labels: data.map(d => d.label),
       datasets: [
         {
-          label: 'Pace', data: paceData,
-          borderColor: C.green, borderWidth: 2.5,
-          fill: true, backgroundColor: ctx2 => areaGradient(ctx2, C.green, 0.12),
-          tension: 0.4, pointRadius: 4,
-          pointBackgroundColor: C.green, pointBorderColor: '#080a0d', pointBorderWidth: 2,
+          label: 'Pace (sec/km)',
+          data: data.map(d => d.value / (parseFloat(d.label) || 1)),
+          borderColor: COLORS.green,
+          borderWidth: 2.5,
+          fill: true,
+          backgroundColor: 'rgba(0,255,135,0.08)',
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: COLORS.green,
+          pointBorderColor: '#0a0b0e',
+          pointBorderWidth: 2,
           yAxisID: 'yPace'
         },
         {
-          label: 'HR', data: data.map(d => d.hr),
-          borderColor: C.red, borderWidth: 1.5, borderDash: [4, 4],
-          fill: false, tension: 0.4, pointRadius: 0,
+          label: 'HR (bpm)',
+          data: data.map(d => d.hr),
+          borderColor: COLORS.red,
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
           yAxisID: 'yHR'
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...TOOLTIP_DEFAULTS,
-          callbacks: {
-            label: ctx2 => {
-              if (ctx2.datasetIndex === 0) {
-                const v = ctx2.parsed.y;
-                return ` ${Math.floor(v/60)}:${String(Math.round(v%60)).padStart(2,'0')}/km`;
-              }
-              return ` ${ctx2.parsed.y}bpm`;
-            }
-          }
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' } },
         yPace: {
-          position: 'left', reverse: false,
+          position: 'left',
+          reverse: false,
           grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}`; } }
+          ticks: {
+            maxTicksLimit: 5,
+            callback: v => {
+              const m = Math.floor(v / 60);
+              const s = Math.floor(v % 60);
+              return `${m}:${String(s).padStart(2,'0')}`;
+            }
+          }
         },
-        yHR: { position: 'right', grid: { display: false }, ticks: { maxTicksLimit: 5, color: C.red } }
+        yHR: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { maxTicksLimit: 5, color: COLORS.red }
+        }
       }
     }
   });
 }
 
 // ============================================
-// POWER CURVE (Cycling page)
+// POWER CURVE CHART (Cycling page)
 // ============================================
-function buildPowerCurveChart(canvasId, current, prev = null) {
+function buildPowerCurveChart(canvasId, current, prev) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
-  const datasets = [
-    {
-      label: '90-day bests', data: current.map(d => d.value),
-      borderColor: C.accent, borderWidth: 2.5,
-      fill: true, backgroundColor: ctx2 => areaGradient(ctx2, C.accent, 0.12),
-      tension: 0.4, pointRadius: 3,
-      pointBackgroundColor: C.accent, pointBorderColor: '#080a0d', pointBorderWidth: 2
-    }
-  ];
-
-  if (prev) {
-    datasets.push({
-      label: 'Previous 90d', data: prev.map(d => d.value),
-      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 1.5, borderDash: [4, 4],
-      fill: false, tension: 0.4, pointRadius: 0
-    });
-  }
-
-  return new Chart(ctx, {
-    type: 'line',
-    data: { labels: current.map(d => d.label), datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: !!prev, labels: { color: '#b8c0d0', boxWidth: 12 } },
-        tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: c => ` ${c.parsed.y}W` } }
-      },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => v + 'W', maxTicksLimit: 6 } }
-      }
-    }
-  });
-}
-
-// ============================================
-// PACE TREND LINE (Running page)
-// ============================================
-function buildPaceTrendChart(canvasId, dates, paceData) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
+  const labels = current.map(d => d.label);
 
   return new Chart(ctx, {
     type: 'line',
     data: {
-      labels: dates.map(d => d.slice(5)),
-      datasets: [{
-        label: 'Avg Pace', data: paceData,
-        borderColor: C.green, borderWidth: 2,
-        fill: true, backgroundColor: ctx2 => areaGradient(ctx2, C.green, 0.12),
-        tension: 0.4, pointRadius: 3,
-        pointBackgroundColor: C.green, pointBorderColor: '#080a0d', pointBorderWidth: 2,
-        pointHoverRadius: 5
-      }]
+      labels,
+      datasets: [
+        {
+          label: '90-day bests',
+          data: current.map(d => d.value),
+          borderColor: COLORS.accent,
+          borderWidth: 2.5,
+          fill: true,
+          backgroundColor: 'rgba(0,229,255,0.1)',
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: COLORS.accent,
+          pointBorderColor: '#0a0b0e',
+          pointBorderWidth: 2
+        },
+        prev && {
+          label: 'Previous period',
+          data: prev.map(d => d.value),
+          borderColor: 'rgba(255,255,255,0.15)',
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0
+        }
+      ].filter(Boolean)
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: { display: !!prev },
         tooltip: {
-          ...TOOLTIP_DEFAULTS,
-          callbacks: { label: c => { const v=c.parsed.y; return ` ${Math.floor(v/60)}:${String(Math.round(v%60)).padStart(2,'0')}/km`; } }
+          backgroundColor: '#181b22',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: { label: ctx => ` ${ctx.parsed.y}W` }
         }
       },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
         y: {
-          reverse: true,
           grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}`; } }
+          ticks: { callback: v => v + 'W', maxTicksLimit: 6 }
         }
       }
     }
