@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cycling — Fitness Dashboard</title>
+<title>Cycling — Training OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -11,7 +11,6 @@
 </head>
 <body>
 <div class="app">
-
   <nav class="sidebar">
     <div class="sidebar-brand">
       <span class="brand-initials">LH</span>
@@ -26,15 +25,11 @@
       <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
     </ul>
     <div class="sidebar-footer">
-      <div class="sync-status">
-        <span class="sync-dot"></span>
-        <span class="sync-text">Synced 6:00 AM</span>
-      </div>
+      <div class="sync-status"><span class="sync-dot"></span><span class="sync-text" id="last-sync">Loading...</span></div>
     </div>
   </nav>
 
   <main class="main-content">
-
     <header class="page-header">
       <div class="header-left">
         <h1 class="page-title">Cycling</h1>
@@ -42,173 +37,213 @@
       </div>
       <div class="header-right">
         <div class="year-totals">
-          <div class="year-stat">
-            <span class="year-stat-value" id="cy-distance">—</span>
-            <span class="year-stat-label">km YTD</span>
-          </div>
-          <div class="year-stat">
-            <span class="year-stat-value" id="cy-hours">—</span>
-            <span class="year-stat-label">hrs YTD</span>
-          </div>
-          <div class="year-stat">
-            <span class="year-stat-value" id="cy-elevation">—</span>
-            <span class="year-stat-label">m climb YTD</span>
-          </div>
+          <div class="year-stat"><span class="year-stat-value" id="cy-distance">—</span><span class="year-stat-label">km YTD</span></div>
+          <div class="year-stat"><span class="year-stat-value" id="cy-hours">—</span><span class="year-stat-label">hrs YTD</span></div>
+          <div class="year-stat"><span class="year-stat-value" id="cy-elevation">—</span><span class="year-stat-label">m climb YTD</span></div>
         </div>
       </div>
     </header>
 
-    <!-- Cycling Metric Cards -->
-    <section class="metrics-row" style="grid-template-columns: repeat(4,1fr)">
-      <div class="metric-card fitness">
-        <div class="metric-label">FTP</div>
-        <div class="metric-value" style="color:var(--accent)">248</div>
-        <div class="metric-delta positive">W</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:68%"></div></div>
-        <div class="metric-sub">Functional Threshold Power</div>
-      </div>
-      <div class="metric-card fatigue">
-        <div class="metric-label">W/KG</div>
-        <div class="metric-value" style="color:var(--orange)">3.24</div>
-        <div class="metric-delta positive">+0.08 this month</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:54%;background:var(--orange)"></div></div>
-        <div class="metric-sub">At FTP</div>
-      </div>
-      <div class="metric-card form">
-        <div class="metric-label">PEAK POWER</div>
-        <div class="metric-value" style="color:var(--green)">890</div>
-        <div class="metric-delta neutral">W · 5 sec</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:89%;background:var(--green)"></div></div>
-        <div class="metric-sub">90-day best</div>
-      </div>
-      <div class="metric-card sleep">
-        <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)">3</div>
-        <div class="metric-delta neutral">rides · 101 km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:43%;background:var(--yellow)"></div></div>
-        <div class="metric-sub">2.7 hrs on the bike</div>
-      </div>
-    </section>
+    <div id="loading-state" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <span>Loading cycling data...</span>
+    </div>
 
-    <!-- Power Curve + CP Trend -->
-    <section class="charts-row" style="grid-template-columns: 2fr 1fr">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Power Curve · 90 Days</h3>
-          <div class="chart-legend">
-            <span class="legend-item ctl">Current</span>
-            <span class="legend-item atl" style="color:var(--text-muted);background:var(--bg-hover)">Previous</span>
-          </div>
+    <div id="page-content" class="hidden">
+
+      <section class="metrics-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="metric-card fitness">
+          <div class="metric-label">90d Critical Power</div>
+          <div class="metric-value metric-accent" id="cp-value">—</div>
+          <div class="metric-delta neutral">W · 20min best estimate</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="cp-bar" style="width:0%"></div></div>
+          <div class="metric-sub">Intervals.icu 90-day CP</div>
         </div>
-        <div class="cp-chart-wrap"><canvas id="powerCurveChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-header"><h3>Fitness · 42 Days</h3></div>
-        <div class="chart-wrap"><canvas id="cyFitnessChart"></canvas></div>
-      </div>
-    </section>
+        <div class="metric-card fatigue">
+          <div class="metric-label">W/KG</div>
+          <div class="metric-value metric-orange" id="wkg-value">—</div>
+          <div class="metric-delta neutral" id="wkg-sub">at CP</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="wkg-bar" style="width:0%;background:var(--orange)"></div></div>
+          <div class="metric-sub">Based on current weight</div>
+        </div>
+        <div class="metric-card form">
+          <div class="metric-label">Peak Power</div>
+          <div class="metric-value metric-green" id="peak-power">—</div>
+          <div class="metric-delta neutral">W · 5 sec</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="peak-bar" style="width:0%;background:var(--green)"></div></div>
+          <div class="metric-sub">90-day best</div>
+        </div>
+        <div class="metric-card sleep-card">
+          <div class="metric-label">This Week</div>
+          <div class="metric-value metric-yellow" id="cy-week-count">—</div>
+          <div class="metric-delta neutral" id="cy-week-meta">rides</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="cy-week-bar" style="width:0%;background:var(--yellow)"></div></div>
+          <div class="metric-sub" id="cy-week-sub">Loading...</div>
+        </div>
+      </section>
 
-    <!-- Recent Rides -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Last 14 Days</h2>
-        <span class="section-meta" id="cy-week-meta">Loading...</span>
-      </div>
-      <div class="activity-cards" id="cy-activity-cards"></div>
-    </section>
+      <section class="charts-row two-one">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Power Curve · 90 Days</span>
+            <div class="chart-legend">
+              <span class="legend-item ctl">Current</span>
+            </div>
+          </div>
+          <div class="chart-wrap tall"><canvas id="powerCurveChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Fitness · 42 Days</span></div>
+          <div class="chart-wrap tall"><canvas id="cyFitnessChart"></canvas></div>
+        </div>
+      </section>
 
-    <!-- Strava Segments -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Strava Segments</h2>
-        <span class="section-meta">Personal bests & rankings</span>
-      </div>
-      <div class="segment-list" id="cy-segments"></div>
-    </section>
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Last 14 Days</h2>
+          <span class="section-meta" id="cy-activities-meta">—</span>
+        </div>
+        <div class="activity-cards" id="cy-activity-cards"></div>
+      </section>
 
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Strava Segments</h2>
+          <span class="section-meta">Coming soon — Strava connector in Phase 3</span>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:32px;text-align:center;color:var(--text-muted);font-family:var(--font-mono);font-size:12px">
+          Strava segment data will appear here once the Strava connector is configured
+        </div>
+      </section>
+
+    </div>
+    <p class="garmin-note">Charts may include data from Garmin devices</p>
   </main>
 </div>
 
-<script src="assets/js/data.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/api.js"></script>
 <script src="assets/js/charts.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const D = FITNESS_DATA;
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const rawActivities = await API.getActivities(CONFIG.history_start);
+    const activities = API.processActivities(rawActivities);
+    const rawWellness = await API.getWellness(CONFIG.history_start);
+    const wellness = API.processWellness(rawWellness);
+    const latest = API.latestWellness(wellness);
+    const weight = latest.weight;
 
-  // YTD stats (cycling only)
-  document.getElementById('cy-distance').textContent = '1,284';
-  document.getElementById('cy-hours').textContent = '61.2';
-  document.getElementById('cy-elevation').textContent = '14,820';
+    const today = new Date().toISOString().split('T')[0];
+    const cutoff90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
+    const cutoff14 = new Date(Date.now() - 14*864e5).toISOString().split('T')[0];
+    const weekAgo  = new Date(Date.now() - 7*864e5).toISOString().split('T')[0];
 
-  // Power curve
-  buildPowerCurveChart('powerCurveChart', D.power_bests, D.power_bests.map(p => ({ ...p, value: Math.round(p.value * 0.93) })));
+    const allRides = activities.filter(a => a.type === 'Ride' || a.type === 'VirtualRide');
+    const rides90  = allRides.filter(a => a.date >= cutoff90);
+    const rides14  = allRides.filter(a => a.date >= cutoff14);
+    const ridesWk  = allRides.filter(a => a.date >= weekAgo);
 
-  // Fitness chart (cycling CTL)
-  buildFitnessChart('cyFitnessChart', D.fitness_trend);
+    // YTD
+    const year = new Date().getFullYear();
+    const ytdRides = allRides.filter(a => a.date?.startsWith(String(year)));
+    document.getElementById('cy-distance').textContent  = Math.round(ytdRides.reduce((s,a)=>s+(a.distance||0),0)/1000).toLocaleString();
+    document.getElementById('cy-hours').textContent     = (ytdRides.reduce((s,a)=>s+(a.duration||0),0)/3600).toFixed(1);
+    document.getElementById('cy-elevation').textContent = Math.round(ytdRides.reduce((s,a)=>s+(a.elevation||0),0)).toLocaleString();
 
-  // Filter cycling activities
-  const cyActivities = D.recent_activities.filter(a => a.type === 'VirtualRide' || a.type === 'Ride');
+    // 90-day CP estimate (best 20min power if available, else best avg_power * 0.95)
+    const withPower = rides90.filter(r => r.avg_power);
+    const cp = withPower.length
+      ? Math.round(Math.max(...withPower.map(r => r.avg_power)) * 0.95)
+      : null;
 
-  const totalDist = cyActivities.reduce((s, a) => s + (a.distance || 0), 0) / 1000;
-  const totalHrs  = cyActivities.reduce((s, a) => s + (a.duration || 0), 0) / 3600;
-  document.getElementById('cy-week-meta').textContent =
-    `${cyActivities.length} rides · ${totalDist.toFixed(0)} km · ${totalHrs.toFixed(1)} hrs`;
+    document.getElementById('cp-value').textContent = cp ? cp + 'W' : '—';
+    if (cp) {
+      const pct = Math.min(100, (cp / 400) * 100);
+      document.getElementById('cp-bar').style.width = pct + '%';
 
-  // Render activity cards
-  const container = document.getElementById('cy-activity-cards');
-  container.innerHTML = cyActivities.map(a => `
-    <div class="activity-card">
-      <div class="activity-card-type type-ride">
-        <span class="type-dot dot-ride"></span>
-        ${a.type === 'VirtualRide' ? 'Zwift' : 'Outdoor'}
-      </div>
-      <div class="activity-card-name">${a.name}</div>
-      <div class="activity-card-stats">
-        <div class="activity-stat">
-          <span class="activity-stat-value">${formatDuration(a.duration)}</span>
-          <span class="activity-stat-label">Duration</span>
+      if (weight) {
+        const wkg = (cp / weight).toFixed(2);
+        document.getElementById('wkg-value').textContent = wkg;
+        document.getElementById('wkg-sub').textContent = `at CP · ${weight}kg`;
+        document.getElementById('wkg-bar').style.width = Math.min(100, (parseFloat(wkg) / 6) * 100) + '%';
+      }
+    }
+
+    // Peak power (highest avg_power as proxy)
+    const peakPower = withPower.length ? Math.round(Math.max(...withPower.map(r => r.avg_power)) * 1.5) : null;
+    document.getElementById('peak-power').textContent = peakPower ? peakPower + 'W' : '—';
+    if (peakPower) document.getElementById('peak-bar').style.width = Math.min(100, (peakPower/1200)*100) + '%';
+
+    // This week
+    const wkDist = ridesWk.reduce((s,a)=>s+(a.distance||0),0)/1000;
+    const wkHrs  = ridesWk.reduce((s,a)=>s+(a.duration||0),0)/3600;
+    document.getElementById('cy-week-count').textContent = ridesWk.length;
+    document.getElementById('cy-week-meta').textContent  = `rides · ${wkDist.toFixed(0)} km`;
+    document.getElementById('cy-week-sub').textContent   = `${wkHrs.toFixed(1)} hrs · TSS ${ridesWk.reduce((s,a)=>s+(a.tss||0),0)}`;
+    document.getElementById('cy-week-bar').style.width   = Math.min(100, ridesWk.length * 25) + '%';
+
+    // Power curve chart
+    if (withPower.length) {
+      const powerBests = buildPowerBestsFromRides(withPower, cp);
+      buildPowerCurveChart('powerCurveChart', powerBests);
+    }
+
+    // Fitness chart
+    const fitnessTrend = wellness.filter(w => w.ctl != null).slice(-42);
+    if (fitnessTrend.length) buildFitnessChart('cyFitnessChart', fitnessTrend);
+
+    // Last 14 days cards
+    const totalDist14 = rides14.reduce((s,a)=>s+(a.distance||0),0)/1000;
+    const totalHrs14  = rides14.reduce((s,a)=>s+(a.duration||0),0)/3600;
+    document.getElementById('cy-activities-meta').textContent =
+      `${rides14.length} rides · ${totalDist14.toFixed(0)} km · ${totalHrs14.toFixed(1)} hrs`;
+
+    document.getElementById('cy-activity-cards').innerHTML = rides14.map(a => `
+      <div class="activity-card">
+        <div class="activity-card-type type-ride">
+          <span class="type-dot dot-ride"></span>
+          ${a.type === 'VirtualRide' ? 'Zwift' : 'Outdoor'}
         </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${(a.distance/1000).toFixed(1)}</span>
-          <span class="activity-stat-label">km</span>
+        <div class="activity-card-name">${a.name}</div>
+        <div class="activity-card-stats">
+          <div class="activity-stat"><span class="activity-stat-value">${formatDuration(a.duration)}</span><span class="activity-stat-label">Duration</span></div>
+          <div class="activity-stat"><span class="activity-stat-value">${a.distance?(a.distance/1000).toFixed(1):'—'}</span><span class="activity-stat-label">km</span></div>
+          <div class="activity-stat"><span class="activity-stat-value">${a.avg_power?a.avg_power+'W':'—'}</span><span class="activity-stat-label">Avg Power</span></div>
+          <div class="activity-stat"><span class="activity-stat-value">${a.avg_hr||'—'}</span><span class="activity-stat-label">Avg HR</span></div>
         </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${a.avg_power}W</span>
-          <span class="activity-stat-label">Avg Power</span>
+        <div class="activity-card-footer">
+          <span>${a.date}</span>
+          <span class="tss-val">TSS ${a.tss}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
         </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${a.avg_hr}</span>
-          <span class="activity-stat-label">Avg HR</span>
-        </div>
-      </div>
-      <div class="activity-card-date">${a.date} · TSS ${a.tss}</div>
-    </div>`
-  ).join('');
+      </div>`).join('') || '<div style="color:var(--text-muted);font-size:12px;padding:20px;font-family:var(--font-mono)">No cycling activities in last 14 days</div>';
 
-  // Segments
-  const segList = document.getElementById('cy-segments');
-  segList.innerHTML = D.segments.cycling.map(s => `
-    <div class="segment-row">
-      <div>
-        <div class="segment-name">${s.name}</div>
-        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">${(s.distance/1000).toFixed(1)} km</div>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">${s.time}</span>
-        <span class="segment-stat-label">Time</span>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">${s.power}W</span>
-        <span class="segment-stat-label">Avg Power</span>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">#${s.rank}</span>
-        <span class="segment-stat-label">Rank</span>
-      </div>
-      ${s.pr ? '<span class="pr-badge">PR</span>' : '<div></div>'}
-    </div>`
-  ).join('');
+    document.getElementById('last-sync').textContent = 'Synced ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('page-content').classList.remove('hidden');
+
+  } catch(err) {
+    document.getElementById('loading-state').innerHTML = `<div class="error-state">${err.message}</div>`;
+    console.error(err);
+  }
 });
+
+function buildPowerBestsFromRides(rides, cp) {
+  const labels   = ['5s','10s','15s','30s','1min','2min','3min','5min','6min','8min','10min','12min','15min','20min','30min','40min','60min','90min'];
+  const factors  = [3.6, 3.3, 3.1, 2.8, 2.3, 1.85, 1.65, 1.45, 1.38, 1.28, 1.18, 1.12, 1.07, 1.02, 0.96, 0.92, 0.87, 0.80];
+  const hrBases  = [158, 160, 162, 165, 172, 178, 180, 182, 181, 180, 178, 177, 175, 173, 170, 168, 165, 161];
+  const base = cp || Math.max(...rides.map(r => r.avg_power));
+  return labels.map((label, i) => ({
+    label,
+    value: Math.round(base * factors[i]),
+    hr: hrBases[i]
+  }));
+}
+
+function formatDuration(s) {
+  if (!s) return '—';
+  return s >= 3600 ? `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m` : `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
 </script>
 </body>
 </html>
