@@ -13,6 +13,10 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
+from dotenv import load_dotenv
+
+# ------------------ Load .env ------------------
+load_dotenv()
 
 # ------------------ Logging ------------------
 logging.basicConfig(
@@ -24,22 +28,22 @@ logger = logging.getLogger(__name__)
 # ------------------ Constants ------------------
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
-
 # ------------------ Google Drive Sync Class ------------------
 class GoogleDriveSync:
     def __init__(self):
-        """Authenticate using Service Account from environment variables"""
-        service_account_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+        """Authenticate using Service Account from file or environment"""
+        service_account_path = os.getenv("GOOGLE_CREDENTIALS_PATH", "config/google_credentials.json")
         self.folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
 
-        if not service_account_json or not self.folder_id:
-            raise ValueError(
-                "GOOGLE_SERVICE_ACCOUNT_JSON and GOOGLE_DRIVE_FOLDER_ID must be set"
-            )
+        if not os.path.exists(service_account_path):
+            raise FileNotFoundError(f"Service account file not found: {service_account_path}")
+        if not self.folder_id:
+            raise ValueError("GOOGLE_DRIVE_FOLDER_ID must be set in environment or .env")
 
-        credentials = service_account.Credentials.from_service_account_info(
-            json.loads(service_account_json), scopes=SCOPES
-        )
+        with open(service_account_path) as f:
+            credentials_info = json.load(f)
+
+        credentials = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
         self.service = build("drive", "v3", credentials=credentials)
         self.subfolder_ids = self._get_or_create_subfolders()
 
@@ -53,20 +57,16 @@ class GoogleDriveSync:
         return ids
 
     def _find_or_create_folder(self, name: str, parent_id: str) -> str:
-        """Find a folder or create it if missing"""
         query = (
             f"name='{name}' and '{parent_id}' in parents "
             "and mimeType='application/vnd.google-apps.folder' and trashed=false"
         )
         try:
-            results = self.service.files().list(
-                q=query, spaces="drive", fields="files(id, name)"
-            ).execute()
+            results = self.service.files().list(q=query, spaces="drive", fields="files(id, name)").execute()
             files = results.get("files", [])
             if files:
                 return files[0]["id"]
 
-            # Create folder if not found
             folder = self.service.files().create(
                 body={"name": name, "mimeType": "application/vnd.google-apps.folder", "parents": [parent_id]},
                 fields="id",
@@ -83,8 +83,6 @@ class GoogleDriveSync:
             return None
 
         parent_id = self.subfolder_ids.get(subfolder, self.folder_id)
-
-        # Check if file exists
         existing_id = self._find_file(filepath.name, parent_id)
         media = MediaFileUpload(str(filepath), mimetype="application/json", resumable=True)
         file_metadata = {"name": filepath.name, "parents": [parent_id]}
@@ -92,21 +90,16 @@ class GoogleDriveSync:
         try:
             if existing_id:
                 logger.info(f"Updating file: {filepath.name}")
-                uploaded_file = self.service.files().update(
-                    fileId=existing_id, media_body=media, fields="id"
-                ).execute()
+                uploaded_file = self.service.files().update(fileId=existing_id, media_body=media, fields="id").execute()
             else:
                 logger.info(f"Uploading new file: {filepath.name}")
-                uploaded_file = self.service.files().create(
-                    body=file_metadata, media_body=media, fields="id"
-                ).execute()
+                uploaded_file = self.service.files().create(body=file_metadata, media_body=media, fields="id").execute()
             return uploaded_file["id"]
         except HttpError as e:
             logger.error(f"Failed to upload {filepath.name}: {e}")
             return None
 
     def _find_file(self, filename: str, parent_id: str) -> Optional[str]:
-        """Return file ID if it exists"""
         query = f"name='{filename}' and '{parent_id}' in parents and trashed=false"
         try:
             results = self.service.files().list(q=query, spaces="drive", fields="files(id)").execute()
@@ -148,10 +141,10 @@ def main():
         if not (args.upload_raw or args.upload_processed or args.all):
             total += sync.sync_directory(Path("data/processed"), "processed")
 
-        logger.info(f"Sync complete! Total files uploaded: {total}")
+        logger.info(f"✅ Sync complete! Total files uploaded: {total}")
 
     except Exception as e:
-        logger.error(f"Sync failed: {e}")
+        logger.error(f"❌ Sync failed: {e}")
         sys.exit(1)
 
 
