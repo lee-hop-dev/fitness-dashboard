@@ -28,14 +28,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create .env file (for other secrets)
+      - name: Create .env file (for API keys)
         env:
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
           CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
           CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         run: |
-          cat > .env << EOF
+          cat > .env <<EOF
 INTERVALS_API_KEY=$INTERVALS_API_KEY
 CONCEPT2_USERNAME=$CONCEPT2_USERNAME
 CONCEPT2_PASSWORD=$CONCEPT2_PASSWORD
