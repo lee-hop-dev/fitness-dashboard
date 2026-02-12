@@ -2,7 +2,7 @@ name: Daily Data Sync
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Runs daily at 6am UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       days_back:
@@ -29,22 +29,14 @@ jobs:
           pip install -r requirements.txt
         shell: pwsh
 
-      - name: Create .env file
+      - name: Set environment variables
         shell: pwsh
-        env:
-          INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
-          CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
-          CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         run: |
-@"
-INTERVALS_API_KEY=$env:INTERVALS_API_KEY
-CONCEPT2_USERNAME=$env:CONCEPT2_USERNAME
-CONCEPT2_PASSWORD=$env:CONCEPT2_PASSWORD
-GOOGLE_SERVICE_ACCOUNT_JSON=$env:GOOGLE_SERVICE_ACCOUNT_JSON
-GOOGLE_DRIVE_FOLDER_ID=$env:GOOGLE_DRIVE_FOLDER_ID
-"@ | Out-File -FilePath .env -Encoding UTF8
+          $env:INTERVALS_API_KEY = '${{ secrets.INTERVALS_API_KEY }}'
+          $env:CONCEPT2_USERNAME = '${{ secrets.CONCEPT2_USERNAME }}'
+          $env:CONCEPT2_PASSWORD = '${{ secrets.CONCEPT2_PASSWORD }}'
+          $env:GOOGLE_SERVICE_ACCOUNT_JSON = '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}'
+          $env:GOOGLE_DRIVE_FOLDER_ID = '${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}'
 
       - name: Collect data from APIs
         shell: pwsh
