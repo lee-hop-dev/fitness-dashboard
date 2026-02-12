@@ -35,34 +35,19 @@
 
   <main class="main-content">
 
-    <!-- Header -->
     <header class="page-header">
       <div class="header-left">
         <h1 class="page-title">Overview</h1>
-        <span class="page-subtitle" id="page-subtitle">Loading...</span>
+        <span class="page-subtitle" id="page-subtitle">—</span>
       </div>
-      <div class="header-right" style="display:flex;gap:16px;align-items:flex-start">
-        <button class="sync-btn" id="sync-btn" onclick="manualSync()">
-          <span class="sync-icon">↻</span>
-          <span>Sync Now</span>
-        </button>
+      <div class="header-right">
         <div>
-          <div class="year-totals" id="ytd-totals">
-            <div class="year-stat">
-              <span class="year-stat-value" id="ytd-distance">—</span>
-              <span class="year-stat-label">km YTD</span>
-            </div>
-            <div class="year-stat">
-              <span class="year-stat-value" id="ytd-hours">—</span>
-              <span class="year-stat-label">hrs YTD</span>
-            </div>
-            <div class="year-stat">
-              <span class="year-stat-value" id="ytd-tss">—</span>
-              <span class="year-stat-label">TSS YTD</span>
-            </div>
+          <div class="year-totals">
+            <div class="year-stat"><span class="year-stat-value" id="ytd-distance">—</span><span class="year-stat-label">km YTD</span></div>
+            <div class="year-stat"><span class="year-stat-value" id="ytd-hours">—</span><span class="year-stat-label">hrs YTD</span></div>
+            <div class="year-stat"><span class="year-stat-value" id="ytd-tss">—</span><span class="year-stat-label">TSS YTD</span></div>
           </div>
-          <!-- YTD Breakdown -->
-          <div class="ytd-breakdown" id="ytd-breakdown">
+          <div class="ytd-breakdown">
             <div class="ytd-sport cycling">
               <span class="ytd-sport-label">⬡ Cycling</span>
               <div class="ytd-sport-stats">
@@ -84,28 +69,22 @@
       </div>
     </header>
 
-    <!-- Loading state -->
     <div id="loading-state" class="loading-overlay">
       <div class="loading-spinner"></div>
-      <span id="loading-msg">Fetching data from Intervals.icu...</span>
+      <span id="loading-msg">Loading dashboard data...</span>
     </div>
 
-    <!-- Error state -->
     <div id="error-state" class="error-state hidden">
-      <strong>Failed to load data.</strong>
-      <span id="error-msg"></span>
-      <button onclick="manualSync()" style="margin-left:12px;background:none;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px">Retry</button>
+      <strong>No data found.</strong> <span id="error-msg"></span>
     </div>
 
-    <!-- Dashboard content (hidden until loaded) -->
     <div id="dashboard-content" class="hidden">
 
-      <!-- Metric Cards -->
-      <section class="metrics-row" id="metrics-row">
+      <section class="metrics-row">
         <div class="metric-card fitness">
           <div class="metric-label">Fitness</div>
           <div class="metric-value metric-accent" id="ctl-value">—</div>
-          <div class="metric-delta" id="ctl-delta">CTL</div>
+          <div class="metric-delta" id="ctl-delta">—</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="ctl-bar" style="width:0%"></div></div>
           <div class="metric-sub">Chronic Training Load</div>
         </div>
@@ -119,14 +98,14 @@
         <div class="metric-card form">
           <div class="metric-label">Form</div>
           <div class="metric-value metric-green" id="tsb-value">—</div>
-          <div class="metric-delta" id="tsb-delta">TSB</div>
+          <div class="metric-delta" id="tsb-delta">—</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="tsb-bar" style="width:50%"></div></div>
           <div class="metric-sub">Training Stress Balance</div>
         </div>
         <div class="metric-card hrv-card">
           <div class="metric-label">HRV</div>
           <div class="metric-value metric-purple" id="hrv-value">—</div>
-          <div class="metric-delta neutral" id="hrv-delta">ms</div>
+          <div class="metric-delta neutral">ms</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="hrv-bar" style="width:0%"></div></div>
           <div class="metric-sub">Resting HR: <span id="rhr-value">—</span> bpm</div>
         </div>
@@ -139,7 +118,6 @@
         </div>
       </section>
 
-      <!-- Fitness Trend + TSS -->
       <section class="charts-row two-one">
         <div class="chart-card">
           <div class="chart-header">
@@ -171,7 +149,6 @@
         </div>
       </section>
 
-      <!-- Recent Activities -->
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">Last 7 Days</h2>
@@ -180,7 +157,6 @@
         <div class="activity-cards" id="activity-cards"></div>
       </section>
 
-      <!-- HRV + Sleep -->
       <section class="charts-row full">
         <div class="chart-card">
           <div class="chart-header">
@@ -200,7 +176,6 @@
         </div>
       </section>
 
-      <!-- Calendar -->
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">Calendar</h2>
@@ -209,7 +184,6 @@
         <div class="calendar-wrap" id="calendar-wrap"></div>
       </section>
 
-      <!-- Heatmap -->
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">Activity Heatmap</h2>
@@ -235,7 +209,6 @@
         </div>
       </section>
 
-      <!-- 90-Day Bests -->
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">90-Day Bests</h2>
@@ -256,187 +229,132 @@
 
       <p class="garmin-note">Charts may include data from Garmin devices</p>
 
-    </div><!-- /dashboard-content -->
+    </div>
   </main>
 </div>
 
-<script src="assets/js/config.js"></script>
-<script src="assets/js/api.js"></script>
 <script src="assets/js/charts.js"></script>
+<script src="assets/js/data-loader.js"></script>
 <script>
-
-// ============================================
-// STATE
-// ============================================
-let STATE = {
-  activities: [],
-  wellness: [],
-  heatmap1y: [],
-  heatmap3y: []
-};
-
-// ============================================
-// INIT
-// ============================================
-document.addEventListener('DOMContentLoaded', () => loadDashboard());
-
-async function loadDashboard(forceRefresh = false) {
-  showLoading('Fetching data from Intervals.icu...');
-
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    if (forceRefresh) API.clearCache();
+    const { activities, wellness, weeklyTSS, ytd, heatmap1y, heatmap3y, meta } = await DATA.loadAll();
 
-    setLoading('Fetching activities...');
-    const rawActivities = await API.getActivities(CONFIG.history_start);
-    STATE.activities = API.processActivities(rawActivities);
+    // Sync time
+    const updated = new Date(meta.last_updated);
+    document.getElementById('last-sync').textContent = 'Updated ' + updated.toLocaleDateString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
 
-    setLoading('Fetching wellness & fitness data...');
-    const rawWellness = await API.getWellness(CONFIG.history_start);
-    STATE.wellness = API.processWellness(rawWellness);
+    // Page subtitle
+    const weekNum = getISOWeekNum(new Date());
+    document.getElementById('page-subtitle').textContent = `${new Date().getFullYear()} · Week ${weekNum}`;
 
-    setLoading('Building dashboard...');
-    renderDashboard();
+    // ---- METRICS ----
+    const lw = DATA.latestWellness(wellness);
+    document.getElementById('ctl-value').textContent   = lw.ctl?.toFixed(1) ?? '—';
+    document.getElementById('atl-value').textContent   = lw.atl?.toFixed(1) ?? '—';
+    document.getElementById('tsb-value').textContent   = lw.tsb != null ? (lw.tsb >= 0 ? '+' : '') + lw.tsb.toFixed(1) : '—';
+    document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
+    document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
+    document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
+    document.getElementById('weight-value').textContent = lw.weight ? lw.weight.toFixed(1) : '—';
 
-    document.getElementById('last-sync').textContent =
-      'Synced ' + new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    const setBar = (id, val, max) => { const el = document.getElementById(id); if (el && val) el.style.width = Math.min(100, (val/max)*100) + '%'; };
+    setBar('ctl-bar', lw.ctl, 120);
+    setBar('atl-bar', lw.atl, 120);
+    setBar('hrv-bar', lw.hrv, 100);
+    setBar('sleep-bar', lw.sleep, 10);
 
-    hideLoading();
-
-  } catch (err) {
-    showError(err.message);
-    console.error(err);
-  }
-}
-
-function renderDashboard() {
-  const { activities, wellness } = STATE;
-  const today = new Date().toISOString().split('T')[0];
-  const year  = new Date().getFullYear();
-
-  // Week / year info
-  const weekNum = getISOWeekNum(new Date());
-  document.getElementById('page-subtitle').textContent = `${year} · Week ${weekNum}`;
-
-  // ---- METRICS ----
-  const latest = API.latestWellness(wellness);
-
-  document.getElementById('ctl-value').textContent   = latest.ctl?.toFixed(1) ?? '—';
-  document.getElementById('atl-value').textContent   = latest.atl?.toFixed(1) ?? '—';
-  document.getElementById('tsb-value').textContent   = latest.tsb != null ? (latest.tsb > 0 ? '+' : '') + latest.tsb.toFixed(1) : '—';
-  document.getElementById('hrv-value').textContent   = latest.hrv ?? '—';
-  document.getElementById('rhr-value').textContent   = latest.resting_hr ?? '—';
-  document.getElementById('sleep-value').textContent = latest.sleep ?? '—';
-  document.getElementById('weight-value').textContent = latest.weight ? latest.weight.toFixed(1) : '—';
-
-  const setBar = (id, val, max) => {
-    const el = document.getElementById(id);
-    if (el) el.style.width = Math.min(100, (val / max) * 100) + '%';
-  };
-  setBar('ctl-bar', latest.ctl || 0, 120);
-  setBar('atl-bar', latest.atl || 0, 120);
-  setBar('hrv-bar', latest.hrv || 0, 100);
-  setBar('sleep-bar', latest.sleep || 0, 10);
-
-  const ctlDelta = document.getElementById('ctl-delta');
-  if (latest.ctl) {
-    const prev = wellness.slice(-8, -1).find(w => w.ctl != null);
-    const diff = prev ? (latest.ctl - prev.ctl).toFixed(1) : null;
-    if (diff) {
+    const ctlDelta = document.getElementById('ctl-delta');
+    const prevCtl = [...wellness].reverse().slice(7).find(w => w.ctl != null);
+    if (lw.ctl && prevCtl) {
+      const diff = (lw.ctl - prevCtl.ctl).toFixed(1);
       ctlDelta.textContent = (diff > 0 ? '+' : '') + diff + ' this week';
       ctlDelta.className = 'metric-delta ' + (diff >= 0 ? 'positive' : 'negative');
     }
-  }
 
-  const tsbEl = document.getElementById('tsb-delta');
-  if (latest.tsb != null) {
-    tsbEl.textContent = latest.tsb > 5 ? 'Fresh · Ready' : latest.tsb > 0 ? 'Neutral' : latest.tsb > -10 ? 'Slight fatigue' : 'Fatigued';
-    tsbEl.className = 'metric-delta ' + (latest.tsb > 0 ? 'positive' : 'negative');
-  }
+    const tsbEl = document.getElementById('tsb-delta');
+    if (lw.tsb != null) {
+      tsbEl.textContent = lw.tsb > 10 ? 'Fresh · Ready to race' : lw.tsb > 0 ? 'Fresh · Ready to train' : lw.tsb > -10 ? 'Slight fatigue' : 'Fatigued';
+      tsbEl.className = 'metric-delta ' + (lw.tsb >= 0 ? 'positive' : 'negative');
+    }
 
-  // ---- YTD ----
-  const ytd = API.calcYTD(activities);
-  document.getElementById('ytd-distance').textContent = ytd.total.distance.toLocaleString();
-  document.getElementById('ytd-hours').textContent    = ytd.total.hours.toFixed(1);
-  document.getElementById('ytd-tss').textContent      = ytd.total.tss.toLocaleString();
-  document.getElementById('ytd-cy-dist').textContent  = ytd.cycling.distance.toLocaleString();
-  document.getElementById('ytd-cy-hrs').textContent   = ytd.cycling.hours.toFixed(1);
-  document.getElementById('ytd-cy-tss').textContent   = ytd.cycling.tss.toLocaleString();
-  document.getElementById('ytd-ru-dist').textContent  = ytd.running.distance.toLocaleString();
-  document.getElementById('ytd-ru-hrs').textContent   = ytd.running.hours.toFixed(1);
-  document.getElementById('ytd-ru-tss').textContent   = ytd.running.tss.toLocaleString();
+    // ---- YTD ----
+    document.getElementById('ytd-distance').textContent = ytd.total.distance.toLocaleString();
+    document.getElementById('ytd-hours').textContent    = ytd.total.hours.toFixed(1);
+    document.getElementById('ytd-tss').textContent      = ytd.total.tss.toLocaleString();
+    document.getElementById('ytd-cy-dist').textContent  = ytd.cycling.distance.toLocaleString();
+    document.getElementById('ytd-cy-hrs').textContent   = ytd.cycling.hours.toFixed(1);
+    document.getElementById('ytd-cy-tss').textContent   = ytd.cycling.tss.toLocaleString();
+    document.getElementById('ytd-ru-dist').textContent  = ytd.running.distance.toLocaleString();
+    document.getElementById('ytd-ru-hrs').textContent   = ytd.running.hours.toFixed(1);
+    document.getElementById('ytd-ru-tss').textContent   = ytd.running.tss.toLocaleString();
 
-  // ---- FITNESS CHART ----
-  const fitnessTrend = wellness.filter(w => w.ctl != null);
+    // ---- FITNESS CHART ----
+    const fitnessTrend = wellness.filter(w => w.ctl != null);
+    const pbs = DATA.pbMarkers(activities, wellness);
+    setupFitnessToggle('fitnessChart', fitnessTrend, pbs);
 
-  // Find PB markers in last 90 days
-  const pbCutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];
-  const pbMarkers = buildPBMarkersFromActivities(activities, pbCutoff);
+    // ---- TSS CHART ----
+    buildTSSChart('tssChart', weeklyTSS);
 
-  setupFitnessToggle('fitnessChart', fitnessTrend, pbMarkers);
+    // ---- ACTIVITY CARDS ----
+    const last7 = DATA.recentActivities(activities, 7);
+    renderActivityCards(last7);
 
-  // ---- TSS CHART ----
-  const weeklyTSS = API.aggregateWeeklyTSS(activities);
-  buildTSSChart('tssChart', weeklyTSS);
-
-  // ---- ACTIVITY CARDS ----
-  const sevenDaysAgo = new Date(Date.now() - 7 * 864e5).toISOString().split('T')[0];
-  const last7 = activities.filter(a => a.date >= sevenDaysAgo).slice(0, 14);
-  renderActivityCards(last7);
-
-  // ---- HRV + SLEEP ----
-  setupHRVSleepToggle('hrvSleepChart', {
-    dates: wellness.map(w => w.date),
-    hrv:   wellness.map(w => w.hrv),
-    sleep: wellness.map(w => w.sleep)
-  });
-
-  // ---- CALENDAR ----
-  renderCalendar(activities);
-
-  // ---- HEATMAP ----
-  STATE.heatmap1y = buildHeatmapData(activities, 365);
-  STATE.heatmap3y = buildHeatmapData(activities, 1095);
-  renderHeatmap(STATE.heatmap1y);
-
-  document.querySelectorAll('[data-heatmap-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-heatmap-toggle]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderHeatmap(btn.dataset.heatmapToggle === '3y' ? STATE.heatmap3y : STATE.heatmap1y);
+    // ---- HRV + SLEEP ----
+    setupHRVSleepToggle('hrvSleepChart', {
+      dates: wellness.map(w => w.date),
+      hrv:   wellness.map(w => w.hrv),
+      sleep: wellness.map(w => w.sleep)
     });
-  });
 
-  // ---- POWER BESTS (90-day from activities) ----
-  const powerBests = buildPowerBestsFromWellness(activities);
-  const paceBests  = buildPaceBests(activities);
+    // ---- CALENDAR ----
+    renderCalendar(activities);
 
-  if (powerBests.length) buildPowerBestsChart('powerBestsChart', powerBests);
-  if (paceBests.length)  buildPaceBestsChart('paceBestsChart', paceBests);
-
-  renderBestsTables(powerBests, paceBests);
-
-  // ---- TABS ----
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelectorAll('.bests-container').forEach(c => c.classList.add('hidden'));
-      document.getElementById(tab.dataset.tab).classList.remove('hidden');
+    // ---- HEATMAP ----
+    renderHeatmap(heatmap1y);
+    document.querySelectorAll('[data-heatmap-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-heatmap-toggle]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderHeatmap(btn.dataset.heatmapToggle === '3y' ? heatmap3y : heatmap1y);
+      });
     });
-  });
-}
 
-// ============================================
-// ACTIVITY CARDS
-// ============================================
+    // ---- BESTS ----
+    const powerBests = DATA.powerBests(activities);
+    const paceBests  = DATA.paceBests(activities);
+    if (powerBests.length) buildPowerBestsChart('powerBestsChart', powerBests);
+    if (paceBests.length)  buildPaceBestsChart('paceBestsChart', paceBests);
+    renderBestsTables(powerBests, paceBests);
+
+    // ---- TABS ----
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.bests-container').forEach(c => c.classList.add('hidden'));
+        document.getElementById(tab.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('dashboard-content').classList.remove('hidden');
+
+  } catch(err) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+    document.getElementById('error-msg').textContent = err.message;
+    console.error(err);
+  }
+});
+
 function renderActivityCards(activities) {
   const container = document.getElementById('activity-cards');
-  const totalDist = activities.reduce((s, a) => s + (a.distance || 0), 0) / 1000;
-  const totalHrs  = activities.reduce((s, a) => s + (a.duration || 0), 0) / 3600;
-  const totalTSS  = activities.reduce((s, a) => s + (a.tss || 0), 0);
-
+  const totalDist = activities.reduce((s,a) => s+(a.distance||0),0)/1000;
+  const totalHrs  = activities.reduce((s,a) => s+(a.duration||0),0)/3600;
   document.getElementById('week-summary').textContent =
-    `${activities.length} activities · ${totalDist.toFixed(0)} km · ${totalHrs.toFixed(1)} hrs · ${totalTSS} TSS`;
+    `${activities.length} activities · ${totalDist.toFixed(0)} km · ${totalHrs.toFixed(1)} hrs`;
 
   if (!activities.length) {
     container.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px">No activities in the last 7 days</div>';
@@ -446,350 +364,109 @@ function renderActivityCards(activities) {
   container.innerHTML = activities.map(a => {
     const info = getTypeInfo(a.type);
     const isPower = !!a.avg_power;
-    const isPace  = !!a.avg_pace && !a.avg_power;
-    const stat1val = isPower ? `${a.avg_power}W` : isPace ? formatPace(a.avg_pace) : '—';
+    const isPace  = !!a.avg_speed && !a.avg_power;
+    const paceSecKm = a.avg_speed ? Math.round(1000/a.avg_speed) : null;
+    const stat1val = isPower ? `${a.avg_power}W` : isPace ? formatPace(paceSecKm) : '—';
     const stat1lbl = isPower ? 'Avg Power' : isPace ? 'Pace/km' : 'Effort';
-
     return `
       <a class="activity-card" href="${info.page}">
         <div class="activity-card-type ${info.colorClass}">
-          <span class="type-dot ${info.dotClass}"></span>
-          ${info.label}
+          <span class="type-dot ${info.dotClass}"></span>${info.label}
         </div>
         <div class="activity-card-name">${a.name}</div>
         <div class="activity-card-stats">
-          <div class="activity-stat">
-            <span class="activity-stat-value">${formatDuration(a.duration)}</span>
-            <span class="activity-stat-label">Duration</span>
-          </div>
-          <div class="activity-stat">
-            <span class="activity-stat-value">${a.distance ? (a.distance/1000).toFixed(1) : '—'}</span>
-            <span class="activity-stat-label">km</span>
-          </div>
-          <div class="activity-stat">
-            <span class="activity-stat-value">${stat1val}</span>
-            <span class="activity-stat-label">${stat1lbl}</span>
-          </div>
-          <div class="activity-stat">
-            <span class="activity-stat-value">${a.avg_hr || '—'}</span>
-            <span class="activity-stat-label">Avg HR</span>
-          </div>
+          <div class="activity-stat"><span class="activity-stat-value">${formatDuration(a.duration)}</span><span class="activity-stat-label">Duration</span></div>
+          <div class="activity-stat"><span class="activity-stat-value">${a.distance?(a.distance/1000).toFixed(1):'—'}</span><span class="activity-stat-label">km</span></div>
+          <div class="activity-stat"><span class="activity-stat-value">${stat1val}</span><span class="activity-stat-label">${stat1lbl}</span></div>
+          <div class="activity-stat"><span class="activity-stat-value">${a.avg_hr||'—'}</span><span class="activity-stat-label">Avg HR</span></div>
         </div>
         <div class="activity-card-footer">
           <span>${a.date}</span>
-          <span class="tss-val">TSS ${a.tss}${a.if_val ? ' · IF ' + a.if_val.toFixed(2) : ''}</span>
+          <span class="tss-val">TSS ${a.tss}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
         </div>
       </a>`;
   }).join('');
 }
 
-// ============================================
-// CALENDAR
-// ============================================
 function renderCalendar(activities) {
   const wrap = document.getElementById('calendar-wrap');
   const today = new Date();
   const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-
-  // Build lookup: date string → activities
   const actByDate = {};
-  activities.forEach(a => {
-    if (!actByDate[a.date]) actByDate[a.date] = [];
-    actByDate[a.date].push(a);
-  });
+  activities.forEach(a => { if(!actByDate[a.date]) actByDate[a.date]=[]; actByDate[a.date].push(a); });
 
-  // Find start: 4 weeks ago, Monday
   const start = new Date(today);
   start.setDate(today.getDate() - 27);
   const dow = start.getDay();
-  start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1));
+  start.setDate(start.getDate() - (dow===0?6:dow-1));
 
   let html = `<div class="calendar-month-header">
     <div class="cal-day-header"></div>
-    ${dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('')}
+    ${dayNames.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}
     <div class="cal-day-header" style="text-align:right;font-size:9px">TSS</div>
   </div>`;
 
   const cursor = new Date(start);
-  for (let w = 0; w < 4; w++) {
-    const weekActs = [];
-    let weekTSS = 0, weekDist = 0;
-    const days = [];
-
-    for (let d = 0; d < 7; d++) {
-      const dateStr = cursor.toISOString().split('T')[0];
-      const acts = actByDate[dateStr] || [];
-      weekActs.push(...acts);
-      weekTSS  += acts.reduce((s, a) => s + (a.tss || 0), 0);
-      weekDist += acts.reduce((s, a) => s + (a.distance || 0), 0);
-      days.push({ dateStr, dayNum: cursor.getDate(), acts, isToday: dateStr === today.toISOString().split('T')[0], inRange: cursor <= today });
-      cursor.setDate(cursor.getDate() + 1);
+  for (let w=0; w<4; w++) {
+    let weekTSS=0, weekDist=0;
+    const days=[];
+    for (let d=0; d<7; d++) {
+      const ds = cursor.toISOString().split('T')[0];
+      const acts = actByDate[ds]||[];
+      weekTSS  += acts.reduce((s,a)=>s+(a.tss||0),0);
+      weekDist += acts.reduce((s,a)=>s+(a.distance||0),0);
+      days.push({ ds, dayNum:cursor.getDate(), acts, isToday:ds===today.toISOString().split('T')[0], inRange:cursor<=today });
+      cursor.setDate(cursor.getDate()+1);
     }
-
-    const wkNum = getISOWeekNum(new Date(days[0].dateStr));
+    const wkNum = getISOWeekNum(new Date(days[0].ds));
     html += `<div class="calendar-row"><div class="cal-week-num">W${wkNum}</div>`;
-
     days.forEach(day => {
-      const act = day.acts[0];
-      const info = act ? getTypeInfo(act.type) : null;
-      html += `<div class="cal-day-cell ${!day.inRange ? 'empty' : ''} ${day.acts.length ? 'has-activity' : ''} ${day.isToday ? 'today' : ''}">
+      const act=day.acts[0];
+      const info=act?getTypeInfo(act.type):null;
+      html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}">
         <div class="cal-date-num">${day.dayNum}</div>
-        ${act ? `<div class="cal-activity-mini">
-          <div class="cal-mini-name ${info?.colorClass || ''}">${act.name.substring(0,16)}</div>
+        ${act?`<div class="cal-activity-mini">
+          <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
           <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss}tss</div>
-        </div>` : ''}
+        </div>`:''}
       </div>`;
     });
-
     html += `<div class="cal-week-total">
       <span class="cal-week-tss">${weekTSS}</span>
       <span class="cal-week-label">TSS</span>
       <span class="cal-week-dist">${(weekDist/1000).toFixed(0)}km</span>
     </div></div>`;
   }
-
   wrap.innerHTML = html;
-}
-
-// ============================================
-// HEATMAP
-// ============================================
-function buildHeatmapData(activities, days) {
-  const actByDate = {};
-  activities.forEach(a => {
-    if (!actByDate[a.date]) actByDate[a.date] = 0;
-    actByDate[a.date] += a.tss || 0;
-  });
-
-  const cells = [];
-  const end = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(end);
-    d.setDate(end.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const tss = actByDate[dateStr] || 0;
-    let level = 0;
-    if (tss > 0)   level = 1;
-    if (tss > 40)  level = 2;
-    if (tss > 80)  level = 3;
-    if (tss > 120) level = 4;
-    if (tss > 180) level = 5;
-    cells.push({ date: dateStr, level, tss });
-  }
-  return cells;
 }
 
 function renderHeatmap(cells) {
   const inner = document.getElementById('heatmap-inner');
   if (!inner) return;
-
-  const months = [];
-  let lastMonth = -1;
-  cells.forEach((c, i) => {
-    const m = new Date(c.date).getMonth();
-    if (m !== lastMonth) {
-      months.push({ label: new Date(c.date).toLocaleString('default',{month:'short'}), index: i });
-      lastMonth = m;
-    }
-  });
-
-  const colW = 16;
-  let monthHtml = `<div class="heatmap-months" style="padding-left:28px">`;
-  months.forEach((m, i) => {
-    const nextIdx = months[i+1]?.index || cells.length;
-    const cols = Math.ceil((nextIdx - m.index) / 7);
-    monthHtml += `<div class="heatmap-month-label" style="width:${cols*colW}px">${m.label}</div>`;
-  });
-  monthHtml += '</div>';
-
-  const gridHtml = `<div style="display:flex;gap:0">
-    <div class="heatmap-days-labels">
-      ${['','Mon','','Wed','','Fri',''].map(d => `<div class="heatmap-day-label">${d}</div>`).join('')}
-    </div>
-    <div class="heatmap-grid">${cells.map(c =>
-      `<div class="heatmap-cell" data-level="${c.level}" title="${c.date}${c.tss ? ' · ' + c.tss + ' TSS' : ''}"></div>`
-    ).join('')}</div>
+  const months=[]; let lastM=-1;
+  cells.forEach((c,i)=>{ const m=new Date(c.date).getMonth(); if(m!==lastM){months.push({label:new Date(c.date).toLocaleString('default',{month:'short'}),index:i});lastM=m;} });
+  const colW=16;
+  let mHtml=`<div class="heatmap-months" style="padding-left:28px">`;
+  months.forEach((m,i)=>{ const next=months[i+1]?.index||cells.length; const cols=Math.ceil((next-m.index)/7); mHtml+=`<div class="heatmap-month-label" style="width:${cols*colW}px">${m.label}</div>`; });
+  mHtml+='</div>';
+  const gHtml=`<div style="display:flex;gap:0">
+    <div class="heatmap-days-labels">${['','Mon','','Wed','','Fri',''].map(d=>`<div class="heatmap-day-label">${d}</div>`).join('')}</div>
+    <div class="heatmap-grid">${cells.map(c=>`<div class="heatmap-cell" data-level="${c.level}" title="${c.date}${c.tss?' · '+c.tss+' TSS':''}"></div>`).join('')}</div>
   </div>`;
-
-  inner.innerHTML = monthHtml + gridHtml;
-}
-
-// ============================================
-// BESTS TABLES
-// ============================================
-function buildPowerBestsFromWellness(activities) {
-  const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];
-  const rides = activities.filter(a =>
-    (a.type === 'Ride' || a.type === 'VirtualRide') && a.date >= cutoff && a.avg_power
-  );
-  if (!rides.length) return [];
-
-  const labels = ['5s','10s','15s','30s','1min','2min','3min','5min','6min','8min','10min','12min','15min','20min','30min','40min','60min','90min'];
-  const durations = [5,10,15,30,60,120,180,300,360,480,600,720,900,1200,1800,2400,3600,5400];
-
-  // Estimate power curve from max activities
-  const maxPower = Math.max(...rides.map(r => r.avg_power));
-  const ftp = Math.round(maxPower * 0.95);
-
-  return labels.map((label, i) => {
-    const dur = durations[i];
-    const decay = dur <= 30 ? 1.8 : dur <= 120 ? 1.4 : dur <= 300 ? 1.15 : dur <= 1200 ? 1.05 : 1.0;
-    const power = Math.round(ftp * Math.min(2.2, decay * (dur <= 10 ? 1.5 : 1)));
-    return {
-      label,
-      value: Math.min(Math.round(maxPower * 1.4), power),
-      hr: Math.round(140 + (dur < 120 ? 30 : dur < 600 ? 20 : 10) * Math.random())
-    };
-  });
-}
-
-function buildPaceBests(activities) {
-  const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];
-  const runs = activities.filter(a =>
-    (a.type === 'Run' || a.type === 'VirtualRun') && a.date >= cutoff && a.avg_pace
-  );
-  if (!runs.length) return [];
-
-  const bestPace = Math.min(...runs.map(r => r.avg_pace));
-  const distances = [
-    { label:'400m',     distM:400   },
-    { label:'800m',     distM:800   },
-    { label:'1k',       distM:1000  },
-    { label:'1500m',    distM:1500  },
-    { label:'1600m',    distM:1600  },
-    { label:'2k',       distM:2000  },
-    { label:'3k',       distM:3000  },
-    { label:'5k',       distM:5000  },
-    { label:'8k',       distM:8000  },
-    { label:'10k',      distM:10000 },
-    { label:'15k',      distM:15000 },
-    { label:'16.1k',    distM:16100 },
-    { label:'20k',      distM:20000 },
-    { label:'Marathon', distM:42195 }
-  ];
-
-  return distances.map(d => {
-    const factor = d.distM <= 1000 ? 0.85 : d.distM <= 5000 ? 0.92 : d.distM <= 10000 ? 0.97 : 1.04;
-    const secPerKm = bestPace * factor;
-    return {
-      label:    d.label,
-      distM:    d.distM,
-      totalSec: Math.round((secPerKm / 1000) * d.distM),
-      hr:       Math.round(160 + (d.distM < 1000 ? 20 : d.distM < 5000 ? 15 : 5))
-    };
-  });
+  inner.innerHTML = mHtml+gHtml;
 }
 
 function renderBestsTables(powerBests, paceBests) {
-  const powerGrid = document.getElementById('power-bests-grid');
-  if (powerGrid) {
-    powerGrid.innerHTML = powerBests.length
-      ? powerBests.map(b => `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${b.value}W</span></div>`).join('')
-      : '<div style="color:var(--text-muted);font-size:11px;padding:10px">No cycling data in last 90 days</div>';
-  }
+  const pg = document.getElementById('power-bests-grid');
+  if (pg) pg.innerHTML = powerBests.length
+    ? powerBests.map(b=>`<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${b.value}W</span></div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:11px;padding:10px;font-family:var(--font-mono)">No cycling data in last 90 days</div>';
 
-  const paceGrid = document.getElementById('pace-bests-grid');
-  if (paceGrid) {
-    paceGrid.innerHTML = paceBests.length
-      ? paceBests.map(b => {
-          const secPerKm = (b.totalSec / b.distM) * 1000;
-          const m = Math.floor(secPerKm / 60);
-          const s = Math.floor(secPerKm % 60);
-          return `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${m}:${String(s).padStart(2,'0')}/km</span></div>`;
-        }).join('')
-      : '<div style="color:var(--text-muted);font-size:11px;padding:10px">No running data in last 90 days</div>';
-  }
+  const rg = document.getElementById('pace-bests-grid');
+  if (rg) rg.innerHTML = paceBests.length
+    ? paceBests.map(b=>{ const spk=(b.totalSec/b.distM)*1000; return `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${Math.floor(spk/60)}:${String(Math.floor(spk%60)).padStart(2,'0')}/km</span></div>`; }).join('')
+    : '<div style="color:var(--text-muted);font-size:11px;padding:10px;font-family:var(--font-mono)">No running data in last 90 days</div>';
 }
-
-function buildPBMarkersFromActivities(activities, cutoff) {
-  const recent = activities.filter(a => a.date >= cutoff);
-  const markers = [];
-  const maxTSS = Math.max(...recent.map(a => a.tss || 0));
-  recent.forEach(a => {
-    if (a.tss >= maxTSS * 0.95) {
-      markers.push({
-        date: a.date,
-        type: (a.type === 'Ride' || a.type === 'VirtualRide') ? 'cycling' : 'running',
-        tier: a.tss >= maxTSS ? 'gold' : a.tss >= maxTSS * 0.97 ? 'silver' : 'bronze'
-      });
-    }
-  });
-  return markers;
-}
-
-// ============================================
-// MANUAL SYNC
-// ============================================
-async function manualSync() {
-  const btn = document.getElementById('sync-btn');
-  btn.classList.add('syncing');
-  btn.querySelector('span:last-child').textContent = 'Syncing...';
-  await loadDashboard(true);
-  btn.classList.remove('syncing');
-  btn.querySelector('span:last-child').textContent = 'Sync Now';
-}
-
-// ============================================
-// UI HELPERS
-// ============================================
-function showLoading(msg) {
-  document.getElementById('loading-state').classList.remove('hidden');
-  document.getElementById('error-state').classList.add('hidden');
-  document.getElementById('dashboard-content').classList.add('hidden');
-  setLoading(msg);
-}
-
-function setLoading(msg) {
-  document.getElementById('loading-msg').textContent = msg;
-}
-
-function hideLoading() {
-  document.getElementById('loading-state').classList.add('hidden');
-  document.getElementById('dashboard-content').classList.remove('hidden');
-}
-
-function showError(msg) {
-  document.getElementById('loading-state').classList.add('hidden');
-  document.getElementById('error-state').classList.remove('hidden');
-  document.getElementById('error-msg').textContent = ' ' + msg;
-}
-
-// ============================================
-// HELPERS
-// ============================================
-function getISOWeekNum(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
-function formatDuration(seconds) {
-  if (!seconds) return '—';
-  if (seconds >= 3600) {
-    return `${Math.floor(seconds/3600)}h ${Math.floor((seconds%3600)/60)}m`;
-  }
-  return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
-}
-
-function formatPace(secPerKm) {
-  if (!secPerKm) return '—';
-  return `${Math.floor(secPerKm/60)}:${String(Math.round(secPerKm%60)).padStart(2,'0')}`;
-}
-
-function getTypeInfo(type) {
-  const map = {
-    'VirtualRide':{ label:'Cycling', colorClass:'type-ride',    dotClass:'dot-ride',    page:'cycling.html' },
-    'Ride':       { label:'Cycling', colorClass:'type-ride',    dotClass:'dot-ride',    page:'cycling.html' },
-    'VirtualRun': { label:'Running', colorClass:'type-run',     dotClass:'dot-run',     page:'running.html' },
-    'Run':        { label:'Running', colorClass:'type-run',     dotClass:'dot-run',     page:'running.html' },
-    'Rowing':     { label:'Rowing',  colorClass:'type-row',     dotClass:'dot-row',     page:'rowing.html'  },
-    'Workout':    { label:'Workout', colorClass:'type-workout', dotClass:'dot-workout', page:'cardio.html'  },
-    'Walk':       { label:'Walking', colorClass:'type-walk',    dotClass:'dot-walk',    page:'other.html'   }
-  };
-  return map[type] || { label:type, colorClass:'type-default', dotClass:'dot-default', page:'other.html' };
-}
-
 </script>
 </body>
 </html>
