@@ -4,61 +4,47 @@ on:
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:
-    inputs:
-      days_back:
-        description: 'Number of days to fetch'
-        required: false
-        default: '7'
 
 jobs:
   sync-data:
     runs-on: windows-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      
+      - name: Create .env file
         shell: pwsh
-
-      - name: Setup Google Service Account JSON
-        run: |
-          Set-Content -Path config\google_credentials.json -Value $env:GOOGLE_SERVICE_ACCOUNT_JSON -Encoding UTF8
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        shell: pwsh
-
-      - name: Create .env file
-        run: |
-          Set-Content -Path .env -Value "INTERVALS_API_KEY=$env:INTERVALS_API_KEY`nCONCEPT2_USERNAME=$env:CONCEPT2_USERNAME`nCONCEPT2_PASSWORD=$env:CONCEPT2_PASSWORD`nGOOGLE_DRIVE_FOLDER_ID=$env:GOOGLE_DRIVE_FOLDER_ID" -Encoding UTF8
-        env:
-          INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
-          CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
-          CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        shell: pwsh
-
-      - name: Collect data from APIs
         run: |
-          $DAYS = '${{ github.event.inputs.days_back }}'
-          python workflows/collect_data.py --days $DAYS
+          "@
+          GOOGLE_SERVICE_ACCOUNT_JSON=$env:GOOGLE_SERVICE_ACCOUNT_JSON
+          GOOGLE_DRIVE_FOLDER_ID=$env:GOOGLE_DRIVE_FOLDER_ID
+          "@ | Out-File -FilePath .env -Encoding UTF8
+      
+      - name: Collect data from APIs
         shell: pwsh
-
+        run: |
+          python workflows\collect_data.py --days 7
+      
       - name: Sync to Google Drive
-        run: python workflows/sync_to_drive.py --all
         shell: pwsh
-
+        run: |
+          python workflows\sync_to_drive.py --all
+      
       - name: Summary
-        if: success()
+        shell: pwsh
         run: |
           Write-Host "✅ Data sync completed successfully!"
-          Write-Host "📊 Files synced to Google Drive"
-        shell: pwsh
