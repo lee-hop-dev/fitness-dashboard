@@ -2,7 +2,7 @@ name: Daily Data Sync
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Every day at 6:00 UTC
+    - cron: '0 6 * * *'  # every day at 6:00 UTC
   workflow_dispatch:
     inputs:
       days_back:
@@ -28,21 +28,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create .env file
+      - name: Create .env file (for other secrets)
         env:
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
           CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
           CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
           cat > .env << EOF
-          INTERVALS_API_KEY=$INTERVALS_API_KEY
-          CONCEPT2_USERNAME=$CONCEPT2_USERNAME
-          CONCEPT2_PASSWORD=$CONCEPT2_PASSWORD
-          GOOGLE_DRIVE_FOLDER_ID=$GOOGLE_DRIVE_FOLDER_ID
-          GOOGLE_SERVICE_ACCOUNT_JSON=$GOOGLE_SERVICE_ACCOUNT_JSON
-          EOF
+INTERVALS_API_KEY=$INTERVALS_API_KEY
+CONCEPT2_USERNAME=$CONCEPT2_USERNAME
+CONCEPT2_PASSWORD=$CONCEPT2_PASSWORD
+GOOGLE_DRIVE_FOLDER_ID=$GOOGLE_DRIVE_FOLDER_ID
+EOF
 
       - name: Collect data from APIs
         run: |
@@ -50,6 +48,9 @@ jobs:
           python workflows/collect_data.py --days $DAYS
 
       - name: Sync to Google Drive
+        env:
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
           python workflows/sync_to_drive.py --all
 
