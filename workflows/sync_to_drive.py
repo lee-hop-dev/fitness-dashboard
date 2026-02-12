@@ -14,9 +14,7 @@ from typing import Optional
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
@@ -44,44 +42,28 @@ class GoogleDriveSync:
         if not self.folder_id:
             raise ValueError("GOOGLE_DRIVE_FOLDER_ID not found in environment")
         
-        self.credentials_file = Path("config/google_credentials.json")
-        self.token_file = Path("config/token.json")
-        
-        if not self.credentials_file.exists():
-            raise FileNotFoundError(f"Credentials file not found: {self.credentials_file}")
         
         self.service = self._authenticate()
         self.subfolder_ids = self._get_or_create_subfolders()
     
     def _authenticate(self):
-        """Authenticate with Google Drive API"""
-        logger.info("Authenticating with Google Drive...")
-        
-        creds = None
-        
-        # Token file stores the user's access and refresh tokens
-        if self.token_file.exists():
-            creds = Credentials.from_authorized_user_file(str(self.token_file), SCOPES)
-        
-        # If no valid credentials, let user log in
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                logger.info("Refreshing access token...")
-                creds.refresh(Request())
-            else:
-                logger.info("No valid token found. Opening browser for authentication...")
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    str(self.credentials_file), SCOPES
-                )
-                creds = flow.run_local_server(port=0)
-            
-            # Save credentials for next run
-            with open(self.token_file, 'w') as token:
-                token.write(creds.to_json())
-            logger.info("Credentials saved to token.json")
-        
+        """Authenticate using Service Account (CI-safe)"""
+        logger.info("Authenticating with Google Drive (Service Account)...")
+
+        service_account_info = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+
+        if not service_account_info:
+            raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON not found in environment")
+
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(service_account_info),
+            scopes=SCOPES,
+        )
+
         logger.info("Successfully authenticated with Google Drive")
-        return build('drive', 'v3', credentials=creds)
+        return build('drive', 'v3', credentials=credentials)
+
+
     
     def _get_or_create_subfolders(self) -> dict:
         """Get or create raw/processed/cache subfolders"""
