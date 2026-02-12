@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lee Hopkins — Fitness Dashboard</title>
+<title>Lee Hopkins — Training OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
-
 <div class="app">
 
-  <!-- Sidebar Nav -->
   <nav class="sidebar">
     <div class="sidebar-brand">
       <span class="brand-initials">LH</span>
@@ -35,7 +33,6 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
   <main class="main-content">
 
     <!-- Header -->
@@ -47,165 +44,175 @@
       <div class="header-right">
         <div class="year-totals">
           <div class="year-stat">
-            <span class="year-stat-value" id="ytd-distance">—</span>
+            <span class="year-stat-value" id="ytd-distance">1,842</span>
             <span class="year-stat-label">km YTD</span>
           </div>
           <div class="year-stat">
-            <span class="year-stat-value" id="ytd-hours">—</span>
+            <span class="year-stat-value" id="ytd-hours">87.4</span>
             <span class="year-stat-label">hrs YTD</span>
           </div>
           <div class="year-stat">
-            <span class="year-stat-value" id="ytd-tss">—</span>
+            <span class="year-stat-value" id="ytd-tss">6,240</span>
             <span class="year-stat-label">TSS YTD</span>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Fitness Metrics Row -->
+    <!-- Metric Cards -->
     <section class="metrics-row">
       <div class="metric-card fitness">
-        <div class="metric-label">FITNESS</div>
-        <div class="metric-value" id="ctl-value">48.5</div>
-        <div class="metric-delta positive" id="ctl-delta">+1.2</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width: 48.5%"></div></div>
+        <div class="metric-label">Fitness</div>
+        <div class="metric-value metric-accent" id="ctl-value">48.5</div>
+        <div class="metric-delta positive" id="ctl-delta">+1.2 this week</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:48.5%"></div></div>
         <div class="metric-sub">CTL · Chronic Training Load</div>
       </div>
       <div class="metric-card fatigue">
-        <div class="metric-label">FATIGUE</div>
-        <div class="metric-value" id="atl-value">45.5</div>
-        <div class="metric-delta negative" id="atl-delta">+3.1</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width: 45.5%"></div></div>
+        <div class="metric-label">Fatigue</div>
+        <div class="metric-value metric-orange" id="atl-value">45.5</div>
+        <div class="metric-delta negative" id="atl-delta">+3.1 this week</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:45.5%"></div></div>
         <div class="metric-sub">ATL · Acute Training Load</div>
       </div>
       <div class="metric-card form">
-        <div class="metric-label">FORM</div>
-        <div class="metric-value" id="tsb-value">+3.0</div>
-        <div class="metric-delta positive" id="tsb-delta">fresh</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width: 53%"></div></div>
+        <div class="metric-label">Form</div>
+        <div class="metric-value metric-green" id="tsb-value">+3.0</div>
+        <div class="metric-delta positive" id="tsb-delta">Fresh · Ready to train</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:53%"></div></div>
         <div class="metric-sub">TSB · Training Stress Balance</div>
       </div>
-      <div class="metric-card hrv">
+      <div class="metric-card hrv-card">
         <div class="metric-label">HRV</div>
-        <div class="metric-value" id="hrv-value">47</div>
-        <div class="metric-delta positive" id="hrv-delta">+2</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width: 62%"></div></div>
-        <div class="metric-sub">ms · Last reading</div>
+        <div class="metric-value metric-purple" id="hrv-value">47</div>
+        <div class="metric-delta positive" id="hrv-delta">+2 vs 7-day avg</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:62%"></div></div>
+        <div class="metric-sub">ms · Resting HR: <span id="rhr-value">52</span> bpm</div>
       </div>
-      <div class="metric-card sleep">
-        <div class="metric-label">SLEEP</div>
-        <div class="metric-value" id="sleep-value">6.8</div>
-        <div class="metric-delta neutral" id="sleep-delta">hrs</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width: 72%"></div></div>
-        <div class="metric-sub">Resting HR: <span id="rhr-value">52</span> bpm</div>
+      <div class="metric-card sleep-card">
+        <div class="metric-label">Sleep</div>
+        <div class="metric-value metric-yellow" id="sleep-value">6.8</div>
+        <div class="metric-delta neutral" id="sleep-delta">hrs last night</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:72%"></div></div>
+        <div class="metric-sub">7-day avg: 7.0 hrs</div>
       </div>
     </section>
 
-    <!-- 42-day Trends + Heatmap Row -->
-    <section class="charts-row">
-      <div class="chart-card wide">
+    <!-- Fitness Trend + Weekly TSS -->
+    <section class="charts-row two-one">
+      <div class="chart-card">
         <div class="chart-header">
-          <h3>42-Day Trends</h3>
-          <div class="chart-legend">
-            <span class="legend-item ctl">CTL</span>
-            <span class="legend-item atl">ATL</span>
-            <span class="legend-item tsb">TSB</span>
+          <span class="chart-title">Fitness Trend — CTL / ATL / TSB</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="chart-legend">
+              <span class="legend-item ctl">CTL</span>
+              <span class="legend-item atl">ATL</span>
+              <span class="legend-item tsb">TSB</span>
+            </div>
+            <div class="toggle-group">
+              <button class="toggle-btn active" data-fitness-toggle="42">42d</button>
+              <button class="toggle-btn" data-fitness-toggle="365">365d</button>
+            </div>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="fitnessChart"></canvas></div>
+        <div class="chart-wrap tall" style="position:relative">
+          <canvas id="fitnessChart"></canvas>
+          <div id="pb-marker-row" style="position:absolute;bottom:0;left:0;right:0;height:20px;pointer-events:none"></div>
+        </div>
       </div>
-      <div class="chart-card narrow">
+      <div class="chart-card">
         <div class="chart-header">
-          <h3>Weekly TSS</h3>
+          <span class="chart-title">Weekly TSS</span>
           <div class="chart-legend">
             <span class="legend-item ride">Ride</span>
             <span class="legend-item run">Run</span>
-            <span class="legend-item row">Row</span>
+            <span class="legend-item row-l">Row</span>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="tssChart"></canvas></div>
+        <div class="chart-wrap tall"><canvas id="tssChart"></canvas></div>
       </div>
     </section>
 
     <!-- Recent Activities -->
     <section class="section">
       <div class="section-header">
-        <h2>Last 7 Days</h2>
-        <span class="section-meta" id="week-summary">7 activities · 101 km · 3.7 hrs</span>
+        <h2 class="section-title">Last 7 Days</h2>
+        <span class="section-meta" id="week-summary">Loading...</span>
       </div>
-      <div class="activity-cards" id="activity-cards">
-        <!-- Injected by JS -->
-      </div>
+      <div class="activity-cards" id="activity-cards"></div>
     </section>
 
-    <!-- Health Trends -->
-    <section class="charts-row">
-      <div class="chart-card half">
+    <!-- HRV + Sleep Combined -->
+    <section class="charts-row full">
+      <div class="chart-card">
         <div class="chart-header">
-          <h3>HRV · 42 Days</h3>
+          <span class="chart-title">HRV & Sleep</span>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="chart-legend">
+              <span class="legend-item hrv-l">HRV</span>
+              <span class="legend-item sleep-l">Sleep</span>
+            </div>
+            <div class="toggle-group">
+              <button class="toggle-btn active" data-wellness-toggle="42">42d</button>
+              <button class="toggle-btn" data-wellness-toggle="365">365d</button>
+            </div>
+          </div>
         </div>
-        <div class="chart-wrap"><canvas id="hrvChart"></canvas></div>
+        <div class="chart-wrap"><canvas id="hrvSleepChart"></canvas></div>
       </div>
-      <div class="chart-card half">
-        <div class="chart-header">
-          <h3>Sleep · 42 Days</h3>
+    </section>
+
+    <!-- Calendar -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Calendar</h2>
+        <span class="section-meta">Last 4 weeks · by date</span>
+      </div>
+      <div class="calendar-wrap" id="calendar-wrap"></div>
+    </section>
+
+    <!-- Heatmap -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Activity Heatmap</h2>
+        <div class="toggle-group">
+          <button class="toggle-btn active" data-heatmap-toggle="1y">1 Year</button>
+          <button class="toggle-btn" data-heatmap-toggle="3y">3 Years</button>
         </div>
-        <div class="chart-wrap"><canvas id="sleepChart"></canvas></div>
+      </div>
+      <div class="heatmap-wrap" id="heatmap-wrap">
+        <div id="heatmap-inner"></div>
+        <div class="heatmap-legend">
+          <span class="heatmap-legend-label">Less</span>
+          <div class="heatmap-legend-cells">
+            <div class="heatmap-legend-cell" style="background:var(--bg-elevated)"></div>
+            <div class="heatmap-legend-cell" data-level="1"></div>
+            <div class="heatmap-legend-cell" data-level="2"></div>
+            <div class="heatmap-legend-cell" data-level="3"></div>
+            <div class="heatmap-legend-cell" data-level="4"></div>
+            <div class="heatmap-legend-cell" data-level="5"></div>
+          </div>
+          <span class="heatmap-legend-label">More</span>
+        </div>
       </div>
     </section>
 
-    <!-- 4-Week Calendar -->
+    <!-- 90-Day Bests -->
     <section class="section">
       <div class="section-header">
-        <h2>4-Week Calendar</h2>
-      </div>
-      <div class="calendar-grid" id="calendar-grid">
-        <!-- Injected by JS -->
-      </div>
-    </section>
-
-    <!-- Activity Heatmap -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Activity Heatmap · 2026</h2>
-        <span class="section-meta">intensity by TSS</span>
-      </div>
-      <div class="heatmap-wrap">
-        <div class="heatmap-months" id="heatmap-months"></div>
-        <div class="heatmap-grid" id="heatmap-grid"></div>
-      </div>
-    </section>
-
-    <!-- 90-Day Power Bests -->
-    <section class="section">
-      <div class="section-header">
-        <h2>90-Day Bests</h2>
+        <h2 class="section-title">90-Day Bests</h2>
         <div class="tab-group">
           <button class="tab active" data-tab="cycling-bests">Cycling Power</button>
           <button class="tab" data-tab="running-bests">Running Pace</button>
         </div>
       </div>
-
       <div class="bests-container" id="cycling-bests">
-        <div class="bests-chart-wrap">
-          <canvas id="powerBestsChart"></canvas>
-        </div>
-        <div class="bests-table">
-          <div class="bests-grid" id="power-bests-grid">
-            <!-- Injected by JS -->
-          </div>
-        </div>
+        <div class="bests-chart-wrap"><canvas id="powerBestsChart"></canvas></div>
+        <div class="bests-grid" id="power-bests-grid"></div>
       </div>
-
       <div class="bests-container hidden" id="running-bests">
-        <div class="bests-chart-wrap">
-          <canvas id="paceBestsChart"></canvas>
-        </div>
-        <div class="bests-table">
-          <div class="bests-grid" id="pace-bests-grid">
-            <!-- Injected by JS -->
-          </div>
-        </div>
+        <div class="bests-chart-wrap"><canvas id="paceBestsChart"></canvas></div>
+        <div class="bests-grid" id="pace-bests-grid"></div>
       </div>
     </section>
 
@@ -214,6 +221,180 @@
 
 <script src="assets/js/data.js"></script>
 <script src="assets/js/charts.js"></script>
-<script src="assets/js/overview.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = FITNESS_DATA;
+
+  // Charts
+  setupFitnessToggle('fitnessChart', D.fitness_trend, D.pb_markers);
+  buildTSSChart('tssChart', D.weekly_tss);
+  setupHRVSleepToggle('hrvSleepChart', D.wellness_trend);
+  buildPowerBestsChart('powerBestsChart', D.power_bests);
+  buildPaceBestsChart('paceBestsChart', D.pace_bests);
+
+  // Activity cards (last 7 days)
+  const last7 = D.recent_activities.slice(0, 7);
+  const totalDist = last7.reduce((s, a) => s + (a.distance || 0), 0) / 1000;
+  const totalHrs  = last7.reduce((s, a) => s + (a.duration || 0), 0) / 3600;
+  document.getElementById('week-summary').textContent =
+    `${last7.length} activities · ${totalDist.toFixed(0)} km · ${totalHrs.toFixed(1)} hrs`;
+
+  document.getElementById('activity-cards').innerHTML = last7.map(a => {
+    const info = getTypeInfo(a.type);
+    const isPower = !!a.avg_power;
+    const isPace  = !!a.avg_pace && !a.avg_power;
+
+    const stat1val = isPower ? `${a.avg_power}W` : isPace ? formatPace(a.avg_pace) : '—';
+    const stat1lbl = isPower ? 'Avg Power' : isPace ? 'Avg Pace' : 'Effort';
+
+    return `
+      <a class="activity-card" href="${info.page}">
+        <div class="activity-card-type ${info.colorClass}">
+          <span class="type-dot ${info.dotClass}"></span>
+          ${info.label}
+        </div>
+        <div class="activity-card-name">${a.name}</div>
+        <div class="activity-card-stats">
+          <div class="activity-stat">
+            <span class="activity-stat-value">${formatDuration(a.duration)}</span>
+            <span class="activity-stat-label">Duration</span>
+          </div>
+          <div class="activity-stat">
+            <span class="activity-stat-value">${a.distance ? (a.distance/1000).toFixed(1) : '—'}</span>
+            <span class="activity-stat-label">km</span>
+          </div>
+          <div class="activity-stat">
+            <span class="activity-stat-value">${stat1val}</span>
+            <span class="activity-stat-label">${stat1lbl}</span>
+          </div>
+          <div class="activity-stat">
+            <span class="activity-stat-value">${a.avg_hr || '—'}</span>
+            <span class="activity-stat-label">Avg HR</span>
+          </div>
+        </div>
+        <div class="activity-card-footer">
+          <span>${a.date}</span>
+          <span class="tss-val">TSS ${a.tss} · IF ${a.if_val?.toFixed(2) || '—'}</span>
+        </div>
+      </a>`;
+  }).join('');
+
+  // Calendar
+  renderCalendar(D.calendar);
+
+  // Heatmap
+  renderHeatmap(D.heatmap_1y);
+
+  document.querySelectorAll('[data-heatmap-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-heatmap-toggle]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderHeatmap(btn.dataset.heatmapToggle === '3y' ? D.heatmap_3y : D.heatmap_1y);
+    });
+  });
+
+  // Heatmap legend cells
+  document.querySelectorAll('.heatmap-legend-cell[data-level]').forEach(cell => {
+    const lvl = cell.dataset.level;
+    const alphas = { 1: '0.12', 2: '0.28', 3: '0.48', 4: '0.68', 5: '0.92' };
+    cell.style.background = `rgba(0,229,255,${alphas[lvl]})`;
+  });
+
+  // Bests tables
+  document.getElementById('power-bests-grid').innerHTML = D.power_bests.map(b =>
+    `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${b.value}W</span></div>`
+  ).join('');
+
+  document.getElementById('pace-bests-grid').innerHTML = D.pace_bests.map(b => {
+    const paceStr = formatPaceFromBest(b.totalSec, b.distM);
+    return `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${paceStr}/km</span></div>`;
+  }).join('');
+
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.bests-container').forEach(c => c.classList.add('hidden'));
+      document.getElementById(tab.dataset.tab).classList.remove('hidden');
+    });
+  });
+});
+
+function renderCalendar(weeks) {
+  const wrap = document.getElementById('calendar-wrap');
+  if (!wrap) return;
+
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  let html = `<div class="calendar-month-header">
+    <div class="cal-day-header"></div>
+    ${dayNames.map(d => `<div class="cal-day-header">${d}</div>`).join('')}
+    <div class="cal-day-header" style="text-align:right">TSS</div>
+  </div>`;
+
+  weeks.forEach(week => {
+    html += `<div class="calendar-row">
+      <div class="cal-week-num">W${week.weekNum}</div>`;
+
+    week.days.forEach(day => {
+      const hasActs = day.activities.length > 0;
+      const act = day.activities[0];
+      const info = act ? getTypeInfo(act.type) : null;
+
+      html += `<div class="cal-day-cell ${!day.inRange ? 'empty' : ''} ${hasActs ? 'has-activity' : ''} ${day.isToday ? 'today' : ''}">
+        <div class="cal-date-num">${day.dayNum}</div>
+        ${hasActs ? `
+          <div class="cal-activity-mini">
+            <div class="cal-mini-name ${info?.colorClass || ''}">${act.name.split(' - ')[0].substring(0,18)}</div>
+            <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss}tss</div>
+          </div>` : ''}
+      </div>`;
+    });
+
+    html += `<div class="cal-week-total">
+      <span class="cal-week-tss">${week.tss}</span>
+      <span class="cal-week-label">TSS</span>
+      <span class="cal-week-dist">${(week.distance/1000).toFixed(0)}km</span>
+    </div></div>`;
+  });
+
+  wrap.innerHTML = html;
+}
+
+function renderHeatmap(cells) {
+  const inner = document.getElementById('heatmap-inner');
+  if (!inner) return;
+
+  // Build month labels
+  const months = [];
+  let lastMonth = -1;
+  cells.forEach((c, i) => {
+    const m = new Date(c.date).getMonth();
+    if (m !== lastMonth) { months.push({ label: new Date(c.date).toLocaleString('default',{month:'short'}), index: i }); lastMonth = m; }
+  });
+
+  // Calculate column widths for month labels
+  const colWidth = 16;
+  let monthHtml = `<div class="heatmap-months" style="padding-left:28px">`;
+  months.forEach((m, i) => {
+    const nextIdx = months[i+1]?.index || cells.length;
+    const cols = Math.ceil((nextIdx - m.index) / 7);
+    monthHtml += `<div class="heatmap-month-label" style="width:${cols * colWidth}px">${m.label}</div>`;
+  });
+  monthHtml += '</div>';
+
+  const gridHtml = `<div style="display:flex;gap:0">
+    <div class="heatmap-days-labels">
+      ${['','Mon','','Wed','','Fri',''].map(d => `<div class="heatmap-day-label">${d}</div>`).join('')}
+    </div>
+    <div class="heatmap-grid">${cells.map(c =>
+      `<div class="heatmap-cell" data-level="${c.level}" title="${c.date}"></div>`
+    ).join('')}</div>
+  </div>`;
+
+  inner.innerHTML = monthHtml + gridHtml;
+}
+</script>
 </body>
 </html>
