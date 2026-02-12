@@ -2,7 +2,7 @@ name: Daily Data Sync
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # Every day at 6:00 UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       days_back:
@@ -28,7 +28,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create .env file
+      - name: Collect data from APIs
+        run: |
+          $days = '${{ github.event.inputs.days_back }}'
+          python workflows/collect_data.py --days $days
+        shell: pwsh
+
+      - name: Sync to Google Drive
+        run: |
+          python workflows/sync_to_drive.py --all
         shell: pwsh
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
@@ -36,29 +44,10 @@ jobs:
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
           CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
           CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
-        run: |
-          @"
-INTERVALS_API_KEY=$env:INTERVALS_API_KEY
-CONCEPT2_USERNAME=$env:CONCEPT2_USERNAME
-CONCEPT2_PASSWORD=$env:CONCEPT2_PASSWORD
-GOOGLE_SERVICE_ACCOUNT_JSON=$env:GOOGLE_SERVICE_ACCOUNT_JSON
-GOOGLE_DRIVE_FOLDER_ID=$env:GOOGLE_DRIVE_FOLDER_ID
-"@ | Out-File -FilePath .env -Encoding UTF8
-
-      - name: Collect data from APIs
-        shell: pwsh
-        run: |
-          $days = '${{ github.event.inputs.days_back }}'
-          python workflows/collect_data.py --days $days
-
-      - name: Sync to Google Drive
-        shell: pwsh
-        run: |
-          python workflows/sync_to_drive.py --all
 
       - name: Summary
         if: success()
-        shell: pwsh
         run: |
           Write-Host "✅ Data sync completed successfully!"
           Write-Host "📊 Files synced to Google Drive"
+        shell: pwsh
