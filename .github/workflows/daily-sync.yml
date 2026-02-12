@@ -2,7 +2,7 @@ name: Daily Data Sync
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Runs daily at 6:00 UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       days_back:
@@ -13,58 +13,52 @@ on:
 jobs:
   sync-data:
     runs-on: windows-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
-      - name: Setup Google service account JSON
         shell: pwsh
+
+      - name: Setup Google Service Account JSON
+        run: |
+          Set-Content -Path config\google_credentials.json -Value $env:GOOGLE_SERVICE_ACCOUNT_JSON -Encoding UTF8
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        run: |
-          $GOOGLE_SERVICE_ACCOUNT_JSON | Out-File -FilePath config\google_credentials.json -Encoding UTF8
-      
-      - name: Create .env file
         shell: pwsh
+
+      - name: Create .env file
+        run: |
+          Set-Content -Path .env -Value "INTERVALS_API_KEY=$env:INTERVALS_API_KEY`nCONCEPT2_USERNAME=$env:CONCEPT2_USERNAME`nCONCEPT2_PASSWORD=$env:CONCEPT2_PASSWORD`nGOOGLE_DRIVE_FOLDER_ID=$env:GOOGLE_DRIVE_FOLDER_ID" -Encoding UTF8
         env:
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
           CONCEPT2_USERNAME: ${{ secrets.CONCEPT2_USERNAME }}
           CONCEPT2_PASSWORD: ${{ secrets.CONCEPT2_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        run: |
-          $envContent = @"
-INTERVALS_API_KEY=$env:INTERVALS_API_KEY
-CONCEPT2_USERNAME=$env:CONCEPT2_USERNAME
-CONCEPT2_PASSWORD=$env:CONCEPT2_PASSWORD
-GOOGLE_DRIVE_FOLDER_ID=$env:GOOGLE_DRIVE_FOLDER_ID
-"@
-          $envContent | Out-File -FilePath .env -Encoding UTF8
-      
-      - name: Collect data from APIs
         shell: pwsh
+
+      - name: Collect data from APIs
         run: |
           $DAYS = '${{ github.event.inputs.days_back }}'
           python workflows/collect_data.py --days $DAYS
-      
-      - name: Sync to Google Drive
         shell: pwsh
-        run: |
-          python workflows/sync_to_drive.py --all
-      
+
+      - name: Sync to Google Drive
+        run: python workflows/sync_to_drive.py --all
+        shell: pwsh
+
       - name: Summary
         if: success()
-        shell: pwsh
         run: |
           Write-Host "✅ Data sync completed successfully!"
           Write-Host "📊 Files synced to Google Drive"
+        shell: pwsh
