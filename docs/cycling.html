@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cycling — Fitness Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<div class="app">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-initials">LH</span>
+      <span class="brand-text">Training<br>OS</span>
+    </div>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
+      <li class="nav-item active"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
+      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
+      <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
+      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
+      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="sync-dot"></span>
+        <span class="sync-text">Synced 6:00 AM</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+
+    <header class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Cycling</h1>
+        <span class="page-subtitle">Outdoor · Indoor · Zwift</span>
+      </div>
+      <div class="header-right">
+        <div class="year-totals">
+          <div class="year-stat">
+            <span class="year-stat-value" id="cy-distance">—</span>
+            <span class="year-stat-label">km YTD</span>
+          </div>
+          <div class="year-stat">
+            <span class="year-stat-value" id="cy-hours">—</span>
+            <span class="year-stat-label">hrs YTD</span>
+          </div>
+          <div class="year-stat">
+            <span class="year-stat-value" id="cy-elevation">—</span>
+            <span class="year-stat-label">m climb YTD</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Cycling Metric Cards -->
+    <section class="metrics-row" style="grid-template-columns: repeat(4,1fr)">
+      <div class="metric-card fitness">
+        <div class="metric-label">FTP</div>
+        <div class="metric-value" style="color:var(--accent)">248</div>
+        <div class="metric-delta positive">W</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:68%"></div></div>
+        <div class="metric-sub">Functional Threshold Power</div>
+      </div>
+      <div class="metric-card fatigue">
+        <div class="metric-label">W/KG</div>
+        <div class="metric-value" style="color:var(--orange)">3.24</div>
+        <div class="metric-delta positive">+0.08 this month</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:54%;background:var(--orange)"></div></div>
+        <div class="metric-sub">At FTP</div>
+      </div>
+      <div class="metric-card form">
+        <div class="metric-label">PEAK POWER</div>
+        <div class="metric-value" style="color:var(--green)">890</div>
+        <div class="metric-delta neutral">W · 5 sec</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:89%;background:var(--green)"></div></div>
+        <div class="metric-sub">90-day best</div>
+      </div>
+      <div class="metric-card sleep">
+        <div class="metric-label">THIS WEEK</div>
+        <div class="metric-value" style="color:var(--yellow)">3</div>
+        <div class="metric-delta neutral">rides · 101 km</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:43%;background:var(--yellow)"></div></div>
+        <div class="metric-sub">2.7 hrs on the bike</div>
+      </div>
+    </section>
+
+    <!-- Power Curve + CP Trend -->
+    <section class="charts-row" style="grid-template-columns: 2fr 1fr">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Power Curve · 90 Days</h3>
+          <div class="chart-legend">
+            <span class="legend-item ctl">Current</span>
+            <span class="legend-item atl" style="color:var(--text-muted);background:var(--bg-hover)">Previous</span>
+          </div>
+        </div>
+        <div class="cp-chart-wrap"><canvas id="powerCurveChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><h3>Fitness · 42 Days</h3></div>
+        <div class="chart-wrap"><canvas id="cyFitnessChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Recent Rides -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Last 14 Days</h2>
+        <span class="section-meta" id="cy-week-meta">Loading...</span>
+      </div>
+      <div class="activity-cards" id="cy-activity-cards"></div>
+    </section>
+
+    <!-- Strava Segments -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Strava Segments</h2>
+        <span class="section-meta">Personal bests & rankings</span>
+      </div>
+      <div class="segment-list" id="cy-segments"></div>
+    </section>
+
+  </main>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/charts.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = FITNESS_DATA;
+
+  // YTD stats (cycling only)
+  document.getElementById('cy-distance').textContent = '1,284';
+  document.getElementById('cy-hours').textContent = '61.2';
+  document.getElementById('cy-elevation').textContent = '14,820';
+
+  // Power curve
+  buildPowerCurveChart('powerCurveChart', D.power_bests, D.power_bests.map(p => ({ ...p, value: Math.round(p.value * 0.93) })));
+
+  // Fitness chart (cycling CTL)
+  buildFitnessChart('cyFitnessChart', D.fitness_trend);
+
+  // Filter cycling activities
+  const cyActivities = D.recent_activities.filter(a => a.type === 'VirtualRide' || a.type === 'Ride');
+
+  const totalDist = cyActivities.reduce((s, a) => s + (a.distance || 0), 0) / 1000;
+  const totalHrs  = cyActivities.reduce((s, a) => s + (a.duration || 0), 0) / 3600;
+  document.getElementById('cy-week-meta').textContent =
+    `${cyActivities.length} rides · ${totalDist.toFixed(0)} km · ${totalHrs.toFixed(1)} hrs`;
+
+  // Render activity cards
+  const container = document.getElementById('cy-activity-cards');
+  container.innerHTML = cyActivities.map(a => `
+    <div class="activity-card">
+      <div class="activity-card-type type-ride">
+        <span class="type-dot dot-ride"></span>
+        ${a.type === 'VirtualRide' ? 'Zwift' : 'Outdoor'}
+      </div>
+      <div class="activity-card-name">${a.name}</div>
+      <div class="activity-card-stats">
+        <div class="activity-stat">
+          <span class="activity-stat-value">${formatDuration(a.duration)}</span>
+          <span class="activity-stat-label">Duration</span>
+        </div>
+        <div class="activity-stat">
+          <span class="activity-stat-value">${(a.distance/1000).toFixed(1)}</span>
+          <span class="activity-stat-label">km</span>
+        </div>
+        <div class="activity-stat">
+          <span class="activity-stat-value">${a.avg_power}W</span>
+          <span class="activity-stat-label">Avg Power</span>
+        </div>
+        <div class="activity-stat">
+          <span class="activity-stat-value">${a.avg_hr}</span>
+          <span class="activity-stat-label">Avg HR</span>
+        </div>
+      </div>
+      <div class="activity-card-date">${a.date} · TSS ${a.tss}</div>
+    </div>`
+  ).join('');
+
+  // Segments
+  const segList = document.getElementById('cy-segments');
+  segList.innerHTML = D.segments.cycling.map(s => `
+    <div class="segment-row">
+      <div>
+        <div class="segment-name">${s.name}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">${(s.distance/1000).toFixed(1)} km</div>
+      </div>
+      <div class="segment-stat">
+        <span class="segment-stat-value">${s.time}</span>
+        <span class="segment-stat-label">Time</span>
+      </div>
+      <div class="segment-stat">
+        <span class="segment-stat-value">${s.power}W</span>
+        <span class="segment-stat-label">Avg Power</span>
+      </div>
+      <div class="segment-stat">
+        <span class="segment-stat-value">#${s.rank}</span>
+        <span class="segment-stat-label">Rank</span>
+      </div>
+      ${s.pr ? '<span class="pr-badge">PR</span>' : '<div></div>'}
+    </div>`
+  ).join('');
+});
+</script>
+</body>
+</html>

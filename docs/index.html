@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lee Hopkins — Fitness Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar Nav -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-initials">LH</span>
+      <span class="brand-text">Training<br>OS</span>
+    </div>
+    <ul class="nav-links">
+      <li class="nav-item active"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
+      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
+      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
+      <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
+      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
+      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="sync-dot"></span>
+        <span class="sync-text">Synced 6:00 AM</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <header class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Overview</h1>
+        <span class="page-subtitle">2026 · Week 7</span>
+      </div>
+      <div class="header-right">
+        <div class="year-totals">
+          <div class="year-stat">
+            <span class="year-stat-value" id="ytd-distance">—</span>
+            <span class="year-stat-label">km YTD</span>
+          </div>
+          <div class="year-stat">
+            <span class="year-stat-value" id="ytd-hours">—</span>
+            <span class="year-stat-label">hrs YTD</span>
+          </div>
+          <div class="year-stat">
+            <span class="year-stat-value" id="ytd-tss">—</span>
+            <span class="year-stat-label">TSS YTD</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Fitness Metrics Row -->
+    <section class="metrics-row">
+      <div class="metric-card fitness">
+        <div class="metric-label">FITNESS</div>
+        <div class="metric-value" id="ctl-value">48.5</div>
+        <div class="metric-delta positive" id="ctl-delta">+1.2</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width: 48.5%"></div></div>
+        <div class="metric-sub">CTL · Chronic Training Load</div>
+      </div>
+      <div class="metric-card fatigue">
+        <div class="metric-label">FATIGUE</div>
+        <div class="metric-value" id="atl-value">45.5</div>
+        <div class="metric-delta negative" id="atl-delta">+3.1</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width: 45.5%"></div></div>
+        <div class="metric-sub">ATL · Acute Training Load</div>
+      </div>
+      <div class="metric-card form">
+        <div class="metric-label">FORM</div>
+        <div class="metric-value" id="tsb-value">+3.0</div>
+        <div class="metric-delta positive" id="tsb-delta">fresh</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width: 53%"></div></div>
+        <div class="metric-sub">TSB · Training Stress Balance</div>
+      </div>
+      <div class="metric-card hrv">
+        <div class="metric-label">HRV</div>
+        <div class="metric-value" id="hrv-value">47</div>
+        <div class="metric-delta positive" id="hrv-delta">+2</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width: 62%"></div></div>
+        <div class="metric-sub">ms · Last reading</div>
+      </div>
+      <div class="metric-card sleep">
+        <div class="metric-label">SLEEP</div>
+        <div class="metric-value" id="sleep-value">6.8</div>
+        <div class="metric-delta neutral" id="sleep-delta">hrs</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width: 72%"></div></div>
+        <div class="metric-sub">Resting HR: <span id="rhr-value">52</span> bpm</div>
+      </div>
+    </section>
+
+    <!-- 42-day Trends + Heatmap Row -->
+    <section class="charts-row">
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h3>42-Day Trends</h3>
+          <div class="chart-legend">
+            <span class="legend-item ctl">CTL</span>
+            <span class="legend-item atl">ATL</span>
+            <span class="legend-item tsb">TSB</span>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="fitnessChart"></canvas></div>
+      </div>
+      <div class="chart-card narrow">
+        <div class="chart-header">
+          <h3>Weekly TSS</h3>
+          <div class="chart-legend">
+            <span class="legend-item ride">Ride</span>
+            <span class="legend-item run">Run</span>
+            <span class="legend-item row">Row</span>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="tssChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Recent Activities -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Last 7 Days</h2>
+        <span class="section-meta" id="week-summary">7 activities · 101 km · 3.7 hrs</span>
+      </div>
+      <div class="activity-cards" id="activity-cards">
+        <!-- Injected by JS -->
+      </div>
+    </section>
+
+    <!-- Health Trends -->
+    <section class="charts-row">
+      <div class="chart-card half">
+        <div class="chart-header">
+          <h3>HRV · 42 Days</h3>
+        </div>
+        <div class="chart-wrap"><canvas id="hrvChart"></canvas></div>
+      </div>
+      <div class="chart-card half">
+        <div class="chart-header">
+          <h3>Sleep · 42 Days</h3>
+        </div>
+        <div class="chart-wrap"><canvas id="sleepChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- 4-Week Calendar -->
+    <section class="section">
+      <div class="section-header">
+        <h2>4-Week Calendar</h2>
+      </div>
+      <div class="calendar-grid" id="calendar-grid">
+        <!-- Injected by JS -->
+      </div>
+    </section>
+
+    <!-- Activity Heatmap -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Activity Heatmap · 2026</h2>
+        <span class="section-meta">intensity by TSS</span>
+      </div>
+      <div class="heatmap-wrap">
+        <div class="heatmap-months" id="heatmap-months"></div>
+        <div class="heatmap-grid" id="heatmap-grid"></div>
+      </div>
+    </section>
+
+    <!-- 90-Day Power Bests -->
+    <section class="section">
+      <div class="section-header">
+        <h2>90-Day Bests</h2>
+        <div class="tab-group">
+          <button class="tab active" data-tab="cycling-bests">Cycling Power</button>
+          <button class="tab" data-tab="running-bests">Running Pace</button>
+        </div>
+      </div>
+
+      <div class="bests-container" id="cycling-bests">
+        <div class="bests-chart-wrap">
+          <canvas id="powerBestsChart"></canvas>
+        </div>
+        <div class="bests-table">
+          <div class="bests-grid" id="power-bests-grid">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="bests-container hidden" id="running-bests">
+        <div class="bests-chart-wrap">
+          <canvas id="paceBestsChart"></canvas>
+        </div>
+        <div class="bests-table">
+          <div class="bests-grid" id="pace-bests-grid">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/charts.js"></script>
+<script src="assets/js/overview.js"></script>
+</body>
+</html>

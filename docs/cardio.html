@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cardio — Fitness Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-brand"><span class="brand-initials">LH</span><span class="brand-text">Training<br>OS</span></div>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
+      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
+      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
+      <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
+      <li class="nav-item active"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
+      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
+    </ul>
+    <div class="sidebar-footer"><div class="sync-status"><span class="sync-dot"></span><span class="sync-text">Synced 6:00 AM</span></div></div>
+  </nav>
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left"><h1 class="page-title">Cardio & Workouts</h1><span class="page-subtitle">Strength · HIIT · Cross Training</span></div>
+    </header>
+    <section class="section">
+      <div class="section-header"><h2>Recent Sessions</h2></div>
+      <div class="activity-cards">
+        <div class="activity-card">
+          <div class="activity-card-type type-workout"><span class="type-dot dot-workout"></span>Workout</div>
+          <div class="activity-card-name">Strength & Conditioning</div>
+          <div class="activity-card-stats">
+            <div class="activity-stat"><span class="activity-stat-value">60:00</span><span class="activity-stat-label">Duration</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">132</span><span class="activity-stat-label">Avg HR</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">35</span><span class="activity-stat-label">TSS</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">480</span><span class="activity-stat-label">kcal</span></div>
+          </div>
+          <div class="activity-card-date">2026-02-04</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="assets/js/data.js"></script>
+</body>
+</html>

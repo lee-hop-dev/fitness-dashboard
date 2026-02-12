@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rowing — Fitness Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-initials">LH</span>
+      <span class="brand-text">Training<br>OS</span>
+    </div>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
+      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
+      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
+      <li class="nav-item active"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
+      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
+      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="sync-status"><span class="sync-dot"></span><span class="sync-text">Synced 6:00 AM</span></div>
+    </div>
+  </nav>
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Rowing</h1>
+        <span class="page-subtitle">Concept2 · Erg Data</span>
+      </div>
+    </header>
+    <section class="metrics-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="metric-card fitness">
+        <div class="metric-label">2K BEST</div>
+        <div class="metric-value" style="color:var(--accent)">7:24</div>
+        <div class="metric-delta neutral">1:51/500m</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:78%"></div></div>
+        <div class="metric-sub">All-time best</div>
+      </div>
+      <div class="metric-card hrv">
+        <div class="metric-label">5K BEST</div>
+        <div class="metric-value" style="color:var(--purple)">19:45</div>
+        <div class="metric-delta neutral">1:58/500m</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:65%;background:var(--purple)"></div></div>
+        <div class="metric-sub">All-time best</div>
+      </div>
+      <div class="metric-card form">
+        <div class="metric-label">60 MIN BEST</div>
+        <div class="metric-value" style="color:var(--green)">14.8</div>
+        <div class="metric-delta neutral">km · 2:01/500m</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:55%;background:var(--green)"></div></div>
+        <div class="metric-sub">All-time best</div>
+      </div>
+      <div class="metric-card sleep">
+        <div class="metric-label">THIS WEEK</div>
+        <div class="metric-value" style="color:var(--yellow)">1</div>
+        <div class="metric-delta neutral">session · 8 km</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:28%;background:var(--yellow)"></div></div>
+        <div class="metric-sub">40 min · TSS 42</div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <h2>Recent Rowing Sessions</h2>
+        <span class="section-meta">Last 30 days</span>
+      </div>
+      <div class="activity-cards" id="row-cards">
+        <div class="activity-card">
+          <div class="activity-card-type type-row"><span class="type-dot dot-row"></span>Rowing</div>
+          <div class="activity-card-name">Steady State Erg · 8km</div>
+          <div class="activity-card-stats">
+            <div class="activity-stat"><span class="activity-stat-value">40:00</span><span class="activity-stat-label">Duration</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">8.0</span><span class="activity-stat-label">km</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">2:30</span><span class="activity-stat-label">/500m</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">148</span><span class="activity-stat-label">Avg HR</span></div>
+          </div>
+          <div class="activity-card-date">2026-02-06 · 22 s/m</div>
+        </div>
+        <div class="activity-card">
+          <div class="activity-card-type type-row"><span class="type-dot dot-row"></span>Rowing</div>
+          <div class="activity-card-name">5 × 4min Intervals</div>
+          <div class="activity-card-stats">
+            <div class="activity-stat"><span class="activity-stat-value">35:00</span><span class="activity-stat-label">Duration</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">7.2</span><span class="activity-stat-label">km</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">2:26</span><span class="activity-stat-label">/500m</span></div>
+            <div class="activity-stat"><span class="activity-stat-value">162</span><span class="activity-stat-label">Avg HR</span></div>
+          </div>
+          <div class="activity-card-date">2026-01-28 · 24 s/m</div>
+        </div>
+      </div>
+    </section>
+    <section class="charts-row" style="grid-template-columns:1fr 1fr">
+      <div class="chart-card">
+        <div class="chart-header"><h3>Pace Trend · 30 Days</h3></div>
+        <div class="chart-wrap"><canvas id="rowPaceChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><h3>Volume · Weekly</h3></div>
+        <div class="chart-wrap"><canvas id="rowVolumeChart"></canvas></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/charts.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  buildWellnessChart('rowPaceChart',
+    ['W1','W2','W3','W4','W5','W6'],
+    [152, 148, 155, 146, 150, 148],
+    '#a855f7', 'Pace');
+  buildWellnessChart('rowVolumeChart',
+    ['W1','W2','W3','W4','W5','W6'],
+    [12, 8, 15, 10, 8, 8],
+    '#00e5ff', 'km');
+});
+</script>
+</body>
+</html>
