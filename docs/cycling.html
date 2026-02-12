@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- v4 fixed -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -128,11 +129,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const rawActivities = await API.getActivities(CONFIG.history_start);
-    const activities = API.processActivities(rawActivities);
-    const rawWellness = await API.getWellness(CONFIG.history_start);
-    const wellness = API.processWellness(rawWellness);
-    const latest = API.latestWellness(wellness);
+    const { activities, wellness, meta } = await DATA.loadAll();
+    const latest = DATA.latestWellness(wellness);
     const weight = latest.weight;
 
     const today = new Date().toISOString().split('T')[0];
