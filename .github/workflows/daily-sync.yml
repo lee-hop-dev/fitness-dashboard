@@ -42,7 +42,7 @@ jobs:
         shell: pwsh
         run: |
           $days = '${{ github.event.inputs.days_back }}'
-          python workflows/collect_data.py --days $days
+          python workflows/collect_data.py --oldest 2025-01-01
 
       - name: Sync to Google Drive
         shell: pwsh
