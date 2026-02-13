@@ -102,7 +102,7 @@ def process_activities(raw):
             'tss':         round(a.get('icu_training_load') or 0),
             'if_val':      round(a.get('icu_intensity') or 0, 2) or None,
             'w_prime':     a.get('icu_w_prime'),
-            'weight':      a.get('icu_weight')
+            'weight':      a.get('icu_weight'),
             'device':      a.get('device_name') or '',
             'is_garmin':   'garmin' in (a.get('device_name') or '').lower()
         })
