@@ -112,15 +112,72 @@
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  buildWellnessChart('rowPaceChart',
-    ['W1','W2','W3','W4','W5','W6'],
-    [152, 148, 155, 146, 150, 148],
-    '#a855f7', 'Pace');
-  buildWellnessChart('rowVolumeChart',
-    ['W1','W2','W3','W4','W5','W6'],
-    [12, 8, 15, 10, 8, 8],
-    '#00e5ff', 'km');
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { activities, weeklyTSS } = await DATA.loadAll();
+
+    const rows = activities.filter(a => a.type === 'Rowing' || a.type === 'Kayaking');
+    const weekCutoff = new Date(Date.now() - 7*864e5).toISOString().split('T')[0];
+    const weekRows = rows.filter(a => a.date >= weekCutoff);
+    const recent30 = rows.filter(a => {
+      const cutoff = new Date(Date.now() - 30*864e5).toISOString().split('T')[0];
+      return a.date >= cutoff;
+    });
+
+    // Update this week card
+    const weekDist = weekRows.reduce((s,a) => s+(a.distance||0),0)/1000;
+    const weekHrs  = weekRows.reduce((s,a) => s+(a.duration||0),0)/3600;
+    const weekTSS  = weekRows.reduce((s,a) => s+(a.tss||0),0);
+    const weekEl    = document.querySelector('.metric-card.sleep .metric-value');
+    const weekDelta = document.querySelector('.metric-card.sleep .metric-delta');
+    const weekSub   = document.querySelector('.metric-card.sleep .metric-sub');
+    if (weekEl)    weekEl.textContent    = weekRows.length;
+    if (weekDelta) weekDelta.textContent = `session${weekRows.length!==1?'s':''} · ${weekDist.toFixed(0)} km`;
+    if (weekSub)   weekSub.textContent   = `${weekHrs.toFixed(0)} min · TSS ${weekTSS}`;
+
+    // Activity cards
+    const container = document.getElementById('row-cards');
+    if (container) {
+      container.innerHTML = recent30.length ? recent30.map(a => {
+        // Convert avg_speed (m/s) to 500m split pace
+        const split500 = a.avg_speed ? Math.round(500/a.avg_speed) : null;
+        const splitStr = split500 ? Math.floor(split500/60)+':'+String(split500%60).padStart(2,'0') : '—';
+        return '<div class="activity-card">' +
+          '<div class="activity-card-type type-row"><span class="type-dot dot-row"></span>Rowing</div>' +
+          '<div class="activity-card-name">'+a.name+'</div>' +
+          '<div class="activity-card-stats">' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+formatDuration(a.duration)+'</span><span class="activity-stat-label">Duration</span></div>' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+(a.distance?(a.distance/1000).toFixed(1):'—')+'</span><span class="activity-stat-label">km</span></div>' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+splitStr+'</span><span class="activity-stat-label">/500m</span></div>' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+(a.avg_hr||'—')+'</span><span class="activity-stat-label">Avg HR</span></div>' +
+          '</div>' +
+          '<div class="activity-card-footer"><span>'+a.date+'</span><span class="tss-val">TSS '+a.tss+'</span></div>' +
+          '</div>';
+      }).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px">No rowing sessions in last 30 days</div>';
+    }
+
+    // Pace trend chart (500m split per session)
+    const trendRows = rows.slice(0,20).reverse();
+    if (trendRows.length >= 2) {
+      const dates  = trendRows.map(a => a.date);
+      const splits = trendRows.map(a => a.avg_speed ? Math.round(500/a.avg_speed) : null);
+      buildPaceTrendChart('rowPaceChart', dates, splits);
+    }
+
+    // Volume chart (weekly km)
+    const rowWeekly = weeklyTSS.slice(-12).map(w => ({
+      week: w.week,
+      year: w.year,
+      ride: 0, run: 0, row: w.row, other: 0
+    }));
+    if (rowWeekly.some(w => w.row > 0)) buildTSSChart('rowVolumeChart', rowWeekly);
+
+    document.getElementById('loading-state')?.classList.add('hidden');
+    document.getElementById('dashboard-content')?.classList.remove('hidden');
+
+  } catch(err) {
+    console.error('Rowing page error:', err);
+  }
 });
 </script>
 </body>

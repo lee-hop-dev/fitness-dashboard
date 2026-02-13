@@ -134,83 +134,117 @@
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const D = FITNESS_DATA;
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { activities, wellness, weeklyTSS, ytd, meta } = await DATA.loadAll();
 
-  document.getElementById('ru-distance').textContent = '286';
-  document.getElementById('ru-runs').textContent = '28';
-  document.getElementById('ru-elevation').textContent = '2,140';
+    const year = new Date().getFullYear().toString();
+    const runs = activities.filter(a => a.type === 'Run' || a.type === 'VirtualRun');
+    const ytdRuns = runs.filter(a => a.date.startsWith(year));
+    const recent = runs.filter(a => {
+      const cutoff = new Date(Date.now() - 14 * 864e5).toISOString().split('T')[0];
+      return a.date >= cutoff;
+    });
 
-  // Pace curve
-  buildPaceBestsChart('paceCurveChart', D.pace_bests);
+    // YTD stats
+    const ytdDist = ytdRuns.reduce((s,a) => s+(a.distance||0),0)/1000;
+    const ytdElev = ytdRuns.reduce((s,a) => s+(a.elevation||0),0);
+    document.getElementById('ru-distance').textContent  = ytdDist.toFixed(0);
+    document.getElementById('ru-runs').textContent      = ytdRuns.length;
+    document.getElementById('ru-elevation').textContent = Math.round(ytdElev).toLocaleString();
 
-  // Pace trend (mock 42-day average pace)
-  const paceDates = D.wellness_trend.dates;
-  const paceValues = [285, 292, 278, 310, 275, 268, 282, 271, 265, 270];
-  buildWellnessChart('paceTrendChart', paceDates, paceValues, '#00ff87', 'Avg Pace');
+    // This week
+    const weekCutoff = new Date(Date.now() - 7*864e5).toISOString().split('T')[0];
+    const weekRuns = runs.filter(a => a.date >= weekCutoff);
+    const weekDist = weekRuns.reduce((s,a) => s+(a.distance||0),0)/1000;
+    const weekHrs  = weekRuns.reduce((s,a) => s+(a.duration||0),0)/3600;
+    const weekEl = document.querySelector('.metric-card.sleep .metric-value');
+    const weekDelta = document.querySelector('.metric-card.sleep .metric-delta');
+    const weekSub = document.querySelector('.metric-card.sleep .metric-sub');
+    if (weekEl) weekEl.textContent = weekRuns.length;
+    if (weekDelta) weekDelta.textContent = `runs · ${weekDist.toFixed(1)} km`;
+    if (weekSub) weekSub.textContent = `${weekHrs.toFixed(1)} hrs running`;
 
-  // Filter running activities
-  const ruActivities = D.recent_activities.filter(a => a.type === 'VirtualRun' || a.type === 'Run');
+    // 5K and 10K bests from last 90 days
+    const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
+    const recent90 = runs.filter(a => a.date >= d90);
+    const best5k = best90(recent90, 5000);
+    const best10k = best90(recent90, 10000);
+    if (best5k) {
+      document.querySelector('.metric-card.form .metric-value').textContent = fmtTime(best5k);
+      document.querySelector('.metric-card.form .metric-delta').textContent = fmtPaceKm(best5k, 5);
+    }
+    if (best10k) {
+      document.querySelector('.metric-card.fitness .metric-value').textContent = fmtTime(best10k);
+      document.querySelector('.metric-card.fitness .metric-delta').textContent = fmtPaceKm(best10k, 10);
+    }
 
-  const totalDist = ruActivities.reduce((s, a) => s + (a.distance || 0), 0) / 1000;
-  const totalHrs  = ruActivities.reduce((s, a) => s + (a.duration || 0), 0) / 3600;
-  document.getElementById('ru-week-meta').textContent =
-    `${ruActivities.length} runs · ${totalDist.toFixed(1)} km · ${totalHrs.toFixed(1)} hrs`;
+    // Pace curve (90d bests)
+    const paceBests = DATA.paceBests(runs);
+    if (paceBests.length) buildPaceBestsChart('paceCurveChart', paceBests);
 
-  const container = document.getElementById('ru-activity-cards');
-  container.innerHTML = ruActivities.map(a => `
-    <div class="activity-card">
-      <div class="activity-card-type type-run">
-        <span class="type-dot dot-run"></span>
-        Running
-      </div>
-      <div class="activity-card-name">${a.name}</div>
-      <div class="activity-card-stats">
-        <div class="activity-stat">
-          <span class="activity-stat-value">${formatDuration(a.duration)}</span>
-          <span class="activity-stat-label">Duration</span>
-        </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${(a.distance/1000).toFixed(1)}</span>
-          <span class="activity-stat-label">km</span>
-        </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${formatPace(a.avg_pace)}</span>
-          <span class="activity-stat-label">Pace/km</span>
-        </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${a.avg_hr}</span>
-          <span class="activity-stat-label">Avg HR</span>
-        </div>
-      </div>
-      <div class="activity-card-date">${a.date} · TSS ${a.tss}</div>
-    </div>`
-  ).join('');
+    // Pace trend (rolling avg from actual runs)
+    const trendRuns = runs.slice(0, 30).reverse();
+    if (trendRuns.length) {
+      const dates = trendRuns.map(a => a.date);
+      const paces = trendRuns.map(a => a.avg_speed ? Math.round(1000/a.avg_speed) : null);
+      buildPaceTrendChart('paceTrendChart', dates, paces);
+    }
 
-  // Segments
-  const segList = document.getElementById('ru-segments');
-  segList.innerHTML = D.segments.running.map(s => `
-    <div class="segment-row">
-      <div>
-        <div class="segment-name">${s.name}</div>
-        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">${(s.distance/1000).toFixed(1)} km</div>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">${s.time}</span>
-        <span class="segment-stat-label">Time</span>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">${s.pace}</span>
-        <span class="segment-stat-label">Avg Pace</span>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">#${s.rank}</span>
-        <span class="segment-stat-label">Rank</span>
-      </div>
-      ${s.pr ? '<span class="pr-badge">PR</span>' : '<div></div>'}
-    </div>`
-  ).join('');
+    // Activity cards
+    const meta2 = document.getElementById('ru-week-meta');
+    if (meta2) meta2.textContent = recent.length + ' runs · ' + recent.reduce((s,a)=>s+(a.distance||0),0)/1000 + ' km';
+    const container = document.getElementById('ru-activity-cards');
+    if (container) {
+      container.innerHTML = recent.length ? recent.map(a => {
+        const paceSecKm = a.avg_speed ? Math.round(1000/a.avg_speed) : null;
+        return '<div class="activity-card">' +
+          '<div class="activity-card-type type-run"><span class="type-dot dot-run"></span>Running</div>' +
+          '<div class="activity-card-name">'+a.name+'</div>' +
+          '<div class="activity-card-stats">' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+formatDuration(a.duration)+'</span><span class="activity-stat-label">Duration</span></div>' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+(a.distance?(a.distance/1000).toFixed(1):'—')+'</span><span class="activity-stat-label">km</span></div>' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+(paceSecKm?formatPace(paceSecKm):'—')+'</span><span class="activity-stat-label">Pace/km</span></div>' +
+            '<div class="activity-stat"><span class="activity-stat-value">'+(a.avg_hr||'—')+'</span><span class="activity-stat-label">Avg HR</span></div>' +
+          '</div>' +
+          '<div class="activity-card-footer"><span>'+a.date+'</span><span class="tss-val">TSS '+a.tss+(a.if_val?' · IF '+a.if_val.toFixed(2):'')+'</span></div>' +
+          '</div>';
+      }).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px">No runs in last 14 days</div>';
+    }
+
+    document.getElementById('loading-state')?.classList.add('hidden');
+    document.getElementById('dashboard-content')?.classList.remove('hidden');
+
+  } catch(err) {
+    document.getElementById('loading-state')?.classList.add('hidden');
+    document.getElementById('error-state')?.classList.remove('hidden');
+    document.getElementById('error-msg') && (document.getElementById('error-msg').textContent = err.message);
+    console.error('Running page error:', err);
+  }
 });
+
+function best90(runs, distTarget) {
+  // Find best time for activities close to target distance
+  const margin = distTarget * 0.15;
+  const candidates = runs.filter(a => a.distance && Math.abs(a.distance - distTarget) < margin);
+  if (!candidates.length) return null;
+  // Estimate time based on pace
+  return candidates.reduce((best, a) => {
+    if (!a.avg_speed) return best;
+    const t = distTarget / a.avg_speed;
+    return (!best || t < best) ? t : best;
+  }, null);
+}
+
+function fmtTime(secs) {
+  const m = Math.floor(secs/60), s = Math.round(secs%60);
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+function fmtPaceKm(totalSecs, km) {
+  const secPer = totalSecs / km;
+  return Math.floor(secPer/60) + ':' + String(Math.floor(secPer%60)).padStart(2,'0') + '/km';
+}
 </script>
 </body>
 </html>
