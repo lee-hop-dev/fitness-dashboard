@@ -268,6 +268,15 @@ function buildHRVSleepChart(canvasId, wellnessTrend, days = 42) {
 }
 
 // ============================================
+// SAFE WRAPPER FOR DASHBOARD
+// ============================================
+function setupHRVSleepToggle(canvasId, wellnessTrend) {
+    // Minimal safe fix: call the chart builder
+    buildHRVSleepChart(canvasId, wellnessTrend, 42);
+}
+
+
+// ============================================
 // POWER BESTS CHART
 // ============================================
 function buildPowerBestsChart(canvasId, data) {
