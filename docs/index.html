@@ -109,21 +109,14 @@
           <div class="metric-bar"><div class="metric-bar-fill" id="hrv-bar" style="width:0%"></div></div>
           <div class="metric-sub">Resting HR: <span id="rhr-value">—</span> bpm</div>
         </div>
-                        <div class="metric-card sleep-card">
-                        <div class="metric-label">Sleep</div>
-                        <div class="metric-value metric-yellow" id="sleep-value">—</div>
-                        <div class="metric-delta neutral">hrs last night</div>
-                        <div class="metric-bar"><div class="metric-bar-fill" id="sleep-bar" style="width:0%"></div></div>
-                       <div class="metric-sub">Weight: <span id="weight-value">—</span> kg</div>
-                   </div>
-                      <div class="metric-card fitness">
-                      <div class="metric-label">W'bal</div>
-                      <div class="metric-value metric-accent" id="wbal-value">—</div>
-                      <div class="metric-delta neutral">kJ anaerobic reserve</div>
-                      <div class="metric-bar"><div class="metric-bar-fill" id="wbal-bar" style="width:0%"></div></div>
-                      <div class="metric-sub">FTP: <span id="ftp-value">—</span> W</div>
-                       </div>
-                    </section>
+        <div class="metric-card sleep-card">
+          <div class="metric-label">Sleep</div>
+          <div class="metric-value metric-yellow" id="sleep-value">—</div>
+          <div class="metric-delta neutral">hrs last night</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="sleep-bar" style="width:0%"></div></div>
+          <div class="metric-sub">Weight: <span id="weight-value">—</span> kg</div>
+        </div>
+      </section>
 
       <section class="charts-row two-one">
         <div class="chart-card">
@@ -265,11 +258,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
     const weight = athlete?.weight ?? lw.weight;
     document.getElementById('weight-value').textContent = weight ? weight.toFixed(1) : '—';
-           if (athlete?.w_prime) {
-    document.getElementById('wbal-value').textContent = Math.round(athlete.w_prime / 1000);
-          document.getElementById('wbal-bar').style.width = Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
-}
-if (athlete?.ftp) document.getElementById('ftp-value').textContent = athlete.ftp;
+    if (athlete?.w_prime) {
+      document.getElementById('wbal-value').textContent = Math.round(athlete.w_prime / 1000);
+      document.getElementById('wbal-bar').style.width = Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
+    }
+    if (athlete?.ftp) document.getElementById('ftp-value').textContent = athlete.ftp;
 
     const setBar = (id, val, max) => { const el = document.getElementById(id); if (el && val) el.style.width = Math.min(100, (val/max)*100) + '%'; };
     setBar('ctl-bar', lw.ctl, 120);
