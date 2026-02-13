@@ -1,0 +1,269 @@
+[1mdiff --git a/docs/assets/js/api.js b/docs/assets/js/api.js[m
+[1mdeleted file mode 100644[m
+[1mindex b738b49..0000000[m
+[1m--- a/docs/assets/js/api.js[m
+[1m+++ /dev/null[m
+[36m@@ -1,237 +0,0 @@[m
+[31m-/* ============================================[m
+[31m-   FITNESS DASHBOARD — API LAYER[m
+[31m-   Direct Intervals.icu fetch with caching[m
+[31m-   ============================================ */[m
+[31m-[m
+[31m-const API = {[m
+[31m-  CACHE_TTL: 60 * 60 * 1000, // 1 hour[m
+[31m-[m
+[31m-  _cacheKey(key) { return `fd_${key}`; },[m
+[31m-[m
+[31m-  _cacheGet(key) {[m
+[31m-    try {[m
+[31m-      const raw = sessionStorage.getItem(this._cacheKey(key));[m
+[31m-      if (!raw) return null;[m
+[31m-      const { ts, data } = JSON.parse(raw);[m
+[31m-      if (Date.now() - ts > this.CACHE_TTL) return null;[m
+[31m-      return data;[m
+[31m-    } catch { return null; }[m
+[31m-  },[m
+[31m-[m
+[31m-  _cacheSet(key, data) {[m
+[31m-    try {[m
+[31m-      sessionStorage.setItem(this._cacheKey(key), JSON.stringify({ ts: Date.now(), data }));[m
+[31m-    } catch {}[m
+[31m-  },[m
+[31m-[m
+[31m-  async _fetch(endpoint, params = {}) {[m
+[31m-    const url = new URL(`${CONFIG.base_url}/${endpoint}`);[m
+[31m-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));[m
+[31m-[m
+[31m-    const res = await fetch(url.toString(), { headers: CONFIG.headers });[m
+[31m-    if (!res.ok) throw new Error(`API error ${res.status}: ${endpoint}`);[m
+[31m-    return res.json();[m
+[31m-  },[m
+[31m-[m
+[31m-  async getAthlete() {[m
+[31m-    const cached = this._cacheGet('athlete');[m
+[31m-    if (cached) return cached;[m
+[31m-    const data = await this._fetch(`athlete/${CONFIG.athlete_id}`);[m
+[31m-    this._cacheSet('athlete', data);[m
+[31m-    return data;[m
+[31m-  },[m
+[31m-[m
+[31m-  async getActivities(oldest = CONFIG.history_start) {[m
+[31m-    const cacheKey = `activities_${oldest}`;[m
+[31m-    const cached = this._cacheGet(cacheKey);[m
+[31m-    if (cached) return cached;[m
+[31m-[m
+[31m-    const data = await this._fetch(`athlete/${CONFIG.athlete_id}/activities`, { oldest });[m
+[31m-[m
+[31m-    // Deduplicate by id[m
+[31m-    const seen = new Set();[m
+[31m-    const deduped = data.filter(a => {[m
+[31m-      if (seen.has(a.id)) return false;[m
+[31m-      seen.add(a.id);[m
+[31m-      return true;[m
+[31m-    });[m
+[31m-[m
+[31m-    this._cacheSet(cacheKey, deduped);[m
+[31m-    return deduped;[m
+[31m-  },[m
+[31m-[m
+[31m-  async getWellness(oldest = CONFIG.history_start) {[m
+[31m-    const cacheKey = `wellness_${oldest}`;[m
+[31m-    const cached = this._cacheGet(cacheKey);[m
+[31m-    if (cached) return cached;[m
+[31m-[m
+[31m-    const data = await this._fetch(`athlete/${CONFIG.athlete_id}/wellness`, {[m
+[31m-      oldest,[m
+[31m-      newest: new Date().toISOString().split('T')[0][m
+[31m-    });[m
+[31m-[m
+[31m-    this._cacheSet(cacheKey, data);[m
+[31m-    return data;[m
+[31m-  },[m
+[31m-[m
+[31m-  async getFitnessTrend(oldest = CONFIG.history_start) {[m
+[31m-    // Fitness trend comes from wellness data (contains ctl/atl/tsb)[m
+[31m-    return this.getWellness(oldest);[m
+[31m-  },[m
+[31m-[m
+[31m-  async getPowerCurve() {[m
+[31m-    const cached = this._cacheGet('power_curve');[m
+[31m-    if (cached) return cached;[m
+[31m-[m
+[31m-    // Fetch 90-day power curve[m
+[31m-    const end = new Date().toISOString().split('T')[0];[m
+[31m-    const start = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];[m
+[31m-[m
+[31m-    const data = await this._fetch(`athlete/${CONFIG.athlete_id}/power-curves`, {[m
+[31m-      start, end,[m
+[31m-      curves: 'best'[m
+[31m-    });[m
+[31m-[m
+[31m-    this._cacheSet('power_curve', data);[m
+[31m-    return data;[m
+[31m-  },[m
+[31m-[m
+[31m-  async getWeightHistory(oldest = CONFIG.history_start) {[m
+[31m-    const wellness = await this.getWellness(oldest);[m
+[31m-    return wellness[m
+[31m-      .filter(w => w.weight != null)[m
+[31m-      .map(w => ({ date: w.id, weight: w.weight }));[m
+[31m-  },[m
+[31m-[m
+[31m-  // Force refresh — clears session cache[m
+[31m-  clearCache() {[m
+[31m-    Object.keys(sessionStorage)[m
+[31m-      .filter(k => k.startsWith('fd_'))[m
+[31m-      .forEach(k => sessionStorage.removeItem(k));[m
+[31m-  },[m
+[31m-[m
+[31m-  // ============================================[m
+[31m-  // DATA PROCESSORS[m
+[31m-  // ============================================[m
+[31m-[m
+[31m-  processActivities(raw) {[m
+[31m-    return raw.map(a => ({[m
+[31m-      id:          String(a.id),[m
+[31m-      name:        a.name || 'Activity',[m
+[31m-      type:        a.type || 'Unknown',[m
+[31m-      date:        (a.start_date_local || '').slice(0, 10),[m
+[31m-      duration:    a.moving_time || 0,[m
+[31m-      distance:    a.distance || 0,[m
+[31m-      elevation:   a.total_elevation_gain || 0,[m
+[31m-      avg_power:   a.average_watts || null,[m
+[31m-      norm_power:  a.weighted_average_watts || null,[m
+[31m-      avg_hr:      a.average_hr || null,[m
+[31m-      max_hr:      a.max_hr || null,[m
+[31m-      avg_pace:    a.average_speed ? Math.round(1000 / a.average_speed) : null,[m
+[31m-      avg_cadence: a.average_cadence || null,[m
+[31m-      calories:    a.calories || null,[m
+[31m-      tss:         Math.round(a.icu_training_load || 0),[m
+[31m-      if_val:      a.icu_intensity ? Math.round(a.icu_intensity * 100) / 100 : null,[m
+[31m-      device:      a.device_name || '',[m
+[31m-      is_garmin:   (a.device_name || '').toLowerCase().includes('garmin')[m
+[31m-    }));[m
+[31m-  },[m
+[31m-[m
+[31m-  processWellness(raw) {[m
+[31m-    return raw.map(w => ({[m
+[31m-      date:       w.id,[m
+[31m-      ctl:        w.ctl,[m
+[31m-      atl:        w.atl,[m
+[31m-      tsb:        w.tsb,[m
+[31m-      tss:        w.trainingLoad || 0,[m
+[31m-      hrv:        w.hrv,[m
+[31m-      resting_hr: w.restingHR,[m
+[31m-      sleep:      w.sleepSecs ? Math.round((w.sleepSecs / 3600) * 10) / 10 : null,[m
+[31m-      weight:     w.weight,[m
+[31m-      fatigue:    w.fatigue,[m
+[31m-      mood:       w.mood[m
+[31m-    }));[m
+[31m-  },[m
+[31m-[m
+[31m-  // Aggregate weekly TSS by type from activities[m
+[31m-  aggregateWeeklyTSS(activities) {[m
+[31m-    const weeks = {};[m
+[31m-    activities.forEach(a => {[m
+[31m-      if (!a.date) return;[m
+[31m-      const d = new Date(a.date);[m
+[31m-      const wk = getISOWeek(d);[m
+[31m-      const key = `${d.getFullYear()}-W${String(wk).padStart(2,'0')}`;[m
+[31m-      if (!weeks[key]) weeks[key] = { week: `W${wk}`, ride: 0, run: 0, row: 0, other: 0 };[m
+[31m-      const tss = a.tss || 0;[m
+[31m-      const t = a.type;[m
+[31m-      if (t === 'Ride' || t === 'VirtualRide') weeks[key].ride += tss;[m
+[31m-      else if (t === 'Run' || t === 'VirtualRun') weeks[key].run += tss;[m
+[31m-      else if (t === 'Rowing' || t === 'Kayaking') weeks[key].row += tss;[m
+[31m-      else weeks[key].other += tss;[m
+[31m-    });[m
+[31m-    return Object.values(weeks).slice(-52);[m
+[31m-  },[m
+[31m-[m
+[31m-  // YTD breakdown by sport[m
+[31m-  calcYTD(activities) {[m
+[31m-    const year = new Date().getFullYear();[m
+[31m-    const ytd = activities.filter(a => a.date?.startsWith(String(year)));[m
+[31m-[m
+[31m-    const cycling = ytd.filter(a => a.type === 'Ride' || a.type === 'VirtualRide');[m
+[31m-    const running = ytd.filter(a => a.type === 'Run' || a.type === 'VirtualRun');[m
+[31m-[m
+[31m-    const sum = arr => ({[m
+[31m-      distance: Math.round(arr.reduce((s, a) => s + (a.distance || 0), 0) / 1000),[m
+[31m-      hours:    Math.round(arr.reduce((s, a) => s + (a.duration || 0), 0) / 360) / 10,[m
+[31m-      tss:      arr.reduce((s, a) => s + (a.tss || 0), 0)[m
+[31m-    });[m
+[31m-[m
+[31m-    return {[m
+[31m-      total:   sum(ytd),[m
+[31m-      cycling: sum(cycling),[m
+[31m-      running: sum(running)[m
+[31m-    };[m
+[31m-  },[m
+[31m-[m
+[31m-  // Latest wellness metrics[m
+[31m-  latestWellness(wellness) {[m
+[31m-    const recent = [...wellness].reverse().find(w => w.ctl != null);[m
+[31m-    const latestHRV    = [...wellness].reverse().find(w => w.hrv != null);[m
+[31m-    const latestSleep  = [...wellness].reverse().find(w => w.sleep != null);[m
+[31m-    const latestWeight = [...wellness].reverse().find(w => w.weight != null);[m
+[31m-    return {[m
+[31m-      ctl:        recent?.ctl,[m
+[31m-      atl:        recent?.atl,[m
+[31m-      tsb:        recent?.tsb,[m
+[31m-      hrv:        latestHRV?.hrv,[m
+[31m-      resting_hr: latestHRV?.resting_hr,[m
+[31m-      sleep:      latestSleep?.sleep,[m
+[31m-      weight:     latestWeight?.weight[m
+[31m-    };[m
+[31m-  },[m
+[31m-[m
+[31m-  // Build 90-day power bests from activities (fallback if power curve API unavailable)[m
+[31m-  buildPowerBests(activities) {[m
+[31m-    const durations = [5, 10, 15, 30, 60, 120, 180, 300, 360, 480, 600, 720, 900, 1200, 1800, 2400, 3600, 5400];[m
+[31m-    const labels = ['5s','10s','15s','30s','1min','2min','3min','5min','6min','8min','10min','12min','15min','20min','30min','40min','60min','90min'];[m
+[31m-    const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];[m
+[31m-    const rides = activities.filter(a =>[m
+[31m-      (a.type === 'Ride' || a.type === 'VirtualRide') && a.date >= cutoff[m
+[31m-    );[m
+[31m-    // Use max power available — in real data this would come from streams[m
+[31m-    // For now return structured placeholder to be replaced by power curve API[m
+[31m-    return labels.map((label, i) => ({[m
+[31m-      label,[m
+[31m-      duration: durations[i],[m
+[31m-      value: null, // populated by power curve endpoint[m
+[31m-      hr: null[m
+[31m-    }));[m
+[31m-  }[m
+[31m-};[m
+[31m-[m
+[31m-function getISOWeek(date) {[m
+[31m-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));[m
+[31m-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));[m
+[31m-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));[m
+[31m-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);[m
+[31m-}[m
+[1mdiff --git a/docs/assets/js/config.js b/docs/assets/js/config.js[m
+[1mdeleted file mode 100644[m
+[1mindex b46d23c..0000000[m
+[1m--- a/docs/assets/js/config.js[m
+[1m+++ /dev/null[m
+[36m@@ -1,20 +0,0 @@[m
+[31m-/* ============================================[m
+[31m-   FITNESS DASHBOARD — CONFIG[m
+[31m-   ============================================ */[m
+[31m-const CONFIG = {[m
+[31m-  athlete_id: '5718022',[m
+[31m-  api_key: '3nxpa26knlwkdc3aikwhofr6r',[m
+[31m-  base_url: 'https://intervals.icu/api/v1',[m
+[31m-  history_start: '2025-01-01',[m
+[31m-[m
+[31m-  get auth_header() {[m
+[31m-    return 'Basic ' + btoa('API_KEY:' + this.api_key);[m
+[31m-  },[m
+[31m-[m
+[31m-  get headers() {[m
+[31m-    return {[m
+[31m-      'Authorization': this.auth_header,[m
+[31m-      'Content-Type': 'application/json'[m
+[31m-    };[m
+[31m-  }[m
+[31m-};[m

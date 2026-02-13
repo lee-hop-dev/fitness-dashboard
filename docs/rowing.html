@@ -1,127 +1,544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rowing — Fitness Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="assets/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Dashboard - Rowing</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="app">
-  <nav class="sidebar">
-    <div class="sidebar-brand">
-      <span class="brand-initials">LH</span>
-      <span class="brand-text">Training<br>OS</span>
-    </div>
-    <ul class="nav-links">
-      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
-      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
-      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
-      <li class="nav-item active"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
-      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
-      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
-    </ul>
-    <div class="sidebar-footer">
-      <div class="sync-status"><span class="sync-dot"></span><span class="sync-text">Synced 6:00 AM</span></div>
-    </div>
-  </nav>
-  <main class="main-content">
-    <header class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">Rowing</h1>
-        <span class="page-subtitle">Concept2 · Erg Data</span>
-      </div>
-    </header>
-    <section class="metrics-row" style="grid-template-columns:repeat(4,1fr)">
-      <div class="metric-card fitness">
-        <div class="metric-label">2K BEST</div>
-        <div class="metric-value" style="color:var(--accent)">7:24</div>
-        <div class="metric-delta neutral">1:51/500m</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:78%"></div></div>
-        <div class="metric-sub">All-time best</div>
-      </div>
-      <div class="metric-card hrv">
-        <div class="metric-label">5K BEST</div>
-        <div class="metric-value" style="color:var(--purple)">19:45</div>
-        <div class="metric-delta neutral">1:58/500m</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:65%;background:var(--purple)"></div></div>
-        <div class="metric-sub">All-time best</div>
-      </div>
-      <div class="metric-card form">
-        <div class="metric-label">60 MIN BEST</div>
-        <div class="metric-value" style="color:var(--green)">14.8</div>
-        <div class="metric-delta neutral">km · 2:01/500m</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:55%;background:var(--green)"></div></div>
-        <div class="metric-sub">All-time best</div>
-      </div>
-      <div class="metric-card sleep">
-        <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)">1</div>
-        <div class="metric-delta neutral">session · 8 km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:28%;background:var(--yellow)"></div></div>
-        <div class="metric-sub">40 min · TSS 42</div>
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-header">
-        <h2>Recent Rowing Sessions</h2>
-        <span class="section-meta">Last 30 days</span>
-      </div>
-      <div class="activity-cards" id="row-cards">
-        <div class="activity-card">
-          <div class="activity-card-type type-row"><span class="type-dot dot-row"></span>Rowing</div>
-          <div class="activity-card-name">Steady State Erg · 8km</div>
-          <div class="activity-card-stats">
-            <div class="activity-stat"><span class="activity-stat-value">40:00</span><span class="activity-stat-label">Duration</span></div>
-            <div class="activity-stat"><span class="activity-stat-value">8.0</span><span class="activity-stat-label">km</span></div>
-            <div class="activity-stat"><span class="activity-stat-value">2:30</span><span class="activity-stat-label">/500m</span></div>
-            <div class="activity-stat"><span class="activity-stat-value">148</span><span class="activity-stat-label">Avg HR</span></div>
-          </div>
-          <div class="activity-card-date">2026-02-06 · 22 s/m</div>
-        </div>
-        <div class="activity-card">
-          <div class="activity-card-type type-row"><span class="type-dot dot-row"></span>Rowing</div>
-          <div class="activity-card-name">5 × 4min Intervals</div>
-          <div class="activity-card-stats">
-            <div class="activity-stat"><span class="activity-stat-value">35:00</span><span class="activity-stat-label">Duration</span></div>
-            <div class="activity-stat"><span class="activity-stat-value">7.2</span><span class="activity-stat-label">km</span></div>
-            <div class="activity-stat"><span class="activity-stat-value">2:26</span><span class="activity-stat-label">/500m</span></div>
-            <div class="activity-stat"><span class="activity-stat-value">162</span><span class="activity-stat-label">Avg HR</span></div>
-          </div>
-          <div class="activity-card-date">2026-01-28 · 24 s/m</div>
-        </div>
-      </div>
-    </section>
-    <section class="charts-row" style="grid-template-columns:1fr 1fr">
-      <div class="chart-card">
-        <div class="chart-header"><h3>Pace Trend · 30 Days</h3></div>
-        <div class="chart-wrap"><canvas id="rowPaceChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-header"><h3>Volume · Weekly</h3></div>
-        <div class="chart-wrap"><canvas id="rowVolumeChart"></canvas></div>
-      </div>
-    </section>
-  </main>
-</div>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Rowing Analytics</h1>
+            <nav class="dashboard-nav">
+                <a href="index.html" class="nav-link">Overview</a>
+                <a href="cycling.html" class="nav-link">Cycling</a>
+                <a href="running.html" class="nav-link">Running</a>
+                <a href="rowing.html" class="nav-link active">Rowing</a>
+                <a href="cardio.html" class="nav-link">Cardio</a>
+                <a href="other.html" class="nav-link">Other</a>
+            </nav>
+        </header>
 
+        <main class="dashboard-main">
+            <!-- Key Metrics -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Sessions (90d)</h3>
+                    <div class="stat-value" id="total-sessions">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Distance (90d)</h3>
+                    <div class="stat-value" id="total-distance">--</div>
+                    <div class="stat-unit">km</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Time (90d)</h3>
+                    <div class="stat-value" id="total-time">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Avg Power (90d)</h3>
+                    <div class="stat-value" id="avg-power">--</div>
+                    <div class="stat-unit">W</div>
+                </div>
+            </section>
 
-<script src="assets/js/charts.js"></script>
-<script src="assets/js/data-loader.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  buildWellnessChart('rowPaceChart',
-    ['W1','W2','W3','W4','W5','W6'],
-    [152, 148, 155, 146, 150, 148],
-    '#a855f7', 'Pace');
-  buildWellnessChart('rowVolumeChart',
-    ['W1','W2','W3','W4','W5','W6'],
-    [12, 8, 15, 10, 8, 8],
-    '#00e5ff', 'km');
-});
-</script>
+            <!-- Personal Bests -->
+            <section class="personal-bests-grid">
+                <div class="card pb-card">
+                    <h3>2000m Best</h3>
+                    <div class="pb-time" id="pb-2000m">--:--</div>
+                    <div class="pb-pace" id="pb-2000m-pace">--:-- /500m</div>
+                    <div class="pb-date" id="pb-2000m-date">--</div>
+                </div>
+                <div class="card pb-card">
+                    <h3>5000m Best</h3>
+                    <div class="pb-time" id="pb-5000m">--:--</div>
+                    <div class="pb-pace" id="pb-5000m-pace">--:-- /500m</div>
+                    <div class="pb-date" id="pb-5000m-date">--</div>
+                </div>
+                <div class="card pb-card">
+                    <h3>10000m Best</h3>
+                    <div class="pb-time" id="pb-10000m">--:--</div>
+                    <div class="pb-pace" id="pb-10000m-pace">--:-- /500m</div>
+                    <div class="pb-date" id="pb-10000m-date">--</div>
+                </div>
+            </section>
+
+            <!-- Pace Trend Chart -->
+            <section class="card">
+                <h2>Pace Trend (90 days)</h2>
+                <div class="chart-container">
+                    <canvas id="pace-trend-chart"></canvas>
+                </div>
+                <div class="chart-info">
+                    <p>Shows your average pace per 500m over time for all rowing sessions.</p>
+                </div>
+            </section>
+
+            <!-- Volume Weekly Chart -->
+            <section class="card">
+                <h2>Weekly Training Volume</h2>
+                <div class="chart-container">
+                    <canvas id="volume-weekly-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Power Distribution -->
+            <section class="card">
+                <h2>Power Distribution (90 days)</h2>
+                <div class="chart-container">
+                    <canvas id="power-distribution-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Stroke Rate Analysis -->
+            <section class="card">
+                <h2>Stroke Rate vs Pace</h2>
+                <div class="chart-container">
+                    <canvas id="stroke-pace-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Recent Activities -->
+            <section class="card">
+                <h2>Recent Rowing Sessions</h2>
+                <div class="activities-table-container">
+                    <table id="recent-activities-table" class="activities-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Distance</th>
+                                <th>Time</th>
+                                <th>Pace (/500m)</th>
+                                <th>Avg Power</th>
+                                <th>Stroke Rate</th>
+                                <th>Avg HR</th>
+                                <th>Max HR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activities-tbody">
+                            <!-- Activities will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/data-loader.js"></script>
+    <script src="assets/js/charts.js"></script>
+    <script>
+        async function initRowingPage() {
+            try {
+                const { activities, athlete, wellness } = await DATA.loadAll();
+                
+                console.log('Loaded rowing data:', { 
+                    totalActivities: activities?.length,
+                    athlete: athlete
+                });
+
+                const rowingActivities = DATA.getRowingActivities(activities);
+                console.log('Rowing activities:', rowingActivities.length);
+
+                if (rowingActivities.length === 0) {
+                    console.warn('No rowing activities found');
+                    showNoDataMessage();
+                    return;
+                }
+
+                updateRowingMetrics(rowingActivities);
+                updatePersonalBests(rowingActivities);
+                updatePaceTrendChart(rowingActivities);
+                updateVolumeWeeklyChart(rowingActivities);
+                updatePowerDistributionChart(rowingActivities);
+                updateStrokePaceChart(rowingActivities);
+                updateRecentActivitiesTable(rowingActivities);
+                
+            } catch (error) {
+                console.error('Error initializing rowing page:', error);
+                showErrorMessage();
+            }
+        }
+
+        function showNoDataMessage() {
+            const main = document.querySelector('.dashboard-main');
+            if (main) {
+                main.innerHTML = `
+                    <div class="no-data-message">
+                        <h2>No Rowing Data Available</h2>
+                        <p>No rowing activities found in your data. This could be because:</p>
+                        <ul>
+                            <li>No rowing activities have been recorded yet</li>
+                            <li>Rowing activities are not syncing properly from Intervals.icu</li>
+                            <li>Activity type mapping may need adjustment</li>
+                        </ul>
+                        <p>Please check your Intervals.icu data or contact support if this seems incorrect.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showErrorMessage() {
+            const main = document.querySelector('.dashboard-main');
+            if (main) {
+                main.innerHTML = `
+                    <div class="error-message">
+                        <h2>Error Loading Rowing Data</h2>
+                        <p>There was an error loading your rowing data. Please refresh the page or try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateRowingMetrics(activities) {
+            const totals = DATA.getActivityTotals(activities, 90);
+            
+            // Calculate average power
+            const activitiesWithPower = activities.filter(a => a.icu_average_watts);
+            const avgPower = activitiesWithPower.length > 0 ? 
+                activitiesWithPower.reduce((sum, a) => sum + a.icu_average_watts, 0) / activitiesWithPower.length : 0;
+            
+            document.getElementById('total-sessions').textContent = totals.count;
+            document.getElementById('total-distance').textContent = (totals.distance / 1000).toFixed(1);
+            document.getElementById('total-time').textContent = DATA.formatTime(totals.time);
+            document.getElementById('avg-power').textContent = avgPower > 0 ? Math.round(avgPower) : '--';
+        }
+
+        function updatePersonalBests(activities) {
+            // Get personal bests for standard rowing distances
+            const distances = [2000, 5000, 10000]; // 2K, 5K, 10K in meters
+            const personalBests = DATA.getPersonalBests(activities, distances);
+            
+            // Update each distance
+            distances.forEach(distance => {
+                const distanceKey = `${distance}m`;
+                const pb = personalBests[distanceKey];
+                
+                const timeEl = document.getElementById(`pb-${distanceKey}`);
+                const paceEl = document.getElementById(`pb-${distanceKey}-pace`);
+                const dateEl = document.getElementById(`pb-${distanceKey}-date`);
+                
+                if (pb) {
+                    timeEl.textContent = DATA.formatTime(pb.time);
+                    paceEl.textContent = formatRowingPace(pb.pace);
+                    dateEl.textContent = formatDate(pb.date);
+                } else {
+                    timeEl.textContent = '--:--';
+                    paceEl.textContent = '--:--';
+                    dateEl.textContent = '--';
+                }
+            });
+        }
+
+        function formatRowingPace(secondsPerKm) {
+            if (!secondsPerKm || secondsPerKm <= 0) return '--:--';
+            
+            // Convert to pace per 500m (standard rowing pace)
+            const secondsPer500m = secondsPerKm / 2;
+            const minutes = Math.floor(secondsPer500m / 60);
+            const seconds = Math.floor(secondsPer500m % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updatePaceTrendChart(activities) {
+            const canvas = document.getElementById('pace-trend-chart');
+            if (!canvas || !activities.length) return;
+
+            // Get last 90 days of activities with pace data
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 90);
+
+            const recentActivities = activities
+                .filter(a => {
+                    if (!a.start_date_local || !a.distance || !a.moving_time) return false;
+                    const actDate = new Date(a.start_date_local);
+                    return actDate >= cutoff && a.distance > 500; // Only sessions > 500m
+                })
+                .sort((a, b) => new Date(a.start_date_local) - new Date(b.start_date_local));
+
+            if (recentActivities.length === 0) {
+                canvas.parentElement.innerHTML = '<p class="no-data">No pace data available for the last 90 days</p>';
+                return;
+            }
+
+            const trendData = recentActivities.map(activity => ({
+                x: activity.start_date_local.split('T')[0],
+                y: (activity.moving_time / (activity.distance / 1000)) / 2 // pace per 500m in seconds
+            }));
+
+            new Chart(canvas, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Pace Trend',
+                        data: trendData,
+                        backgroundColor: 'var(--blue)',
+                        borderColor: 'var(--blue)',
+                        showLine: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'week' },
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Pace (min/500m)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatRowingPace(value * 2); // Convert back for display
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVolumeWeeklyChart(activities) {
+            const canvas = document.getElementById('volume-weekly-chart');
+            if (!canvas || !activities.length) return;
+
+            const weeklyData = getWeeklyRowingData(activities, 12);
+
+            if (weeklyData.every(week => week.distance === 0)) {
+                canvas.parentElement.innerHTML = '<p class="no-data">No weekly volume data available</p>';
+                return;
+            }
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: weeklyData.map(week => week.label),
+                    datasets: [{
+                        label: 'Distance (km)',
+                        data: weeklyData.map(week => week.distance),
+                        backgroundColor: 'var(--blue)',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Sessions',
+                        data: weeklyData.map(week => week.count),
+                        backgroundColor: 'var(--accent)',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Distance (km)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Number of Sessions' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getWeeklyRowingData(activities, weeks) {
+            const weeklyData = [];
+            const now = new Date();
+
+            for (let i = weeks - 1; i >= 0; i--) {
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - (i * 7) - now.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+                
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                weekEnd.setHours(23, 59, 59, 999);
+
+                const weekActivities = activities.filter(a => {
+                    if (!a.start_date_local) return false;
+                    const actDate = new Date(a.start_date_local);
+                    return actDate >= weekStart && actDate <= weekEnd;
+                });
+
+                const distance = weekActivities.reduce((sum, a) => sum + (a.distance || 0), 0) / 1000;
+                const count = weekActivities.length;
+
+                weeklyData.push({
+                    label: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
+                    distance: Math.round(distance * 10) / 10,
+                    count: count
+                });
+            }
+
+            return weeklyData;
+        }
+
+        function updatePowerDistributionChart(activities) {
+            const canvas = document.getElementById('power-distribution-chart');
+            if (!canvas) return;
+
+            const powerData = activities
+                .filter(a => a.icu_average_watts)
+                .map(a => a.icu_average_watts);
+
+            if (!powerData.length) {
+                canvas.parentElement.innerHTML = '<p class="no-data">No power data available</p>';
+                return;
+            }
+
+            // Create power zones
+            const zones = {
+                'Very Light (<100W)': powerData.filter(p => p < 100).length,
+                'Light (100-150W)': powerData.filter(p => p >= 100 && p < 150).length,
+                'Moderate (150-200W)': powerData.filter(p => p >= 150 && p < 200).length,
+                'Hard (200-250W)': powerData.filter(p => p >= 200 && p < 250).length,
+                'Very Hard (250W+)': powerData.filter(p => p >= 250).length
+            };
+
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(zones),
+                    datasets: [{
+                        data: Object.values(zones),
+                        backgroundColor: [
+                            '#22c55e', // Very Light - Green
+                            '#3b82f6', // Light - Blue
+                            '#eab308', // Moderate - Yellow
+                            '#f97316', // Hard - Orange
+                            '#ef4444'  // Very Hard - Red
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function updateStrokePaceChart(activities) {
+            const canvas = document.getElementById('stroke-pace-chart');
+            if (!canvas) return;
+
+            // Filter activities with both stroke rate and pace data
+            const chartData = activities
+                .filter(a => a.average_cadence && a.distance && a.moving_time)
+                .map(activity => ({
+                    x: activity.average_cadence * 2, // Convert to stroke rate (cadence is usually half)
+                    y: (activity.moving_time / (activity.distance / 1000)) / 2, // pace per 500m
+                    distance: activity.distance
+                }));
+
+            if (!chartData.length) {
+                canvas.parentElement.innerHTML = '<p class="no-data">No stroke rate and pace data available</p>';
+                return;
+            }
+
+            new Chart(canvas, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Stroke Rate vs Pace',
+                        data: chartData,
+                        backgroundColor: 'var(--accent)',
+                        borderColor: 'var(--accent)',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const data = context.raw;
+                                    return [
+                                        `Stroke Rate: ${Math.round(data.x)} spm`,
+                                        `Pace: ${formatRowingPace(data.y * 2)}`,
+                                        `Distance: ${(data.distance / 1000).toFixed(1)}km`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Stroke Rate (strokes/min)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Pace (min/500m)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatRowingPace(value * 2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRecentActivitiesTable(activities) {
+            const tbody = document.getElementById('activities-tbody');
+            if (!tbody) return;
+
+            const recentActivities = activities
+                .sort((a, b) => new Date(b.start_date_local) - new Date(a.start_date_local))
+                .slice(0, 20);
+
+            tbody.innerHTML = recentActivities.map(activity => {
+                const pace = activity.distance && activity.moving_time ? 
+                    formatRowingPace(activity.moving_time / (activity.distance / 1000)) : '--';
+                
+                const strokeRate = activity.average_cadence ? 
+                    Math.round(activity.average_cadence * 2) : '--'; // Convert cadence to stroke rate
+                
+                return `
+                    <tr>
+                        <td>${formatDate(activity.start_date_local)}</td>
+                        <td>${DATA.formatDistance(activity.distance || 0)}</td>
+                        <td>${DATA.formatTime(activity.moving_time || 0)}</td>
+                        <td>${pace}</td>
+                        <td>${activity.icu_average_watts ? Math.round(activity.icu_average_watts) + 'W' : '--'}</td>
+                        <td>${strokeRate !== '--' ? strokeRate + ' spm' : '--'}</td>
+                        <td>${activity.average_heartrate ? Math.round(activity.average_heartrate) + ' bpm' : '--'}</td>
+                        <td>${activity.max_heartrate ? Math.round(activity.max_heartrate) + ' bpm' : '--'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '--';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: '2-digit' 
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', initRowingPage);
+    </script>
 </body>
 </html>

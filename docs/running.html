@@ -1,216 +1,544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Running — Fitness Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="assets/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Dashboard - Running</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="app">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Running Analytics</h1>
+            <nav class="dashboard-nav">
+                <a href="index.html" class="nav-link">Overview</a>
+                <a href="cycling.html" class="nav-link">Cycling</a>
+                <a href="running.html" class="nav-link active">Running</a>
+                <a href="rowing.html" class="nav-link">Rowing</a>
+                <a href="cardio.html" class="nav-link">Cardio</a>
+                <a href="other.html" class="nav-link">Other</a>
+            </nav>
+        </header>
 
-  <nav class="sidebar">
-    <div class="sidebar-brand">
-      <span class="brand-initials">LH</span>
-      <span class="brand-text">Training<br>OS</span>
+        <main class="dashboard-main">
+            <!-- Key Metrics -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Runs (90d)</h3>
+                    <div class="stat-value" id="total-runs">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Distance (90d)</h3>
+                    <div class="stat-value" id="total-distance">--</div>
+                    <div class="stat-unit">km</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Time (90d)</h3>
+                    <div class="stat-value" id="total-time">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Elevation (90d)</h3>
+                    <div class="stat-value" id="total-elevation">--</div>
+                    <div class="stat-unit">m</div>
+                </div>
+            </section>
+
+            <!-- Personal Bests - Updated with all-time bests -->
+            <section class="personal-bests-grid">
+                <div class="card pb-card">
+                    <h3>5K Best (90d)</h3>
+                    <div class="pb-time" id="pb-5k-recent">--:--</div>
+                    <div class="pb-date" id="pb-5k-recent-date">--</div>
+                    <div class="pb-alltime">
+                        <strong>All-time: <span id="pb-5k-alltime">--:--</span></strong>
+                        <div class="pb-alltime-date" id="pb-5k-alltime-date">--</div>
+                    </div>
+                </div>
+                <div class="card pb-card">
+                    <h3>10K Best (90d)</h3>
+                    <div class="pb-time" id="pb-10k-recent">--:--</div>
+                    <div class="pb-date" id="pb-10k-recent-date">--</div>
+                    <div class="pb-alltime">
+                        <strong>All-time: <span id="pb-10k-alltime">--:--</span></strong>
+                        <div class="pb-alltime-date" id="pb-10k-alltime-date">--</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pace Curve Chart -->
+            <section class="card">
+                <h2>Pace Duration Curve</h2>
+                <div class="chart-container">
+                    <canvas id="pace-curve-chart"></canvas>
+                </div>
+                <div class="chart-info">
+                    <p>Shows your best average pace for different distances and durations.</p>
+                </div>
+            </section>
+
+            <!-- Pace Trend Chart -->
+            <section class="card">
+                <h2>Pace Trend (90 days)</h2>
+                <div class="chart-container">
+                    <canvas id="pace-trend-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Weekly Volume -->
+            <section class="card">
+                <h2>Weekly Running Volume</h2>
+                <div class="chart-container">
+                    <canvas id="weekly-volume-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Heart Rate Analysis -->
+            <section class="card">
+                <h2>Heart Rate Distribution (90 days)</h2>
+                <div class="chart-container">
+                    <canvas id="hr-distribution-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Recent Activities -->
+            <section class="card">
+                <h2>Recent Running Activities</h2>
+                <div class="activities-table-container">
+                    <table id="recent-activities-table" class="activities-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Distance</th>
+                                <th>Time</th>
+                                <th>Pace</th>
+                                <th>Avg HR</th>
+                                <th>Max HR</th>
+                                <th>TSS</th>
+                                <th>Elevation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activities-tbody">
+                            <!-- Activities will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
     </div>
-    <ul class="nav-links">
-      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
-      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
-      <li class="nav-item active"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
-      <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
-      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
-      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
-    </ul>
-    <div class="sidebar-footer">
-      <div class="sync-status">
-        <span class="sync-dot"></span>
-        <span class="sync-text">Synced 6:00 AM</span>
-      </div>
-    </div>
-  </nav>
 
-  <main class="main-content">
+    <script src="assets/js/data-loader.js"></script>
+    <script src="assets/js/charts.js"></script>
+    <script>
+        async function initRunningPage() {
+            try {
+                const { activities, athlete, wellness } = await DATA.loadAll();
+                
+                console.log('Loaded running data:', { 
+                    totalActivities: activities?.length,
+                    athlete: athlete
+                });
 
-    <header class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">Running</h1>
-        <span class="page-subtitle">Road · Trail · Treadmill</span>
-      </div>
-      <div class="header-right">
-        <div class="year-totals">
-          <div class="year-stat">
-            <span class="year-stat-value" id="ru-distance">—</span>
-            <span class="year-stat-label">km YTD</span>
-          </div>
-          <div class="year-stat">
-            <span class="year-stat-value" id="ru-runs">—</span>
-            <span class="year-stat-label">runs YTD</span>
-          </div>
-          <div class="year-stat">
-            <span class="year-stat-value" id="ru-elevation">—</span>
-            <span class="year-stat-label">m climb YTD</span>
-          </div>
-        </div>
-      </div>
-    </header>
+                const runningActivities = DATA.getRunningActivities(activities);
+                console.log('Running activities:', runningActivities.length);
 
-    <!-- Metric cards -->
-    <section class="metrics-row" style="grid-template-columns: repeat(4,1fr)">
-      <div class="metric-card form">
-        <div class="metric-label">5K BEST</div>
-        <div class="metric-value" style="color:var(--green)">20:45</div>
-        <div class="metric-delta neutral">4:09/km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:72%;background:var(--green)"></div></div>
-        <div class="metric-sub">90-day best</div>
-      </div>
-      <div class="metric-card fitness">
-        <div class="metric-label">10K BEST</div>
-        <div class="metric-value" style="color:var(--accent)">43:00</div>
-        <div class="metric-delta neutral">4:18/km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:65%"></div></div>
-        <div class="metric-sub">90-day best</div>
-      </div>
-      <div class="metric-card hrv">
-        <div class="metric-label">THRESHOLD PACE</div>
-        <div class="metric-value" style="color:var(--purple)">4:25</div>
-        <div class="metric-delta neutral">per km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:58%;background:var(--purple)"></div></div>
-        <div class="metric-sub">Current estimate</div>
-      </div>
-      <div class="metric-card sleep">
-        <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)">2</div>
-        <div class="metric-delta neutral">runs · 16.9 km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:38%;background:var(--yellow)"></div></div>
-        <div class="metric-sub">1.4 hrs running</div>
-      </div>
-    </section>
+                if (runningActivities.length === 0) {
+                    console.warn('No running activities found');
+                    showNoDataMessage();
+                    return;
+                }
 
-    <!-- Pace curve + Trend -->
-    <section class="charts-row" style="grid-template-columns: 2fr 1fr">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Pace Curve · 90 Days</h3>
-          <div class="chart-legend">
-            <span class="legend-item run">Pace</span>
-            <span style="font-size:10px;color:var(--red);font-family:var(--font-mono)">HR</span>
-          </div>
-        </div>
-        <div class="cp-chart-wrap"><canvas id="paceCurveChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-header"><h3>Pace Trend · 42 Days</h3></div>
-        <div class="chart-wrap"><canvas id="paceTrendChart"></canvas></div>
-      </div>
-    </section>
+                updateRunningMetrics(runningActivities);
+                updatePersonalBests(runningActivities);
+                updatePaceCurveChart(runningActivities);
+                updatePaceTrendChart(runningActivities);
+                updateWeeklyVolumeChart(runningActivities);
+                updateHRDistributionChart(runningActivities);
+                updateRecentActivitiesTable(runningActivities);
+                
+            } catch (error) {
+                console.error('Error initializing running page:', error);
+                showErrorMessage();
+            }
+        }
 
-    <!-- Recent runs -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Last 14 Days</h2>
-        <span class="section-meta" id="ru-week-meta">Loading...</span>
-      </div>
-      <div class="activity-cards" id="ru-activity-cards"></div>
-    </section>
+        function showNoDataMessage() {
+            const main = document.querySelector('.dashboard-main');
+            if (main) {
+                main.innerHTML = `
+                    <div class="no-data-message">
+                        <h2>No Running Data Available</h2>
+                        <p>No running activities found in your data. This could be because:</p>
+                        <ul>
+                            <li>No running activities have been recorded yet</li>
+                            <li>Running activities are not syncing properly from Intervals.icu</li>
+                            <li>There may be an issue with the data pipeline</li>
+                        </ul>
+                        <p>Please check your Intervals.icu data or contact support if this seems incorrect.</p>
+                    </div>
+                `;
+            }
+        }
 
-    <!-- Strava segments -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Strava Segments</h2>
-        <span class="section-meta">Personal bests & rankings</span>
-      </div>
-      <div class="segment-list" id="ru-segments"></div>
-    </section>
+        function showErrorMessage() {
+            const main = document.querySelector('.dashboard-main');
+            if (main) {
+                main.innerHTML = `
+                    <div class="error-message">
+                        <h2>Error Loading Running Data</h2>
+                        <p>There was an error loading your running data. Please refresh the page or try again later.</p>
+                    </div>
+                `;
+            }
+        }
 
-  </main>
-</div>
+        function updateRunningMetrics(activities) {
+            const totals = DATA.getActivityTotals(activities, 90);
+            
+            document.getElementById('total-runs').textContent = totals.count;
+            document.getElementById('total-distance').textContent = (totals.distance / 1000).toFixed(0);
+            document.getElementById('total-time').textContent = DATA.formatTime(totals.time);
+            document.getElementById('total-elevation').textContent = Math.round(totals.elevation).toLocaleString();
+        }
 
+        function updatePersonalBests(activities) {
+            // Get personal bests for 5K and 10K
+            const distances = [5000, 10000]; // 5K and 10K in meters
+            const allTimeBests = DATA.getPersonalBests(activities, distances);
+            
+            // Get 90-day bests
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 90);
+            
+            const recentActivities = activities.filter(a => {
+                if (!a.start_date_local) return false;
+                return new Date(a.start_date_local) >= cutoff;
+            });
+            
+            const recentBests = DATA.getPersonalBests(recentActivities, distances);
 
+            // Update 5K
+            updatePersonalBestCard('5k', allTimeBests['5000m'], recentBests['5000m']);
+            
+            // Update 10K
+            updatePersonalBestCard('10k', allTimeBests['10000m'], recentBests['10000m']);
+        }
 
-<script src="assets/js/charts.js"></script>
-<script src="assets/js/data-loader.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const D = FITNESS_DATA;
+        function updatePersonalBestCard(distance, allTime, recent) {
+            // Recent (90-day) best
+            const recentTimeEl = document.getElementById(`pb-${distance}-recent`);
+            const recentDateEl = document.getElementById(`pb-${distance}-recent-date`);
+            
+            if (recent) {
+                recentTimeEl.textContent = DATA.formatTime(recent.time);
+                recentDateEl.textContent = formatDate(recent.date);
+            } else {
+                recentTimeEl.textContent = '--:--';
+                recentDateEl.textContent = '--';
+            }
+            
+            // All-time best
+            const allTimeEl = document.getElementById(`pb-${distance}-alltime`);
+            const allTimeDateEl = document.getElementById(`pb-${distance}-alltime-date`);
+            
+            if (allTime) {
+                allTimeEl.textContent = DATA.formatTime(allTime.time);
+                allTimeDateEl.textContent = formatDate(allTime.date);
+            } else {
+                allTimeEl.textContent = '--:--';
+                allTimeDateEl.textContent = '--';
+            }
+        }
 
-  document.getElementById('ru-distance').textContent = '286';
-  document.getElementById('ru-runs').textContent = '28';
-  document.getElementById('ru-elevation').textContent = '2,140';
+        function updatePaceCurveChart(activities) {
+            const canvas = document.getElementById('pace-curve-chart');
+            if (!canvas || !activities.length) return;
 
-  // Pace curve
-  buildPaceBestsChart('paceCurveChart', D.pace_bests);
+            // Create pace curve for different distances
+            const distances = [1000, 2000, 5000, 10000]; // 1K, 2K, 5K, 10K
+            const paceData = distances.map(distance => {
+                const best = findBestPaceForDistance(activities, distance);
+                return { x: distance / 1000, y: best ? best * 1000 : null }; // Convert to pace per km
+            }).filter(d => d.y !== null);
 
-  // Pace trend (mock 42-day average pace)
-  const paceDates = D.wellness_trend.dates;
-  const paceValues = [285, 292, 278, 310, 275, 268, 282, 271, 265, 270];
-  buildWellnessChart('paceTrendChart', paceDates, paceValues, '#00ff87', 'Avg Pace');
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Best Pace',
+                        data: paceData,
+                        borderColor: 'var(--green)',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        pointBackgroundColor: 'var(--green)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Distance (km)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Pace (sec/km)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return DATA.formatPace(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
-  // Filter running activities
-  const ruActivities = D.recent_activities.filter(a => a.type === 'VirtualRun' || a.type === 'Run');
+        function findBestPaceForDistance(activities, targetDistance) {
+            const tolerance = targetDistance * 0.1; // 10% tolerance
+            
+            const matchingActivities = activities.filter(a => 
+                a.distance && 
+                a.moving_time &&
+                Math.abs(a.distance - targetDistance) <= tolerance
+            );
 
-  const totalDist = ruActivities.reduce((s, a) => s + (a.distance || 0), 0) / 1000;
-  const totalHrs  = ruActivities.reduce((s, a) => s + (a.duration || 0), 0) / 3600;
-  document.getElementById('ru-week-meta').textContent =
-    `${ruActivities.length} runs · ${totalDist.toFixed(1)} km · ${totalHrs.toFixed(1)} hrs`;
+            if (!matchingActivities.length) return null;
 
-  const container = document.getElementById('ru-activity-cards');
-  container.innerHTML = ruActivities.map(a => `
-    <div class="activity-card">
-      <div class="activity-card-type type-run">
-        <span class="type-dot dot-run"></span>
-        Running
-      </div>
-      <div class="activity-card-name">${a.name}</div>
-      <div class="activity-card-stats">
-        <div class="activity-stat">
-          <span class="activity-stat-value">${formatDuration(a.duration)}</span>
-          <span class="activity-stat-label">Duration</span>
-        </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${(a.distance/1000).toFixed(1)}</span>
-          <span class="activity-stat-label">km</span>
-        </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${formatPace(a.avg_pace)}</span>
-          <span class="activity-stat-label">Pace/km</span>
-        </div>
-        <div class="activity-stat">
-          <span class="activity-stat-value">${a.avg_hr}</span>
-          <span class="activity-stat-label">Avg HR</span>
-        </div>
-      </div>
-      <div class="activity-card-date">${a.date} · TSS ${a.tss}</div>
-    </div>`
-  ).join('');
+            const bestActivity = matchingActivities.reduce((best, current) => {
+                const currentPace = current.moving_time / (current.distance / 1000);
+                const bestPace = best.moving_time / (best.distance / 1000);
+                return currentPace < bestPace ? current : best;
+            });
 
-  // Segments
-  const segList = document.getElementById('ru-segments');
-  segList.innerHTML = D.segments.running.map(s => `
-    <div class="segment-row">
-      <div>
-        <div class="segment-name">${s.name}</div>
-        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">${(s.distance/1000).toFixed(1)} km</div>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">${s.time}</span>
-        <span class="segment-stat-label">Time</span>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">${s.pace}</span>
-        <span class="segment-stat-label">Avg Pace</span>
-      </div>
-      <div class="segment-stat">
-        <span class="segment-stat-value">#${s.rank}</span>
-        <span class="segment-stat-label">Rank</span>
-      </div>
-      ${s.pr ? '<span class="pr-badge">PR</span>' : '<div></div>'}
-    </div>`
-  ).join('');
-});
-</script>
+            return bestActivity.moving_time / (bestActivity.distance / 1000);
+        }
+
+        function updatePaceTrendChart(activities) {
+            const canvas = document.getElementById('pace-trend-chart');
+            if (!canvas || !activities.length) return;
+
+            // Get last 90 days of activities with pace data
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 90);
+
+            const recentActivities = activities
+                .filter(a => {
+                    if (!a.start_date_local || !a.distance || !a.moving_time) return false;
+                    const actDate = new Date(a.start_date_local);
+                    return actDate >= cutoff && a.distance > 1000; // Only runs > 1km
+                })
+                .sort((a, b) => new Date(a.start_date_local) - new Date(b.start_date_local));
+
+            const trendData = recentActivities.map(activity => ({
+                x: activity.start_date_local.split('T')[0],
+                y: activity.moving_time / (activity.distance / 1000) // pace in sec/km
+            }));
+
+            new Chart(canvas, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Pace Trend',
+                        data: trendData,
+                        backgroundColor: 'var(--green)',
+                        borderColor: 'var(--green)',
+                        showLine: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'week' },
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Pace (min/km)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return DATA.formatPace(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateWeeklyVolumeChart(activities) {
+            const canvas = document.getElementById('weekly-volume-chart');
+            if (!canvas || !activities.length) return;
+
+            const weeklyData = getWeeklyRunningData(activities, 12);
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: weeklyData.map(week => week.label),
+                    datasets: [{
+                        label: 'Distance (km)',
+                        data: weeklyData.map(week => week.distance),
+                        backgroundColor: 'var(--green)',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Runs',
+                        data: weeklyData.map(week => week.count),
+                        backgroundColor: 'var(--accent)',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Distance (km)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Number of Runs' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getWeeklyRunningData(activities, weeks) {
+            const weeklyData = [];
+            const now = new Date();
+
+            for (let i = weeks - 1; i >= 0; i--) {
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - (i * 7) - now.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+                
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                weekEnd.setHours(23, 59, 59, 999);
+
+                const weekActivities = activities.filter(a => {
+                    if (!a.start_date_local) return false;
+                    const actDate = new Date(a.start_date_local);
+                    return actDate >= weekStart && actDate <= weekEnd;
+                });
+
+                const distance = weekActivities.reduce((sum, a) => sum + (a.distance || 0), 0) / 1000;
+                const count = weekActivities.length;
+
+                weeklyData.push({
+                    label: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
+                    distance: Math.round(distance),
+                    count: count
+                });
+            }
+
+            return weeklyData;
+        }
+
+        function updateHRDistributionChart(activities) {
+            const canvas = document.getElementById('hr-distribution-chart');
+            if (!canvas) return;
+
+            const hrData = activities
+                .filter(a => a.average_heartrate)
+                .map(a => a.average_heartrate);
+
+            if (!hrData.length) {
+                // Show "No HR data" message
+                canvas.parentElement.innerHTML = '<p class="no-data">No heart rate data available</p>';
+                return;
+            }
+
+            // Create HR zones (example zones - should be personalized)
+            const zones = {
+                'Zone 1 (50-60%)': hrData.filter(hr => hr >= 100 && hr < 120).length,
+                'Zone 2 (60-70%)': hrData.filter(hr => hr >= 120 && hr < 140).length,
+                'Zone 3 (70-80%)': hrData.filter(hr => hr >= 140 && hr < 160).length,
+                'Zone 4 (80-90%)': hrData.filter(hr => hr >= 160 && hr < 180).length,
+                'Zone 5 (90%+)': hrData.filter(hr => hr >= 180).length
+            };
+
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(zones),
+                    datasets: [{
+                        data: Object.values(zones),
+                        backgroundColor: [
+                            '#22c55e', // Zone 1 - Green
+                            '#3b82f6', // Zone 2 - Blue
+                            '#eab308', // Zone 3 - Yellow
+                            '#f97316', // Zone 4 - Orange
+                            '#ef4444'  // Zone 5 - Red
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function updateRecentActivitiesTable(activities) {
+            const tbody = document.getElementById('activities-tbody');
+            if (!tbody) return;
+
+            const recentActivities = activities
+                .sort((a, b) => new Date(b.start_date_local) - new Date(a.start_date_local))
+                .slice(0, 20);
+
+            tbody.innerHTML = recentActivities.map(activity => {
+                const pace = activity.distance && activity.moving_time ? 
+                    DATA.formatPace(activity.moving_time / (activity.distance / 1000)) : '--';
+                
+                return `
+                    <tr>
+                        <td>${formatDate(activity.start_date_local)}</td>
+                        <td>${DATA.formatDistance(activity.distance || 0)}</td>
+                        <td>${DATA.formatTime(activity.moving_time || 0)}</td>
+                        <td>${pace}</td>
+                        <td>${activity.average_heartrate ? Math.round(activity.average_heartrate) + ' bpm' : '--'}</td>
+                        <td>${activity.max_heartrate ? Math.round(activity.max_heartrate) + ' bpm' : '--'}</td>
+                        <td>${activity.tss ? Math.round(activity.tss) : '--'}</td>
+                        <td>${activity.total_elevation_gain ? Math.round(activity.total_elevation_gain) + 'm' : '--'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '--';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: '2-digit' 
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', initRunningPage);
+    </script>
 </body>
 </html>
