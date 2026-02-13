@@ -243,13 +243,6 @@
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
 <script>
-function getISOWeekNum(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, weeklyTSS, ytd, heatmap1y, heatmap3y, athlete, meta } = await DATA.loadAll();
