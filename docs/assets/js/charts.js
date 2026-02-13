@@ -1,5 +1,5 @@
 /* ============================================
-   FITNESS DASHBOARD — CHARTS v2
+   FITNESS DASHBOARD — CHARTS v4 (Full, Chart.js 4 Compatible)
    ============================================ */
 
 Chart.defaults.color = '#6b7590';
@@ -13,6 +13,14 @@ const C = {
   gold: '#ffd700', silver: '#c0c8d8', bronze: '#cd7f32'
 };
 
+// -------------------- Helpers --------------------
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
 function areaGradient(ctx, color, a1 = 0.25, a2 = 0) {
   if (!ctx.chart?.chartArea) return 'transparent';
   const { top, bottom } = ctx.chart.chartArea;
@@ -21,13 +29,6 @@ function areaGradient(ctx, color, a1 = 0.25, a2 = 0) {
   g.addColorStop(0, `rgba(${rgb},${a1})`);
   g.addColorStop(1, `rgba(${rgb},${a2})`);
   return g;
-}
-
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `${r},${g},${b}`;
 }
 
 const TOOLTIP_DEFAULTS = {
@@ -89,26 +90,19 @@ function buildFitnessChart(canvasId, data, pbMarkers = []) {
       },
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
-        y: {
-          position: 'left',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 5 }
-        },
-        yTSB: {
-          position: 'right', grid: { display: false },
-          ticks: { maxTicksLimit: 5, color: C.green }
-        }
+        y: { position: 'left', grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 5 } },
+        yTSB: { position: 'right', grid: { display: false }, ticks: { maxTicksLimit: 5, color: C.green } }
       }
     },
     plugins: [{
       id: 'pbMarkers',
       afterDraw(chart) {
         if (!pbMarkers.length) return;
-        const { ctx: c, chartArea, scales } = chart;
+        const { ctx: c, chartArea, scales, data: chartData } = chart;
         pbMarkers.forEach(pb => {
-          const idx = data.findIndex(d => d.date === pb.date);
+          const idx = chartData.labels.findIndex(label => label === pb.date.slice(5));
           if (idx < 0) return;
-          const x = scales.x.getPixelForValue(chart.data.labels[i]);
+          const x = scales.x.getPixelForValue(chartData.labels[idx]);
           const y = chartArea.bottom + 4;
           const color = pb.tier === 'gold' ? C.gold : pb.tier === 'silver' ? C.silver : C.bronze;
           const emoji = pb.type === 'cycling' ? '⚡' : '🏃';
@@ -128,14 +122,8 @@ function buildFitnessChart(canvasId, data, pbMarkers = []) {
   return chart;
 }
 
-// ============================================
-// FITNESS CHART TOGGLE (42d / 365d)
-// ============================================
 function setupFitnessToggle(canvasId, allData, pbMarkers) {
-  let chart = buildFitnessChart(canvasId, allData.slice(-42), pbMarkers.filter(p => {
-    const d = new Date(p.date);
-    return d >= new Date(allData.slice(-42)[0]?.date);
-  }));
+  let chart = buildFitnessChart(canvasId, allData.slice(-42), pbMarkers.filter(p => p.date >= allData.slice(-42)[0]?.date));
 
   document.querySelectorAll('[data-fitness-toggle]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -184,7 +172,7 @@ function buildTSSChart(canvasId, data) {
 }
 
 // ============================================
-// HRV + SLEEP COMBINED CHART (dual axis)
+// HRV + SLEEP COMBINED CHART
 // ============================================
 function buildHRVSleepChart(canvasId, wellnessTrend, days = 42) {
   const ctx = document.getElementById(canvasId);
@@ -192,11 +180,36 @@ function buildHRVSleepChart(canvasId, wellnessTrend, days = 42) {
 
   const sliced = {
     dates: wellnessTrend.dates.slice(-days),
-    hrv:   wellnessTrend.hrv.slice(-days),
+    hrv: wellnessTrend.hrv.slice(-days),
     sleep: wellnessTrend.sleep.slice(-days)
   };
 
-  const chart = new Chart(ctx, {
+  const hrvSleepPlugin = {
+    id: 'hrvSleepMarkers',
+    afterDraw: chart => {
+      const ctx = chart.ctx;
+      const xScale = chart.scales.x;
+      const yHRV = chart.scales.yHRV;
+      const ySleep = chart.scales.ySleep;
+
+      chart.data.datasets.forEach(ds => {
+        ds.data.forEach((val, idx) => {
+          if (val == null) return;
+          const x = xScale.getPixelForValue(chart.data.labels[idx]);
+          const y = ds.yAxisID === 'yHRV' ? yHRV.getPixelForValue(val) : ySleep.getPixelForValue(val);
+
+          ctx.save();
+          ctx.fillStyle = ds.borderColor || 'blue';
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.restore();
+        });
+      });
+    }
+  };
+
+  return new Chart(ctx, {
     type: 'bar',
     data: {
       labels: sliced.dates.map(d => d.slice(5)),
@@ -246,34 +259,11 @@ function buildHRVSleepChart(canvasId, wellnessTrend, days = 42) {
       },
       scales: {
         x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
-        yHRV: {
-          position: 'left',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 4, callback: v => v + 'ms', color: C.accent }
-        },
-        ySleep: {
-          position: 'right',
-          grid: { display: false },
-          min: 0, max: 10,
-          ticks: { maxTicksLimit: 4, callback: v => v + 'h', color: C.yellow }
-        }
+        yHRV: { position: 'left', grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 4, callback: v => v + 'ms', color: C.accent } },
+        ySleep: { position: 'right', grid: { display: false }, min: 0, max: 10, ticks: { maxTicksLimit: 4, callback: v => v + 'h', color: C.yellow } }
       }
-    }
-  });
-
-  return chart;
-}
-
-function setupHRVSleepToggle(canvasId, wellnessTrend) {
-  let chart = buildHRVSleepChart(canvasId, wellnessTrend, 42);
-
-  document.querySelectorAll('[data-wellness-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-wellness-toggle]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      chart.destroy();
-      chart = buildHRVSleepChart(canvasId, wellnessTrend, parseInt(btn.dataset.wellnessToggle));
-    });
+    },
+    plugins: [hrvSleepPlugin]
   });
 }
 
@@ -299,7 +289,7 @@ function buildPowerBestsChart(canvasId, data) {
         },
         {
           label: 'HR (bpm)', data: data.map(d => d.hr),
-          borderColor: C.red, borderWidth: 1.5, borderDash: [4, 4],
+          borderColor: C.red, borderWidth: 1.5, borderDash: [4,4],
           fill: false, tension: 0.4, pointRadius: 0, pointHoverRadius: 3,
           yAxisID: 'yHR'
         }
@@ -310,19 +300,22 @@ function buildPowerBestsChart(canvasId, data) {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
-        tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: c => c.datasetIndex === 0 ? ` ${c.parsed.y}W` : ` ${c.parsed.y}bpm` } }
+        tooltip: { 
+          ...TOOLTIP_DEFAULTS,
+          callbacks: { label: c => c.datasetIndex === 0 ? ` ${c.parsed.y}W` : ` ${c.parsed.y}bpm` } 
+        }
       },
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' } },
         yPower: { position: 'left', grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => v + 'W', maxTicksLimit: 5 } },
-        yHR:    { position: 'right', grid: { display: false }, ticks: { maxTicksLimit: 5, color: C.red } }
+        yHR: { position: 'right', grid: { display: false }, ticks: { maxTicksLimit: 5, color: C.red } }
       }
     }
   });
 }
 
 // ============================================
-// PACE BESTS CHART (fixed: sec/km from totalSec/distM)
+// PACE BESTS CHART
 // ============================================
 function buildPaceBestsChart(canvasId, data) {
   const ctx = document.getElementById(canvasId);
@@ -345,7 +338,7 @@ function buildPaceBestsChart(canvasId, data) {
         },
         {
           label: 'HR', data: data.map(d => d.hr),
-          borderColor: C.red, borderWidth: 1.5, borderDash: [4, 4],
+          borderColor: C.red, borderWidth: 1.5, borderDash: [4,4],
           fill: false, tension: 0.4, pointRadius: 0,
           yAxisID: 'yHR'
         }
@@ -359,23 +352,15 @@ function buildPaceBestsChart(canvasId, data) {
         tooltip: {
           ...TOOLTIP_DEFAULTS,
           callbacks: {
-            label: ctx2 => {
-              if (ctx2.datasetIndex === 0) {
-                const v = ctx2.parsed.y;
-                return ` ${Math.floor(v/60)}:${String(Math.round(v%60)).padStart(2,'0')}/km`;
-              }
-              return ` ${ctx2.parsed.y}bpm`;
-            }
+            label: ctx => ctx.datasetIndex === 0
+              ? ` ${Math.floor(ctx.parsed.y/60)}:${String(Math.round(ctx.parsed.y%60)).padStart(2,'0')}/km`
+              : ` ${ctx.parsed.y}bpm`
           }
         }
       },
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' } },
-        yPace: {
-          position: 'left', reverse: false,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}`; } }
-        },
+        yPace: { position: 'left', reverse: false, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}`; } } },
         yHR: { position: 'right', grid: { display: false }, ticks: { maxTicksLimit: 5, color: C.red } }
       }
     }
@@ -383,7 +368,7 @@ function buildPaceBestsChart(canvasId, data) {
 }
 
 // ============================================
-// POWER CURVE (Cycling page)
+// POWER CURVE CHART
 // ============================================
 function buildPowerCurveChart(canvasId, current, prev = null) {
   const ctx = document.getElementById(canvasId);
@@ -402,7 +387,7 @@ function buildPowerCurveChart(canvasId, current, prev = null) {
   if (prev) {
     datasets.push({
       label: 'Previous 90d', data: prev.map(d => d.value),
-      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 1.5, borderDash: [4, 4],
+      borderColor: 'rgba(255,255,255,0.18)', borderWidth: 1.5, borderDash: [4,4],
       fill: false, tension: 0.4, pointRadius: 0
     });
   }
@@ -426,41 +411,34 @@ function buildPowerCurveChart(canvasId, current, prev = null) {
 }
 
 // ============================================
-// PACE TREND LINE (Running page)
+// PACE TREND CHART
 // ============================================
-function buildPaceTrendChart(canvasId, dates, paceData) {
+function buildPaceTrendChart(canvasId, data) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
+
+  const paceSec = data.map(d => Math.round((d.totalSec / d.distM) * 1000));
 
   return new Chart(ctx, {
     type: 'line',
     data: {
-      labels: dates.map(d => d.slice(5)),
-      datasets: [{
-        label: 'Avg Pace', data: paceData,
-        borderColor: C.green, borderWidth: 2,
-        fill: true, backgroundColor: ctx2 => areaGradient(ctx2, C.green, 0.12),
-        tension: 0.4, pointRadius: 3,
-        pointBackgroundColor: C.green, pointBorderColor: '#080a0d', pointBorderWidth: 2,
-        pointHoverRadius: 5
-      }]
+      labels: data.map(d => d.date.slice(5)),
+      datasets: [
+        {
+          label: 'Pace', data: paceSec,
+          borderColor: C.green, borderWidth: 2,
+          fill: true, backgroundColor: ctx2 => areaGradient(ctx2, C.green, 0.12),
+          tension: 0.4, pointRadius: 0
+        }
+      ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...TOOLTIP_DEFAULTS,
-          callbacks: { label: c => { const v=c.parsed.y; return ` ${Math.floor(v/60)}:${String(Math.round(v%60)).padStart(2,'0')}/km`; } }
-        }
-      },
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: TOOLTIP_DEFAULTS },
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 8 } },
-        y: {
-          reverse: true,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}`; } }
-        }
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}/km`; } } }
       }
     }
   });
