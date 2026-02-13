@@ -82,6 +82,8 @@ def deduplicate(items, key='id'):
 def process_activities(raw):
     processed = []
     for a in raw:
+        if a.get('_note') or not a.get('type'):
+            continue
         processed.append({
             'id':          str(a.get('id', '')),
             'name':        a.get('name') or 'Activity',
@@ -90,15 +92,17 @@ def process_activities(raw):
             'duration':    a.get('moving_time') or 0,
             'distance':    a.get('distance') or 0,
             'elevation':   a.get('total_elevation_gain') or 0,
-            'avg_power':   a.get('average_watts'),
-            'norm_power':  a.get('weighted_average_watts'),
-            'avg_hr':      a.get('average_hr'),
-            'max_hr':      a.get('max_hr'),
+            'avg_power':   a.get('icu_average_watts'),
+            'norm_power':  a.get('icu_weighted_avg_watts'),
+            'avg_hr':      a.get('average_heartrate'),
+            'max_hr':      a.get('max_heartrate'),
             'avg_speed':   a.get('average_speed'),
             'avg_cadence': a.get('average_cadence'),
             'calories':    a.get('calories'),
             'tss':         round(a.get('icu_training_load') or 0),
             'if_val':      round(a.get('icu_intensity') or 0, 2) or None,
+            'w_prime':     a.get('icu_w_prime'),
+            'weight':      a.get('icu_weight')
             'device':      a.get('device_name') or '',
             'is_garmin':   'garmin' in (a.get('device_name') or '').lower()
         })
