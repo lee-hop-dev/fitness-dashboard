@@ -1,404 +1,257 @@
-#!/usr/bin/env python3
 """
-Intervals.icu Data Collector for Fitness Dashboard
-Updated version with comprehensive error handling and data validation
+FITNESS DASHBOARD — DATA COLLECTOR
+Fetches from Intervals.icu and saves to docs/data/ for static site serving
 """
 
 import os
-import sys
 import json
+import time
+import logging
+import argparse
 import requests
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-import time
+from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+log = logging.getLogger(__name__)
+
+ATHLETE_ID  = os.getenv('INTERVALS_ATHLETE_ID', '5718022')
+API_KEY     = os.getenv('INTERVALS_API_KEY', '')
+BASE_URL    = 'https://intervals.icu/api/v1'
+HISTORY_START = '2025-01-01'
+OUTPUT_DIR  = Path(__file__).parent.parent / 'docs' / 'data'
+
 
 class IntervalsClient:
-    """Client for Intervals.icu API with proper error handling"""
-    
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.base_url = "https://intervals.icu/api/v1"
-        self.athlete_id = "5718022"  # Lee Hopkins athlete ID
+    def __init__(self, athlete_id, api_key):
+        self.athlete_id = athlete_id
         self.session = requests.Session()
         self.session.auth = ('API_KEY', api_key)
-        self.session.headers.update({
-            'User-Agent': 'FitnessDashboard/1.0',
-            'Accept': 'application/json'
-        })
-    
-    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Optional[Dict]:
-        """Make API request with error handling and retries"""
-        url = f"{self.base_url}/athlete/{self.athlete_id}/{endpoint}"
-        
-        for attempt in range(3):  # 3 retry attempts
-            try:
-                print(f"Making request to: {endpoint} (attempt {attempt + 1})")
-                response = self.session.get(url, params=params, timeout=30)
-                
-                if response.status_code == 200:
-                    return response.json()
-                elif response.status_code == 429:  # Rate limited
-                    print(f"Rate limited, waiting 60 seconds...")
-                    time.sleep(60)
-                    continue
-                else:
-                    print(f"API request failed: {response.status_code} - {response.text}")
-                    return None
-                    
-            except requests.exceptions.RequestException as e:
-                print(f"Request error (attempt {attempt + 1}): {e}")
-                if attempt < 2:  # Don't wait on last attempt
-                    time.sleep(10)
-        
-        return None
-    
-    def get_activities(self, oldest: str = "2025-01-01", newest: str = None) -> List[Dict]:
-        """Get activities with proper field mapping"""
-        if newest is None:
-            newest = datetime.now().strftime("%Y-%m-%d")
-        
-        params = {
-            'oldest': oldest,
-            'newest': newest
-        }
-        
-        activities = self._make_request('activities', params)
-        if not activities:
-            print("Failed to fetch activities")
-            return []
-        
-        print(f"Fetched {len(activities)} activities")
-        
-        # Filter out Strava stub activities and map fields correctly
-        valid_activities = []
-        for activity in activities:
-            # Skip Strava stubs
-            if activity.get('_note') or not activity.get('type'):
-                continue
-            
-            # Map fields correctly according to API documentation
-            mapped_activity = self._map_activity_fields(activity)
-            valid_activities.append(mapped_activity)
-        
-        print(f"After filtering: {len(valid_activities)} valid activities")
-        return valid_activities
-    
-    def _map_activity_fields(self, activity: Dict) -> Dict:
-        """Map activity fields to correct names"""
-        # Create a copy to avoid modifying the original
-        mapped = activity.copy()
-        
-        # Map power fields correctly
-        if 'icu_average_watts' in activity:
-            mapped['average_watts'] = activity['icu_average_watts']
-        if 'icu_weighted_avg_watts' in activity:
-            mapped['weighted_average_watts'] = activity['icu_weighted_avg_watts']
-        if 'icu_intensity' in activity:
-            mapped['intensity_factor'] = activity['icu_intensity'] / 100  # Convert from percentage
-        
-        # Map heart rate fields
-        if 'average_heartrate' in activity:
-            mapped['average_hr'] = activity['average_heartrate']
-        if 'max_heartrate' in activity:
-            mapped['max_hr'] = activity['max_heartrate']
-        
-        # Map weight and FTP fields
-        if 'icu_weight' in activity:
-            mapped['weight'] = activity['icu_weight']
-        if 'icu_ftp' in activity:
-            mapped['ftp'] = activity['icu_ftp']
-        if 'icu_w_prime' in activity:
-            mapped['w_prime'] = activity['icu_w_prime']
-        
-        return mapped
-    
-    def get_wellness(self, oldest: str = "2025-01-01", newest: str = None) -> List[Dict]:
-        """Get wellness data"""
-        if newest is None:
-            newest = datetime.now().strftime("%Y-%m-%d")
-        
-        params = {
-            'oldest': oldest,
-            'newest': newest
-        }
-        
-        wellness = self._make_request('wellness', params)
-        if not wellness:
-            print("Failed to fetch wellness data")
-            return []
-        
-        print(f"Fetched {len(wellness)} wellness entries")
-        return wellness
-    
-    def get_athlete(self) -> Dict:
-        """Get athlete information"""
-        athlete = self._make_request('')  # Empty endpoint for athlete info
-        if not athlete:
-            print("Failed to fetch athlete data")
-            return {}
-        
-        print("Fetched athlete data")
-        return athlete
+        self.session.headers['Content-Type'] = 'application/json'
 
-class DataCollector:
-    """Collects and processes fitness data"""
-    
-    def __init__(self, api_key: str):
-        self.client = IntervalsClient(api_key)
-        self.data_dir = "docs/data"
-        os.makedirs(self.data_dir, exist_ok=True)
-    
-    def collect_all_data(self):
-        """Collect all data and save to JSON files"""
-        print("Starting data collection...")
-        
-        # Get data from API
-        activities = self.client.get_activities()
-        wellness = self.client.get_wellness()
-        athlete = self.client.get_athlete()
-        
-        if not activities:
-            print("ERROR: No activities data received")
-            sys.exit(1)
-        
-        # Process and save data
-        self._save_activities(activities)
-        self._save_wellness(wellness)
-        self._save_athlete(athlete, activities)
-        self._save_weekly_tss(activities)
-        self._save_ytd_totals(activities)
-        self._save_heatmap_data(activities)
-        self._save_meta()
-        
-        print("Data collection completed successfully!")
-    
-    def _save_activities(self, activities: List[Dict]):
-        """Save activities data"""
-        # Sort by date (most recent first)
-        activities_sorted = sorted(
-            activities, 
-            key=lambda x: x.get('start_date_local', ''), 
-            reverse=True
-        )
-        
-        self._save_json('activities.json', activities_sorted)
-        print(f"Saved {len(activities_sorted)} activities")
-    
-    def _save_wellness(self, wellness: List[Dict]):
-        """Save wellness data"""
-        # Sort by date
-        wellness_sorted = sorted(
-            wellness, 
-            key=lambda x: x.get('id', ''), 
-            reverse=False
-        )
-        
-        self._save_json('wellness.json', wellness_sorted)
-        print(f"Saved {len(wellness_sorted)} wellness entries")
-    
-    def _save_athlete(self, athlete: Dict, activities: List[Dict]):
-        """Save athlete data with latest values from activities"""
-        # Extract latest values from activities since they're not in athlete endpoint
-        latest_weight = None
-        latest_ftp = None
-        latest_w_prime = None
-        
-        for activity in reversed(activities):  # Go through from oldest to newest
-            if activity.get('icu_weight') and not latest_weight:
-                latest_weight = activity['icu_weight']
-            if activity.get('icu_ftp') and not latest_ftp:
-                latest_ftp = activity['icu_ftp']
-            if activity.get('icu_w_prime') and not latest_w_prime:
-                latest_w_prime = activity['icu_w_prime']
-        
-        # Update athlete data with latest values
-        athlete_data = athlete.copy()
-        if latest_weight:
-            athlete_data['weight'] = latest_weight
-        if latest_ftp:
-            athlete_data['ftp'] = latest_ftp
-        if latest_w_prime:
-            athlete_data['w_prime'] = latest_w_prime
-        
-        self._save_json('athlete.json', athlete_data)
-        print(f"Saved athlete data (weight: {latest_weight}, ftp: {latest_ftp}, w': {latest_w_prime})")
-    
-    def _save_weekly_tss(self, activities: List[Dict]):
-        """Calculate and save weekly TSS data"""
-        weekly_data = []
-        
-        # Group activities by week
-        weeks = {}
-        for activity in activities:
-            if not activity.get('start_date_local') or not activity.get('tss'):
-                continue
-            
-            activity_date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00'))
-            # Get Monday of the week
-            week_start = activity_date - timedelta(days=activity_date.weekday())
-            week_key = week_start.strftime('%Y-%m-%d')
-            
-            if week_key not in weeks:
-                weeks[week_key] = {
-                    'week': week_key,
-                    'start_date': week_key,
-                    'tss': 0,
-                    'cycling_tss': 0,
-                    'running_tss': 0,
-                    'other_tss': 0
-                }
-            
-            tss = activity['tss']
-            weeks[week_key]['tss'] += tss
-            
-            # Categorize by activity type
-            activity_type = activity.get('type', '').lower()
-            if activity_type in ['ride', 'virtualride']:
-                weeks[week_key]['cycling_tss'] += tss
-            elif activity_type in ['run', 'virtualrun']:
-                weeks[week_key]['running_tss'] += tss
-            else:
-                weeks[week_key]['other_tss'] += tss
-        
-        # Convert to list and sort by date
-        weekly_data = sorted(weeks.values(), key=lambda x: x['week'])
-        
-        self._save_json('weekly_tss.json', weekly_data)
-        print(f"Saved {len(weekly_data)} weeks of TSS data")
-    
-    def _save_ytd_totals(self, activities: List[Dict]):
-        """Calculate and save year-to-date totals"""
-        current_year = datetime.now().year
-        
-        ytd_data = {
-            'year': current_year,
-            'cycling': {'distance': 0, 'time': 0, 'elevation': 0, 'count': 0},
-            'running': {'distance': 0, 'time': 0, 'elevation': 0, 'count': 0},
-            'total': {'distance': 0, 'time': 0, 'elevation': 0, 'count': 0}
-        }
-        
-        for activity in activities:
-            if not activity.get('start_date_local'):
-                continue
-            
-            activity_date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00'))
-            if activity_date.year != current_year:
-                continue
-            
-            distance = activity.get('distance', 0)
-            time = activity.get('moving_time', activity.get('elapsed_time', 0))
-            elevation = activity.get('total_elevation_gain', 0)
-            
-            # Update totals
-            ytd_data['total']['distance'] += distance
-            ytd_data['total']['time'] += time
-            ytd_data['total']['elevation'] += elevation
-            ytd_data['total']['count'] += 1
-            
-            # Update by category
-            activity_type = activity.get('type', '').lower()
-            if activity_type in ['ride', 'virtualride']:
-                ytd_data['cycling']['distance'] += distance
-                ytd_data['cycling']['time'] += time
-                ytd_data['cycling']['elevation'] += elevation
-                ytd_data['cycling']['count'] += 1
-            elif activity_type in ['run', 'virtualrun']:
-                ytd_data['running']['distance'] += distance
-                ytd_data['running']['time'] += time
-                ytd_data['running']['elevation'] += elevation
-                ytd_data['running']['count'] += 1
-        
-        self._save_json('ytd.json', ytd_data)
-        print(f"Saved YTD totals for {current_year}")
-    
-    def _save_heatmap_data(self, activities: List[Dict]):
-        """Generate heatmap data for calendar view"""
-        # 1 year heatmap
-        one_year_ago = datetime.now() - timedelta(days=365)
-        heatmap_1y = self._generate_heatmap(activities, one_year_ago)
-        self._save_json('heatmap_1y.json', heatmap_1y)
-        
-        # 3 year heatmap (removed as per requirements)
-        # three_years_ago = datetime.now() - timedelta(days=365*3)
-        # heatmap_3y = self._generate_heatmap(activities, three_years_ago)
-        # self._save_json('heatmap_3y.json', heatmap_3y)
-        
-        print("Saved heatmap data")
-    
-    def _generate_heatmap(self, activities: List[Dict], start_date: datetime) -> Dict:
-        """Generate heatmap data structure"""
-        heatmap_data = {}
-        
-        for activity in activities:
-            if not activity.get('start_date_local'):
-                continue
-            
-            activity_date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00'))
-            if activity_date < start_date:
-                continue
-            
-            date_key = activity_date.strftime('%Y-%m-%d')
-            
-            if date_key not in heatmap_data:
-                heatmap_data[date_key] = {
-                    'activities': [],
-                    'tss': 0,
-                    'distance': 0,
-                    'time': 0
-                }
-            
-            heatmap_data[date_key]['activities'].append({
-                'type': activity.get('type'),
-                'name': activity.get('name', ''),
-                'tss': activity.get('tss', 0)
-            })
-            
-            heatmap_data[date_key]['tss'] += activity.get('tss', 0)
-            heatmap_data[date_key]['distance'] += activity.get('distance', 0)
-            heatmap_data[date_key]['time'] += activity.get('moving_time', activity.get('elapsed_time', 0))
-        
+    def _get(self, endpoint, params=None, retries=3):
+        url = f'{BASE_URL}/{endpoint}'
+        for attempt in range(retries):
+            try:
+                time.sleep(0.5)
+                r = self.session.get(url, params=params or {})
+                r.raise_for_status()
+                return r.json()
+            except requests.HTTPError as e:
+                if e.response.status_code == 429:
+                    log.warning('Rate limited, waiting 60s...')
+                    time.sleep(60)
+                else:
+                    raise
+            except Exception as e:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(5 * (attempt + 1))
+
+    def get_athlete(self):
+        return self._get(f'athlete/{self.athlete_id}')
+
+    def get_activities(self, oldest=HISTORY_START):
+        log.info(f'Fetching activities from {oldest}')
+        data = self._get(f'athlete/{self.athlete_id}/activities', {'oldest': oldest})
+        log.info(f'Got {len(data)} activities')
+        return data
+
+    def get_wellness(self, oldest=HISTORY_START):
+        today = datetime.now().strftime('%Y-%m-%d')
+        log.info(f'Fetching wellness {oldest} → {today}')
+        data = self._get(f'athlete/{self.athlete_id}/wellness', {
+            'oldest': oldest,
+            'newest': today
+        })
+        log.info(f'Got {len(data)} wellness entries')
+        return data
+
+
+def deduplicate(items, key='id'):
+    seen = set()
+    result = []
+    for item in items:
+        k = str(item.get(key, ''))
+        if k not in seen:
+            seen.add(k)
+            result.append(item)
+    return result
+
+
+def process_activities(raw):
+    processed = []
+    for a in raw:
+        if a.get('_note') or not a.get('type'):
+            continue
+        processed.append({
+            'id':          str(a.get('id', '')),
+            'name':        a.get('name') or 'Activity',
+            'type':        a.get('type') or 'Unknown',
+            'date':        (a.get('start_date_local') or '')[:10],
+            'duration':    a.get('moving_time') or 0,
+            'distance':    a.get('distance') or 0,
+            'elevation':   a.get('total_elevation_gain') or 0,
+            'avg_power':   a.get('icu_average_watts'),
+            'norm_power':  a.get('icu_weighted_avg_watts'),
+            'avg_hr':      a.get('average_heartrate'),
+            'max_hr':      a.get('max_heartrate'),
+            'avg_speed':   a.get('average_speed'),
+            'avg_cadence': a.get('average_cadence'),
+            'calories':    a.get('calories'),
+            'tss':         round(a.get('icu_training_load') or 0),
+            'if_val':      round(a.get('icu_intensity') / 100, 2) if a.get('icu_intensity') else None,
+            'ftp':         a.get('icu_ftp'),
+            'w_prime':     a.get('icu_w_prime'),
+            'weight':      a.get('icu_weight'),
+            'device':      a.get('device_name') or '',
+            'is_garmin':   'garmin' in (a.get('device_name') or '').lower()
+        })
+    return sorted(processed, key=lambda x: x['date'], reverse=True)
+
+
+def process_wellness(raw):
+    processed = []
+    for w in raw:
+        processed.append({
+            'date':       w.get('id') or '',
+            'ctl':        w.get('ctl'),
+            'atl':        w.get('atl'),
+            'tsb':        w.get('tsb'),
+            'tss':        w.get('trainingLoad') or 0,
+            'hrv':        w.get('hrv'),
+            'resting_hr': w.get('restingHR'),
+            'sleep':      round(w['sleepSecs'] / 3600, 1) if w.get('sleepSecs') else None,
+            'weight':     w.get('weight'),
+            'fatigue':    w.get('fatigue'),
+            'mood':       w.get('mood')
+        })
+    return sorted(processed, key=lambda x: x['date'])
+
+
+def aggregate_weekly_tss(activities):
+    weeks = {}
+    for a in activities:
+        if not a['date']:
+            continue
+        d = datetime.strptime(a['date'], '%Y-%m-%d')
+        # ISO week key
+        iso = d.isocalendar()
+        key = f'{iso[0]}-W{iso[1]:02d}'
+        if key not in weeks:
+            weeks[key] = {'week': f'W{iso[1]}', 'year': iso[0], 'ride': 0, 'run': 0, 'row': 0, 'other': 0}
+        tss = a['tss'] or 0
+        t = a['type']
+        if t in ('Ride', 'VirtualRide'):
+            weeks[key]['ride'] += tss
+        elif t in ('Run', 'VirtualRun'):
+            weeks[key]['run'] += tss
+        elif t in ('Rowing', 'Kayaking'):
+            weeks[key]['row'] += tss
+        else:
+            weeks[key]['other'] += tss
+    return sorted(weeks.values(), key=lambda x: (x['year'], x['week']))
+
+
+def calc_ytd(activities):
+    year = str(datetime.now().year)
+    ytd = [a for a in activities if a['date'].startswith(year)]
+    cycling = [a for a in ytd if a['type'] in ('Ride', 'VirtualRide')]
+    running = [a for a in ytd if a['type'] in ('Run', 'VirtualRun')]
+
+    def s(arr):
         return {
-            'start_date': start_date.strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d'),
-            'data': heatmap_data
+            'distance': round(sum(a['distance'] or 0 for a in arr) / 1000),
+            'hours':    round(sum(a['duration'] or 0 for a in arr) / 3600, 1),
+            'tss':      sum(a['tss'] or 0 for a in arr),
+            'count':    len(arr)
         }
-    
-    def _save_meta(self):
-        """Save metadata about the data collection"""
-        meta = {
-            'last_updated': datetime.now().isoformat(),
-            'collection_version': '2.0',
-            'data_source': 'intervals.icu',
-            'athlete_id': self.client.athlete_id
-        }
-        
-        self._save_json('meta.json', meta)
-        print("Saved metadata")
-    
-    def _save_json(self, filename: str, data: Any):
-        """Save data to JSON file"""
-        filepath = os.path.join(self.data_dir, filename)
-        
-        try:
-            with open(filepath, 'w') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"Error saving {filename}: {e}")
-            sys.exit(1)
+
+    return {'total': s(ytd), 'cycling': s(cycling), 'running': s(running)}
+
+
+def build_heatmap(activities, days=365):
+    act_by_date = {}
+    for a in activities:
+        if not a['date']:
+            continue
+        tss = a['tss'] or 0
+        act_by_date[a['date']] = act_by_date.get(a['date'], 0) + tss
+
+    cells = []
+    end = datetime.now()
+    for i in range(days - 1, -1, -1):
+        d = end - timedelta(days=i)
+        date_str = d.strftime('%Y-%m-%d')
+        tss = act_by_date.get(date_str, 0)
+        level = 0
+        if tss > 0:   level = 1
+        if tss > 40:  level = 2
+        if tss > 80:  level = 3
+        if tss > 120: level = 4
+        if tss > 180: level = 5
+        cells.append({'date': date_str, 'level': level, 'tss': tss})
+    return cells
+
+
+def save_json(data, filename):
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    path = OUTPUT_DIR / filename
+    with open(path, 'w') as f:
+        json.dump(data, f, separators=(',', ':'))
+    log.info(f'Saved {path} ({len(json.dumps(data)) // 1024}kb)')
+
 
 def main():
-    """Main function"""
-    api_key = os.getenv('INTERVALS_API_KEY')
-    if not api_key:
-        print("ERROR: INTERVALS_API_KEY environment variable not set")
-        sys.exit(1)
-    
-    try:
-        collector = DataCollector(api_key)
-        collector.collect_all_data()
-    except Exception as e:
-        print(f"ERROR: Data collection failed: {e}")
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--oldest', default=HISTORY_START)
+    args = parser.parse_args()
 
-if __name__ == "__main__":
+    if not API_KEY:
+        raise ValueError('INTERVALS_API_KEY environment variable not set')
+
+    client = IntervalsClient(ATHLETE_ID, API_KEY)
+
+    # Athlete info
+    log.info('Fetching athlete info...')
+    athlete = client.get_athlete()
+
+    # Activities
+    log.info('Fetching activities...')
+    raw_activities = client.get_activities(args.oldest)
+    raw_activities = deduplicate(raw_activities)
+    activities = process_activities(raw_activities)
+    save_json(activities, 'activities.json')
+
+    # Wellness
+    log.info('Fetching wellness...')
+    raw_wellness = client.get_wellness(args.oldest)
+    wellness = process_wellness(raw_wellness)
+    save_json(wellness, 'wellness.json')
+
+    # Aggregates
+    log.info('Building aggregates...')
+    save_json(aggregate_weekly_tss(activities), 'weekly_tss.json')
+    save_json(calc_ytd(activities), 'ytd.json')
+    save_json(build_heatmap(activities, 365), 'heatmap_1y.json')
+    save_json(build_heatmap(activities, 1095), 'heatmap_3y.json')
+
+    # Meta
+    save_json({
+        'last_updated': datetime.now().isoformat(),
+        'activity_count': len(activities),
+        'oldest_date': args.oldest
+    }, 'meta.json')
+
+    # Extract weight/ftp/wbal from activities, fall back to wellness
+    weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
+    ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
+    w_prime = next((a['w_prime'] for a in activities if a.get('w_prime')), None)
+    if weight is None:
+        weight = next((w['weight'] for w in reversed(wellness) if w.get('weight')), None)
+    save_json({'id': ATHLETE_ID, 'name': athlete.get('name',''), 'weight': weight, 'ftp': ftp, 'w_prime': w_prime}, 'athlete.json')
+    log.info('All data saved to docs/data/')
+
+
+if __name__ == '__main__':
     main()

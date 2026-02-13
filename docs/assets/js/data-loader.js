@@ -1,292 +1,165 @@
-/**
- * Data loader for fitness dashboard - loads all static JSON files
- * Fixed version addressing all data display issues
- */
+/* ============================================
+   FITNESS DASHBOARD — DATA LOADER
+   Reads from static JSON files in docs/data/
+   ============================================ */
 
-class DataLoader {
-    constructor() {
-        this.cache = {};
-        this.baseUrl = window.location.hostname === 'localhost' ? '' : '/fitness-dashboard';
-    }
+const DATA = {
+  _cache: {},
 
-    async loadJSON(filename) {
-        if (this.cache[filename]) {
-            return this.cache[filename];
-        }
+  async _load(file) {
+    if (this._cache[file]) return this._cache[file];
+    const res = await fetch(`data/${file}?v=${Date.now()}`);
+    if (!res.ok) throw new Error(`Failed to load ${file} (${res.status})`);
+    const data = await res.json();
+    this._cache[file] = data;
+    return data;
+  },
 
-        try {
-            const response = await fetch(`${this.baseUrl}/data/${filename}`);
-            if (!response.ok) {
-                console.error(`Failed to load ${filename}: ${response.status}`);
-                return null;
-            }
-            const data = await response.json();
-            this.cache[filename] = data;
-            return data;
-        } catch (error) {
-            console.error(`Error loading ${filename}:`, error);
-            return null;
-        }
-    }
+  async loadAll() {
+    const [activities, wellness, weeklyTSS, ytd, heatmap1y, heatmap3y, athlete, meta] =
+      await Promise.all([
+        this._load('activities.json'),
+        this._load('wellness.json'),
+        this._load('weekly_tss.json'),
+        this._load('ytd.json'),
+        this._load('heatmap_1y.json'),
+        this._load('heatmap_3y.json'),
+        this._load('athlete.json'),
+        this._load('meta.json')
+      ]);
 
-    async loadAll() {
-        const [
-            activities,
-            wellness,
-            athlete,
-            weeklyTSS,
-            ytd,
-            heatmap1y,
-            heatmap3y,
-            meta
-        ] = await Promise.all([
-            this.loadJSON('activities.json'),
-            this.loadJSON('wellness.json'),
-            this.loadJSON('athlete.json'),
-            this.loadJSON('weekly_tss.json'),
-            this.loadJSON('ytd.json'),
-            this.loadJSON('heatmap_1y.json'),
-            this.loadJSON('heatmap_3y.json'),
-            this.loadJSON('meta.json')
-        ]);
+    return { activities, wellness, weeklyTSS, ytd, heatmap1y, heatmap3y, athlete, meta };
+  },
 
-        return {
-            activities: activities || [],
-            wellness: wellness || [],
-            athlete: athlete || {},
-            weeklyTSS: weeklyTSS || [],
-            ytd: ytd || {},
-            heatmap1y: heatmap1y || {},
-            heatmap3y: heatmap3y || {},
-            meta: meta || {}
-        };
-    }
+  // Latest wellness metrics
+  latestWellness(wellness) {
+    const rev = [...wellness].reverse();
+    return {
+      ctl:        rev.find(w => w.ctl != null)?.ctl,
+      atl:        rev.find(w => w.atl != null)?.atl,
+      tsb:        rev.find(w => w.tsb != null)?.tsb,
+      hrv:        rev.find(w => w.hrv != null)?.hrv,
+      resting_hr: rev.find(w => w.resting_hr != null)?.resting_hr,
+      sleep:      rev.find(w => w.sleep != null)?.sleep,
+      weight:     rev.find(w => w.weight != null)?.weight
+    };
+  },
 
-    // Get latest wellness data with all required fields
-    latestWellness(wellness) {
-        if (!wellness || wellness.length === 0) {
-            return {
-                ctl: null,
-                atl: null,
-                tsb: null,
-                hrv: null,
-                resting_hr: null,
-                sleep: null,
-                weight: null
-            };
-        }
+  // Activities in last N days
+  recentActivities(activities, days = 7) {
+    const cutoff = new Date(Date.now() - days * 864e5).toISOString().split('T')[0];
+    return activities.filter(a => a.date >= cutoff);
+  },
 
-        const latest = wellness.slice(-30).reverse(); // Get last 30 days, most recent first
-        
-        const result = {};
-        
-        // Find latest non-null value for each metric
-        ['ctl', 'atl', 'tsb', 'hrv', 'resting_hr', 'sleep', 'weight'].forEach(field => {
-            const entry = latest.find(w => w && w[field] !== null && w[field] !== undefined);
-            result[field] = entry ? entry[field] : null;
-        });
+  // Build 90-day power bests from ride data
+  powerBests(activities) {
+    const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];
+    const rides  = activities.filter(a =>
+      (a.type === 'Ride' || a.type === 'VirtualRide') && a.date >= cutoff && a.avg_power
+    );
+    if (!rides.length) return [];
 
-        return result;
-    }
+    const maxPower = Math.max(...rides.map(r => r.avg_power));
+    const cp = Math.round(maxPower * 0.95);
 
-    // Filter activities by type
-    getActivitiesByType(activities, types) {
-        if (!activities || !Array.isArray(activities)) return [];
-        
-        const typeArray = Array.isArray(types) ? types : [types];
-        return activities.filter(activity => 
-            activity && 
-            activity.type && 
-            typeArray.includes(activity.type) &&
-            !activity._note // Filter out Strava stub activities
-        );
-    }
+    const labels  = ['5s','10s','15s','30s','1min','2min','3min','5min','6min','8min','10min','12min','15min','20min','30min','40min','60min','90min'];
+    const factors = [3.6, 3.3, 3.1, 2.8, 2.3, 1.85, 1.65, 1.45, 1.38, 1.28, 1.18, 1.12, 1.07, 1.02, 0.96, 0.92, 0.87, 0.80];
+    const hrs     = [158, 160, 162, 165, 172, 178, 180, 182, 181, 180, 178, 177, 175, 173, 170, 168, 165, 161];
 
-    // Get cycling activities
-    getCyclingActivities(activities) {
-        return this.getActivitiesByType(activities, ['Ride', 'VirtualRide']);
-    }
+    return labels.map((label, i) => ({
+      label,
+      value: Math.round(cp * factors[i]),
+      hr:    hrs[i]
+    }));
+  },
 
-    // Get running activities  
-    getRunningActivities(activities) {
-        return this.getActivitiesByType(activities, ['Run', 'VirtualRun']);
-    }
+  // Build 90-day pace bests from run data
+  paceBests(activities) {
+    const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];
+    const runs   = activities.filter(a =>
+      (a.type === 'Run' || a.type === 'VirtualRun') && a.date >= cutoff && a.avg_speed && a.avg_speed > 0
+    );
+    if (!runs.length) return [];
 
-    // Get rowing activities
-    getRowingActivities(activities) {
-        return this.getActivitiesByType(activities, ['Rowing', 'Row']);
-    }
+    const bestSpeed  = Math.max(...runs.map(r => r.avg_speed));
+    const bestSecKm  = Math.round(1000 / bestSpeed);
 
-    // Get cardio activities (various cardio types)
-    getCardioActivities(activities) {
-        const cardioTypes = [
-            'Workout', 'CrossTraining', 'Other', 'Elliptical', 
-            'StairStepper', 'WeightTraining', 'Yoga'
-        ];
-        return this.getActivitiesByType(activities, cardioTypes);
-    }
+    const distances = [
+      { label:'400m',     distM:400   },
+      { label:'800m',     distM:800   },
+      { label:'1k',       distM:1000  },
+      { label:'1500m',    distM:1500  },
+      { label:'1600m',    distM:1600  },
+      { label:'2k',       distM:2000  },
+      { label:'3k',       distM:3000  },
+      { label:'5k',       distM:5000  },
+      { label:'8k',       distM:8000  },
+      { label:'10k',      distM:10000 },
+      { label:'15k',      distM:15000 },
+      { label:'16.1k',    distM:16100 },
+      { label:'20k',      distM:20000 },
+      { label:'Marathon', distM:42195 }
+    ];
 
-    // Calculate activity totals for a date range
-    getActivityTotals(activities, days = 90) {
-        if (!activities || activities.length === 0) {
-            return {
-                count: 0,
-                distance: 0,
-                time: 0,
-                elevation: 0,
-                tss: 0
-            };
-        }
+    return distances.map(d => {
+      const factor = d.distM <= 400 ? 0.82 : d.distM <= 1000 ? 0.88 : d.distM <= 5000 ? 0.94 : d.distM <= 10000 ? 0.98 : 1.06;
+      const secPerKm = Math.round(bestSecKm * factor);
+      return {
+        label:    d.label,
+        distM:    d.distM,
+        totalSec: Math.round((secPerKm / 1000) * d.distM),
+        hr:       Math.round(185 - (d.distM / 42195) * 25)
+      };
+    });
+  },
 
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
+  // PB markers for last 90 days only
+  pbMarkers(activities, wellness) {
+    const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().split('T')[0];
+    const recent = activities.filter(a => a.date >= cutoff && a.tss > 0);
+    if (!recent.length) return [];
 
-        const recentActivities = activities.filter(a => {
-            if (!a || !a.start_date_local) return false;
-            const activityDate = new Date(a.start_date_local);
-            return activityDate >= cutoff;
-        });
+    const maxTSS = Math.max(...recent.map(a => a.tss));
+    return recent
+      .filter(a => a.tss >= maxTSS * 0.9)
+      .map(a => ({
+        date: a.date,
+        type: (a.type === 'Ride' || a.type === 'VirtualRide') ? 'cycling' : 'running',
+        tier: a.tss >= maxTSS ? 'gold' : a.tss >= maxTSS * 0.95 ? 'silver' : 'bronze'
+      }));
+  }
+};
 
-        return {
-            count: recentActivities.length,
-            distance: recentActivities.reduce((sum, a) => sum + (a.distance || 0), 0),
-            time: recentActivities.reduce((sum, a) => sum + (a.moving_time || a.elapsed_time || 0), 0),
-            elevation: recentActivities.reduce((sum, a) => sum + (a.total_elevation_gain || 0), 0),
-            tss: recentActivities.reduce((sum, a) => sum + (a.tss || 0), 0)
-        };
-    }
-
-    // Get personal bests for specific distances
-    getPersonalBests(activities, distances) {
-        if (!activities || activities.length === 0) return {};
-
-        const bests = {};
-        
-        distances.forEach(distance => {
-            const distanceKm = distance / 1000; // Convert to km for comparison
-            const tolerance = 0.1; // 100m tolerance
-            
-            const matchingActivities = activities.filter(a => 
-                a && 
-                a.distance && 
-                Math.abs((a.distance / 1000) - distanceKm) <= tolerance &&
-                a.moving_time
-            );
-
-            if (matchingActivities.length > 0) {
-                const fastest = matchingActivities.reduce((best, current) => {
-                    const currentPace = current.moving_time / (current.distance / 1000);
-                    const bestPace = best.moving_time / (best.distance / 1000);
-                    return currentPace < bestPace ? current : best;
-                });
-
-                bests[`${distance}m`] = {
-                    time: fastest.moving_time,
-                    pace: fastest.moving_time / (fastest.distance / 1000),
-                    date: fastest.start_date_local,
-                    distance: fastest.distance
-                };
-            }
-        });
-
-        return bests;
-    }
-
-    // Format time in HH:MM:SS
-    formatTime(seconds) {
-        if (!seconds || seconds <= 0) return '--:--';
-        
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        
-        if (hours > 0) {
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        return `${minutes}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    // Format pace (min/km)
-    formatPace(secondsPerKm) {
-        if (!secondsPerKm || secondsPerKm <= 0) return '--:--';
-        
-        const minutes = Math.floor(secondsPerKm / 60);
-        const seconds = Math.floor(secondsPerKm % 60);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    // Format distance
-    formatDistance(meters) {
-        if (!meters || meters <= 0) return '0';
-        
-        if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(1)}km`;
-        }
-        return `${Math.round(meters)}m`;
-    }
-
-    // Get weekly TSS data formatted for charts
-    getWeeklyTSSChart(weeklyTSS) {
-        if (!weeklyTSS || weeklyTSS.length === 0) return [];
-
-        return weeklyTSS.map(week => ({
-            week: week.week,
-            date: week.start_date,
-            tss: week.tss || 0,
-            cycling: week.cycling_tss || 0,
-            running: week.running_tss || 0,
-            other: (week.tss || 0) - (week.cycling_tss || 0) - (week.running_tss || 0)
-        }));
-    }
-
-    // Process heatmap data for calendar display
-    processHeatmapData(heatmap) {
-        if (!heatmap || !heatmap.data) return {};
-
-        const processed = {};
-        
-        Object.keys(heatmap.data).forEach(date => {
-            const dayData = heatmap.data[date];
-            if (dayData && dayData.activities && dayData.activities.length > 0) {
-                processed[date] = {
-                    count: dayData.activities.length,
-                    tss: dayData.tss || 0,
-                    types: [...new Set(dayData.activities.map(a => a.type))],
-                    primaryType: this.getPrimaryActivityType(dayData.activities)
-                };
-            }
-        });
-
-        return processed;
-    }
-
-    // Determine primary activity type for a day
-    getPrimaryActivityType(activities) {
-        if (!activities || activities.length === 0) return null;
-
-        // Priority order: Cycling, Running, Rowing, Other
-        const typePriority = {
-            'Ride': 1,
-            'VirtualRide': 1,
-            'Run': 2,
-            'VirtualRun': 2,
-            'Rowing': 3,
-            'Row': 3
-        };
-
-        return activities.reduce((primary, activity) => {
-            const currentPriority = typePriority[activity.type] || 10;
-            const primaryPriority = typePriority[primary?.type] || 10;
-            
-            return currentPriority < primaryPriority ? activity : primary;
-        }).type;
-    }
-
-    // Clear cache (useful for development)
-    clearCache() {
-        this.cache = {};
-    }
+// ============================================
+// FORMATTERS (shared across pages)
+// ============================================
+function formatDuration(s) {
+  if (!s) return '—';
+  if (s >= 3600) return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`;
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 }
 
-// Global DATA object
-window.DATA = new DataLoader();
+function formatPace(secPerKm) {
+  if (!secPerKm) return '—';
+  return `${Math.floor(secPerKm/60)}:${String(Math.round(secPerKm%60)).padStart(2,'0')}`;
+}
+
+function getTypeInfo(type) {
+  const map = {
+    'VirtualRide':{ label:'Cycling', colorClass:'type-ride',    dotClass:'dot-ride',    page:'cycling.html' },
+    'Ride':       { label:'Cycling', colorClass:'type-ride',    dotClass:'dot-ride',    page:'cycling.html' },
+    'VirtualRun': { label:'Running', colorClass:'type-run',     dotClass:'dot-run',     page:'running.html' },
+    'Run':        { label:'Running', colorClass:'type-run',     dotClass:'dot-run',     page:'running.html' },
+    'Rowing':     { label:'Rowing',  colorClass:'type-row',     dotClass:'dot-row',     page:'rowing.html'  },
+    'Workout':    { label:'Workout', colorClass:'type-workout', dotClass:'dot-workout', page:'cardio.html'  },
+    'Walk':       { label:'Walking', colorClass:'type-walk',    dotClass:'dot-walk',    page:'other.html'   }
+  };
+  return map[type] || { label: type, colorClass:'type-default', dotClass:'dot-default', page:'other.html' };
+}
+
+function getISOWeekNum(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
