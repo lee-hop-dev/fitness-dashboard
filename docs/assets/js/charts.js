@@ -452,3 +452,11 @@ function buildPaceTrendChart(canvasId, data) {
     }
   });
 }
+
+// ============================================
+// HRV + SLEEP TOGGLE WRAPPER (fixes undefined error)
+// ============================================
+function setupHRVSleepToggle(canvasId, wellnessTrend) {
+    // Call your existing chart builder, keeping all previous functionality
+    return buildHRVSleepChart(canvasId, wellnessTrend, 42); // default 42-day view
+}
