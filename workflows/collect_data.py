@@ -100,7 +100,8 @@ def process_activities(raw):
             'avg_cadence': a.get('average_cadence'),
             'calories':    a.get('calories'),
             'tss':         round(a.get('icu_training_load') or 0),
-            'if_val':      round(a.get('icu_intensity') or 0, 2) or None,
+            'if_val':      round(a.get('icu_intensity') / 100, 2) if a.get('icu_intensity') else None,
+            'ftp':         a.get('icu_ftp'),
             'w_prime':     a.get('icu_w_prime'),
             'weight':      a.get('icu_weight'),
             'device':      a.get('device_name') or '',
@@ -214,12 +215,6 @@ def main():
     # Athlete info
     log.info('Fetching athlete info...')
     athlete = client.get_athlete()
-    save_json({
-        'id':     ATHLETE_ID,
-        'name':   athlete.get('name', ''),
-        'weight': athlete.get('weight'),
-        'ftp':    athlete.get('ftp')
-    }, 'athlete.json')
 
     # Activities
     log.info('Fetching activities...')
@@ -248,6 +243,13 @@ def main():
         'oldest_date': args.oldest
     }, 'meta.json')
 
+    # Extract weight/ftp/wbal from activities, fall back to wellness
+    weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
+    ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
+    w_prime = next((a['w_prime'] for a in activities if a.get('w_prime')), None)
+    if weight is None:
+        weight = next((w['weight'] for w in reversed(wellness) if w.get('weight')), None)
+    save_json({'id': ATHLETE_ID, 'name': athlete.get('name',''), 'weight': weight, 'ftp': ftp, 'w_prime': w_prime}, 'athlete.json')
     log.info('All data saved to docs/data/')
 
 
