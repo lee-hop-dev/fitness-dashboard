@@ -68,11 +68,22 @@
           <div class="metric-sub">Based on current weight</div>
         </div>
         <div class="metric-card form">
-          <div class="metric-label">Peak Power</div>
-          <div class="metric-value metric-green" id="peak-power">—</div>
-          <div class="metric-delta neutral">W · 5 sec</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="peak-bar" style="width:0%;background:var(--green)"></div></div>
-          <div class="metric-sub">90-day best</div>
+          <div class="metric-label">Peak Power · 90 Days</div>
+          <div style="display:flex;flex-direction:column;gap:6px;padding:8px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">1 MIN</span>
+              <span style="font-size:16px;font-weight:700;color:var(--green)" id="peak-1min">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">5 MIN</span>
+              <span style="font-size:16px;font-weight:700;color:var(--accent)" id="peak-5min">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">20 MIN</span>
+              <span style="font-size:16px;font-weight:700;color:var(--purple)" id="peak-20min">—</span>
+            </div>
+          </div>
+          <div class="metric-sub">W · estimated from rides</div>
         </div>
         <div class="metric-card sleep-card">
           <div class="metric-label">This Week</div>
@@ -169,10 +180,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Peak power (highest avg_power as proxy)
+    // Peak power 1min, 5min, 20min estimates
     const peakPower = withPower.length ? Math.round(Math.max(...withPower.map(r => r.avg_power)) * 1.5) : null;
-    document.getElementById('peak-power').textContent = peakPower ? peakPower + 'W' : '—';
-    if (peakPower) document.getElementById('peak-bar').style.width = Math.min(100, (peakPower/1200)*100) + '%';
+    const peak1min  = peakPower ? Math.round(peakPower * 0.64) : null;  // ~1min from peak
+    const peak5min  = cp ? Math.round(cp * 1.1) : null;
+    const peak20min = cp ? cp : null;
+    if (peak1min)  { document.getElementById('peak-1min').textContent  = peak1min  + 'W'; }
+    if (peak5min)  { document.getElementById('peak-5min').textContent  = peak5min  + 'W'; }
+    if (peak20min) { document.getElementById('peak-20min').textContent = peak20min + 'W'; }
 
     // This week
     const wkDist = ridesWk.reduce((s,a)=>s+(a.distance||0),0)/1000;
@@ -185,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Power curve chart
     if (withPower.length) {
       const powerBests = buildPowerBestsFromRides(withPower, cp);
-      buildPowerCurveChart('powerCurveChart', powerBests);
+      buildPowerCurveChart('powerCurveChart', powerBests, null, cp, peak5min, peak20min);
     }
 
     // Fitness chart
