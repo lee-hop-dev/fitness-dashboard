@@ -108,7 +108,7 @@ function buildFitnessChart(canvasId, data, pbMarkers = []) {
         pbMarkers.forEach(pb => {
           const idx = data.findIndex(d => d.date === pb.date);
           if (idx < 0) return;
-          const x = scales.x.getPixelForValue(label);
+          const x = scales.x.getPixelForValue(chart.data.labels[i]);
           const y = chartArea.bottom + 4;
           const color = pb.tier === 'gold' ? C.gold : pb.tier === 'silver' ? C.silver : C.bronze;
           const emoji = pb.type === 'cycling' ? '⚡' : '🏃';
