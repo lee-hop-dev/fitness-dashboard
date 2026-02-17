@@ -125,7 +125,21 @@ class IntervalsICUConnector:
             fitness_data.append(fitness_entry)
         
         return fitness_data
-    
+
+
+    def get_power_curve(self, range_days: int = 90) -> Dict:
+        """
+        Fetch power curve and CP model from Intervals.icu
+        """
+        logger.info(f"Fetching power curve ({range_days} days)")
+
+        endpoint = f"athlete/{self.athlete_id}/powercurve"
+        params = {
+            "range": range_days
+        }
+
+        return self._make_request(endpoint, params)
+
     def standardize_activity(self, raw_activity: Dict) -> Dict:
         return {
             "id": str(raw_activity.get("id")),
