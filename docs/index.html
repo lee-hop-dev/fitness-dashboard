@@ -319,25 +319,28 @@ if (lw.ctl && prevCtl) {
     'metric-delta ' + (diff >= 0 ? 'positive' : 'negative');
 }
 
-// TSB status (use same tsbValue logic)
+// TSB status — prefer Intervals value, fallback to local tsbValue
+
 const tsbEl = document.getElementById('tsb-delta');
 
-if (tsbValue != null) {
+const tsbSource =
+  (lw && lw.tsb != null)
+    ? lw.tsb        // Intervals value (preferred)
+    : tsbValue;     // local calculated fallback
+
+if (tsbSource != null) {
+
   tsbEl.textContent =
-    tsbValue > 10 ? 'Fresh · Ready to race' :
-    tsbValue > 0  ? 'Fresh · Ready to train' :
-    tsbValue > -10 ? 'Slight fatigue' :
-    'Fatigued';
+    tsbSource > 10  ? 'Fresh · Ready to race' :
+    tsbSource > 0   ? 'Fresh · Ready to train' :
+    tsbSource > -10 ? 'Slight fatigue' :
+                      'Fatigued';
 
   tsbEl.className =
-    'metric-delta ' + (tsbValue >= 0 ? 'positive' : 'negative');
+    'metric-delta ' + (tsbSource >= 0 ? 'positive' : 'negative');
+
 }
 
-    const tsbEl = document.getElementById('tsb-delta');
-    if (lw.tsb != null) {
-      tsbEl.textContent = lw.tsb > 10 ? 'Fresh · Ready to race' : lw.tsb > 0 ? 'Fresh · Ready to train' : lw.tsb > -10 ? 'Slight fatigue' : 'Fatigued';
-      tsbEl.className = 'metric-delta ' + (lw.tsb >= 0 ? 'positive' : 'negative');
-    }
 
     // ---- YTD ----
     document.getElementById('ytd-distance').textContent = ytd.total.distance.toLocaleString();
