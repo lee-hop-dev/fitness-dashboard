@@ -1,103 +1,332 @@
-// ===============================
-// FORM / TSB HELPERS
-// ===============================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lee Hopkins — Training OS</title>
 
-function getFormClass(tsb) {
-  if (tsb == null) return '';
-  return tsb >= 0 ? 'fresh' : 'tired';
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<div class="app">
+
+<nav class="sidebar">
+<div class="sidebar-brand">
+<span class="brand-initials">LH</span>
+<span class="brand-text">Training<br>OS</span>
+</div>
+
+<ul class="nav-links">
+<li class="nav-item active"><a href="index.html">Overview</a></li>
+<li class="nav-item"><a href="cycling.html">Cycling</a></li>
+<li class="nav-item"><a href="running.html">Running</a></li>
+<li class="nav-item"><a href="rowing.html">Rowing</a></li>
+<li class="nav-item"><a href="cardio.html">Cardio</a></li>
+<li class="nav-item"><a href="other.html">Other</a></li>
+</ul>
+
+<div class="sidebar-footer">
+<div class="sync-status">
+<span class="sync-dot"></span>
+<span id="last-sync">Loading...</span>
+</div>
+</div>
+</nav>
+
+
+<main class="main-content">
+
+<header class="page-header">
+<div>
+<h1 class="page-title">Overview</h1>
+<div id="page-subtitle">—</div>
+</div>
+</header>
+
+
+<div id="loading-state">Loading dashboard data...</div>
+
+<div id="error-state" class="hidden">
+No data found. <span id="error-msg"></span>
+</div>
+
+<div id="dashboard-content" class="hidden">
+
+
+<section class="section">
+
+<h2 class="section-title">Calendar</h2>
+
+<div class="calendar-wrap" id="calendar-wrap"></div>
+
+</section>
+
+
+</div>
+</main>
+</div>
+
+
+
+<script src="assets/js/data-loader.js"></script>
+<script src="assets/js/charts.js"></script>
+
+
+
+<script>
+
+//
+// ===============================
+// FORM HELPERS
+// ===============================
+//
+
+function getFormClass(tsb)
+{
+if(tsb == null) return '';
+return tsb >= 0 ? 'fresh' : 'tired';
 }
 
-function predictTSB(lastCTL, lastATL, futureTSS = 0) {
-  const ctlTau = 42;
-  const atlTau = 7;
 
-  const newCTL = lastCTL + (futureTSS - lastCTL) / ctlTau;
-  const newATL = lastATL + (futureTSS - lastATL) / atlTau;
-
-  return newCTL - newATL;
+function predictNextCTLATL(ctl, atl, tss)
+{
+return {
+ctl: ctl + (tss - ctl) / 42,
+atl: atl + (tss - atl) / 7
+};
 }
 
 
+
+//
+// ===============================
+// LOAD DATA
+// ===============================
+//
+
+document.addEventListener('DOMContentLoaded', async () =>
+{
+
+try
+{
+
+const { activities, wellness, meta } = await DATA.loadAll();
+
+
+// sync time
+
+const updated = new Date(meta.last_updated);
+
+document.getElementById('last-sync').textContent =
+'Updated ' + updated.toLocaleDateString('en-GB',
+{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+
+// subtitle
+
+const weekNum = getISOWeekNum(new Date());
+
+document.getElementById('page-subtitle').textContent =
+`${new Date().getFullYear()} · Week ${weekNum}`;
+
+
+
+//
+// CALENDAR
+//
+
+renderCalendar(activities, wellness);
+
+
+
+document.getElementById('loading-state').classList.add('hidden');
+document.getElementById('dashboard-content').classList.remove('hidden');
+
+}
+catch(err)
+{
+
+document.getElementById('loading-state').classList.add('hidden');
+document.getElementById('error-state').classList.remove('hidden');
+document.getElementById('error-msg').textContent = err.message;
+
+console.error(err);
+
+}
+
+});
+
+
+
+//
 // ===============================
 // CALENDAR RENDER
 // ===============================
+//
 
-function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
+function renderCalendar(activities, wellness)
+{
 
-  if (!Array.isArray(days)) return;
+const wrap = document.getElementById('calendar-wrap');
 
-  let html = '';
-  let ctl = lastKnownCTL;
-  let atl = lastKnownATL;
+const today = new Date();
 
-  for (let w = 0; w < days.length; w += 7) {
+const actByDate = {};
 
-    const week = days.slice(w, w + 7);
-    if (!week.length) continue;
+activities.forEach(a =>
+{
+if(!actByDate[a.date]) actByDate[a.date] = [];
+actByDate[a.date].push(a);
+});
 
-    const firstDate = week[0]?.ds;
-    const wkNum = firstDate ? getISOWeekNum(new Date(firstDate)) : '';
 
-    html += `<div class="calendar-row">`;
-    html += `<div class="cal-week-num">W${wkNum}</div>`;
+const wellnessByDate = {};
 
-    week.forEach(day => {
+wellness.forEach(w =>
+{
+wellnessByDate[w.date] = w;
+});
 
-      if (!day) return;
 
-      const act = day.acts && day.acts.length ? day.acts[0] : null;
-      const info = act ? getTypeInfo(act.type) : null;
 
-      let tsb = null;
+//
+// find latest ctl/atl
+//
 
-      // Historical form
-      if (day.lw && day.lw.tsb != null) {
-        tsb = day.lw.tsb;
-        ctl = day.lw.ctl ?? ctl;
-        atl = day.lw.atl ?? atl;
-      }
+let ctl = null;
+let atl = null;
 
-      // Forward prediction
-      else if (ctl != null && atl != null) {
-        const tss = act?.tss || 0;
-        tsb = predictTSB(ctl, atl, tss);
-
-        ctl = ctl + (tss - ctl) / 42;
-        atl = atl + (tss - atl) / 7;
-      }
-
-      const formClass = getFormClass(tsb);
-
-      html += `
-        <div class="cal-day-cell 
-          ${!day.inRange ? 'empty' : ''} 
-          ${act ? 'has-activity' : ''} 
-          ${day.isToday ? 'today' : ''} 
-          ${formClass}
-        ">
-          <div class="cal-date-num">${day.dayNum || ''}</div>
-      `;
-
-      if (act) {
-        html += `
-          <div class="cal-activity-mini">
-            <div class="cal-mini-name ${info?.colorClass || ''}">
-              ${act.name ? act.name.substring(0, 16) : ''}
-            </div>
-            <div class="cal-mini-stats">
-              ${formatDuration ? formatDuration(act.duration) : ''} · ${act.tss || 0}tss
-            </div>
-          </div>
-        `;
-      }
-
-      html += `</div>`; // close day cell
-    });
-
-    html += `</div>`; // close week row
-  }
-
-  const el = document.getElementById('calendar-body');
-  if (el) el.innerHTML = html;
+for(let i = wellness.length - 1; i >= 0; i--)
+{
+if(wellness[i].ctl != null && wellness[i].atl != null)
+{
+ctl = wellness[i].ctl;
+atl = wellness[i].atl;
+break;
 }
 }
+
+
+
+//
+// build 5 weeks
+//
+
+const start = new Date(today);
+
+const dow = start.getDay();
+
+start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1));
+
+start.setDate(start.getDate() - 28);
+
+
+
+let html = '';
+
+const cursor = new Date(start);
+
+
+
+for(let w = 0; w < 5; w++)
+{
+
+html += `<div class="calendar-row">`;
+
+const weekNum = getISOWeekNum(cursor);
+
+html += `<div class="cal-week-num">W${weekNum}</div>`;
+
+
+for(let d = 0; d < 7; d++)
+{
+
+const ds = cursor.toISOString().split('T')[0];
+
+const acts = actByDate[ds] || [];
+
+const act = acts.length ? acts[0] : null;
+
+
+//
+// determine tsb
+//
+
+let tsb = null;
+
+const wEntry = wellnessByDate[ds];
+
+if(wEntry && wEntry.tsb != null)
+{
+tsb = wEntry.tsb;
+ctl = wEntry.ctl ?? ctl;
+atl = wEntry.atl ?? atl;
+}
+else if(ctl != null && atl != null)
+{
+tsb = ctl - atl;
+
+const next = predictNextCTLATL(ctl, atl, act?.tss || 0);
+
+ctl = next.ctl;
+atl = next.atl;
+}
+
+
+const formClass = getFormClass(tsb);
+
+
+
+html += `<div class="cal-day-cell ${formClass} ${act ? 'has-activity' : ''}">
+
+<div class="cal-date-num">${cursor.getDate()}</div>`;
+
+
+if(act)
+{
+
+html += `
+<div class="cal-activity-mini">
+
+<div class="cal-mini-name">
+${act.name.substring(0,16)}
+</div>
+
+<div class="cal-mini-stats">
+${formatDuration(act.duration)} · ${act.tss}tss
+</div>
+
+</div>
+`;
+
+}
+
+
+html += `</div>`;
+
+
+cursor.setDate(cursor.getDate() + 1);
+
+}
+
+
+html += `</div>`;
+
+}
+
+
+wrap.innerHTML = html;
+
+}
+
+</script>
+
+
+</body>
+</html>
