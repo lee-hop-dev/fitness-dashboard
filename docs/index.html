@@ -10,6 +10,7 @@ function getFormClass(tsb) {
 
 // forward predict TSB using same decay model
 function predictTSB(lastCTL, lastATL, futureTSS = 0) {
+
   const ctlTau = 42;
   const atlTau = 7;
 
@@ -36,8 +37,10 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
     const week = days.slice(w, w + 7);
     const wkNum = getISOWeekNum(new Date(week[0].ds));
 
-    html += `<div class="calendar-row">
-      <div class="cal-week-num">W${wkNum}</div>`;
+    html += `
+      <div class="calendar-row">
+        <div class="cal-week-num">W${wkNum}</div>
+    `;
 
     week.forEach(day => {
 
@@ -45,27 +48,25 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
       const info = act ? getTypeInfo(act.type) : null;
 
       // -----------------------
-      // Determine TSB for day
+      // Determine TSB
       // -----------------------
 
       let tsb = null;
 
       if (day.lw && day.lw.tsb != null) {
 
-        // historical known form
         tsb = day.lw.tsb;
 
         ctl = day.lw.ctl ?? ctl;
         atl = day.lw.atl ?? atl;
 
-      } else if (ctl != null && atl != null) {
+      }
+      else if (ctl != null && atl != null) {
 
-        // predict forward
         const tss = act?.tss || 0;
 
         tsb = predictTSB(ctl, atl, tss);
 
-        // update ctl/atl forward
         ctl = ctl + (tss - ctl) * (1 / 42);
         atl = atl + (tss - atl) * (1 / 7);
       }
@@ -73,34 +74,36 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
       const formClass = getFormClass(tsb);
 
       // -----------------------
-      // build cell
+      // Build day cell
       // -----------------------
 
       html += `
-      <div class="cal-day-cell
-        ${!day.inRange ? 'empty' : ''}
-        ${day.acts.length ? 'has-activity' : ''}
-        ${day.isToday ? 'today' : ''}
-        ${formClass}
-      ">
+        <div class="cal-day-cell
+          ${!day.inRange ? 'empty' : ''}
+          ${day.acts.length ? 'has-activity' : ''}
+          ${day.isToday ? 'today' : ''}
+          ${formClass}
+        ">
 
-        <div class="cal-date-num">${day.dayNum}</div>
+          <div class="cal-date-num">${day.dayNum}</div>
 
-        ${act ? `
-          <div class="cal-activity-mini">
+          ${act ? `
+            <div class="cal-activity-mini">
 
-            <div class="cal-mini-name ${info?.colorClass || ''}">
-              ${act.name.substring(0,16)}
+              <div class="cal-mini-name ${info?.colorClass || ''}">
+                ${act.name.substring(0,16)}
+              </div>
+
+              <div class="cal-mini-stats">
+                ${formatDuration(act.duration)} · ${act.tss}tss
+              </div>
+
             </div>
+          ` : ''}
 
-            <div class="cal-mini-stats">
-              ${formatDuration(act.duration)} · ${act.tss}tss
-            </div>
+        </div>
+      `;
 
-          </div>
-        ` : ''}
-
-      </div>`;
     });
 
     html += `</div>`;
