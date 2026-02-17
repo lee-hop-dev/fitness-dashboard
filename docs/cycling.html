@@ -180,10 +180,25 @@ if (cp) {
   }
 }
 
-        // Peak power from Intervals.icu (defensive-safe)
-        const peak1min  = Number(latest?.p1  ?? meta?.p1  ?? null);
-        const peak5min  = Number(latest?.p5  ?? meta?.p5  ?? null);
-        const peak20min = Number(latest?.p20 ?? meta?.p20 ?? cp ?? null);
+                // Peak power from Intervals.icu (supports multiple formats)
+        let peak1min  = latest?.p1  ?? meta?.p1  ?? null;
+        let peak5min  = latest?.p5  ?? meta?.p5  ?? null;
+        let peak20min = latest?.p20 ?? meta?.p20 ?? cp ?? null;
+
+        // Fallback to power_curve if direct values missing
+        if (meta?.power_curve && Array.isArray(meta.power_curve)) {
+
+            const findPower = (sec) =>
+                meta.power_curve.find(p => p.duration === sec)?.power;
+
+            peak1min  = peak1min  ?? findPower(60);
+            peak5min  = peak5min  ?? findPower(300);
+            peak20min = peak20min ?? findPower(1200);
+        }
+
+            peak1min  = Number(peak1min);
+            peak5min  = Number(peak5min);
+            peak20min = Number(peak20min);
 
         if (peak1min > 0) {
             document.getElementById('peak-1min').textContent = peak1min + 'W';
@@ -196,6 +211,7 @@ if (cp) {
         if (peak20min > 0) {
             document.getElementById('peak-20min').textContent = peak20min + 'W';
         }
+
 
 
 
