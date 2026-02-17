@@ -256,39 +256,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('page-subtitle').textContent = `${new Date().getFullYear()} · Week ${weekNum}`;
 
     // ---- METRICS ----
-    const lw = DATA.latestWellness(wellness);
-    document.getElementById('ctl-value').textContent   = lw.ctl?.toFixed(1) ?? '—';
-    document.getElementById('atl-value').textContent   = lw.atl?.toFixed(1) ?? '—';
-    const tsbLocal = (lw.ctl != null && lw.atl != null) ? (lw.ctl - lw.atl) : null;
+const lw = DATA.latestWellness(wellness);
+
+document.getElementById('ctl-value').textContent = lw.ctl?.toFixed(1) ?? '—';
+document.getElementById('atl-value').textContent = lw.atl?.toFixed(1) ?? '—';
+
+// Prefer Intervals TSB, fallback to local calculation
+let tsbValue = null;
+
+if (lw.tsb != null) {
+  tsbValue = lw.tsb; // preferred: Intervals value
+} else if (lw.ctl != null && lw.atl != null) {
+  tsbValue = lw.ctl - lw.atl; // fallback: local calculation
+}
 
 document.getElementById('tsb-value').textContent =
-  tsbLocal != null ? (tsbLocal >= 0 ? '+' : '') + tsbLocal.toFixed(1) : '—';
-    document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
-    document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
-    document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
-    const weight = athlete?.weight ?? lw.weight;
-    document.getElementById('weight-value').textContent = weight ? weight.toFixed(1) : '—';
-    if (athlete?.w_prime) {
-      const wbalEl = document.getElementById('wbal-value');
-      const wbalBar = document.getElementById('wbal-bar');
-      if (wbalEl) wbalEl.textContent = Math.round(athlete.w_prime / 1000);
-      if (wbalBar) wbalBar.style.width = Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
-    }
-    if (athlete?.ftp) { const ftpEl = document.getElementById('ftp-value'); if (ftpEl) ftpEl.textContent = athlete.ftp; }
+  tsbValue != null
+    ? (tsbValue >= 0 ? '+' : '') + tsbValue.toFixed(1)
+    : '—';
 
-    const setBar = (id, val, max) => { const el = document.getElementById(id); if (el && val) el.style.width = Math.min(100, (val/max)*100) + '%'; };
-    setBar('ctl-bar', lw.ctl, 120);
-    setBar('atl-bar', lw.atl, 120);
-    setBar('hrv-bar', lw.hrv, 100);
-    setBar('sleep-bar', lw.sleep, 10);
+document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
+document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
+document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
 
-    const ctlDelta = document.getElementById('ctl-delta');
-    const prevCtl = [...wellness].reverse().slice(7).find(w => w.ctl != null);
-    if (lw.ctl && prevCtl) {
-      const diff = (lw.ctl - prevCtl.ctl).toFixed(1);
-      ctlDelta.textContent = (diff > 0 ? '+' : '') + diff + ' this week';
-      ctlDelta.className = 'metric-delta ' + (diff >= 0 ? 'positive' : 'negative');
-    }
+const weight = athlete?.weight ?? lw.weight;
+document.getElementById('weight-value').textContent =
+  weight ? weight.toFixed(1) : '—';
+
+if (athlete?.w_prime) {
+  const wbalEl = document.getElementById('wbal-value');
+  const wbalBar = document.getElementById('wbal-bar');
+  if (wbalEl) wbalEl.textContent = Math.round(athlete.w_prime / 1000);
+  if (wbalBar) wbalBar.style.width =
+    Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
+}
+
+if (athlete?.ftp) {
+  const ftpEl = document.getElementById('ftp-value');
+  if (ftpEl) ftpEl.textContent = athlete.ftp;
+}
+
+const setBar = (id, val, max) => {
+  const el = document.getElementById(id);
+  if (el && val) el.style.width =
+    Math.min(100, (val / max) * 100) + '%';
+};
+
+setBar('ctl-bar', lw.ctl, 120);
+setBar('atl-bar', lw.atl, 120);
+setBar('hrv-bar', lw.hrv, 100);
+setBar('sleep-bar', lw.sleep, 10);
+
+// CTL delta
+const ctlDelta = document.getElementById('ctl-delta');
+const prevCtl = [...wellness].reverse().slice(7).find(w => w.ctl != null);
+
+if (lw.ctl && prevCtl) {
+  const diff = (lw.ctl - prevCtl.ctl).toFixed(1);
+  ctlDelta.textContent =
+    (diff > 0 ? '+' : '') + diff + ' this week';
+  ctlDelta.className =
+    'metric-delta ' + (diff >= 0 ? 'positive' : 'negative');
+}
+
+// TSB status (use same tsbValue logic)
+const tsbEl = document.getElementById('tsb-delta');
+
+if (tsbValue != null) {
+  tsbEl.textContent =
+    tsbValue > 10 ? 'Fresh · Ready to race' :
+    tsbValue > 0  ? 'Fresh · Ready to train' :
+    tsbValue > -10 ? 'Slight fatigue' :
+    'Fatigued';
+
+  tsbEl.className =
+    'metric-delta ' + (tsbValue >= 0 ? 'positive' : 'negative');
+}
 
     const tsbEl = document.getElementById('tsb-delta');
     if (lw.tsb != null) {
