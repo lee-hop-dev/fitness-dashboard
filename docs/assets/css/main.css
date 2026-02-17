@@ -564,18 +564,43 @@ body {
 
 .cal-day-cell.empty { opacity: 0.3; }
 
+/* Base activity day (neutral) */
 .cal-day-cell.has-activity {
-  border-color: rgba(0,229,255,0.15);
-  background: rgba(0,229,255,0.04);
+  border-color: var(--border);
+  background: var(--bg-elevated);
+}
+
+/* Fresh / positive form */
+.cal-day-cell.fresh {
+  border-color: rgba(0,255,135,0.35);
+  background: rgba(0,255,135,0.12);
+}
+
+/* Tired / fatigued */
+.cal-day-cell.tired {
+  border-color: rgba(0,229,255,0.35);
+  background: rgba(0,229,255,0.12);
+}
+
+.cal-day-cell.fresh:hover {
+  border-color: rgba(0,255,135,0.6);
+  box-shadow: 0 0 14px rgba(0,255,135,0.35);
+  transform: translateY(-1px);
+  cursor: pointer;
+}
+
+.cal-day-cell.tired:hover {
+  border-color: rgba(0,229,255,0.6);
+  box-shadow: 0 0 14px rgba(0,229,255,0.35);
+  transform: translateY(-1px);
+  cursor: pointer;
 }
 
 .cal-day-cell.has-activity:hover {
-  border-color: var(--accent-border);
-  background: var(--bg-active);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   cursor: pointer;
 }
+
 
 .cal-date-num {
   font-size: 9px;
