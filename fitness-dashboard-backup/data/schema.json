@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Fitness Activity Data Schema",
+  "description": "Standardized schema for storing activities from multiple sources",
+  
+  "activity": {
+    "type": "object",
+    "required": ["id", "source", "type", "start_date", "duration"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Unique identifier (source_id)"
+      },
+      "source": {
+        "type": "string",
+        "enum": ["intervals_icu", "strava", "concept2", "zwift"]
+      },
+      "type": {
+        "type": "string",
+        "description": "Activity type: Ride, Run, Rowing, etc."
+      },
+      "name": {
+        "type": "string",
+        "description": "Activity name/title"
+      },
+      "start_date": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 datetime"
+      },
+      "duration": {
+        "type": "number",
+        "description": "Duration in seconds"
+      },
+      "distance": {
+        "type": "number",
+        "description": "Distance in meters"
+      },
+      "elevation_gain": {
+        "type": "number",
+        "description": "Elevation gain in meters"
+      },
+      "average_hr": {
+        "type": "number",
+        "description": "Average heart rate in BPM"
+      },
+      "max_hr": {
+        "type": "number",
+        "description": "Maximum heart rate in BPM"
+      },
+      "average_power": {
+        "type": "number",
+        "description": "Average power in watts"
+      },
+      "normalized_power": {
+        "type": "number",
+        "description": "Normalized power in watts"
+      },
+      "intensity_factor": {
+        "type": "number",
+        "description": "IF (NP/FTP)"
+      },
+      "training_stress_score": {
+        "type": "number",
+        "description": "TSS"
+      },
+      "average_cadence": {
+        "type": "number",
+        "description": "Average cadence (RPM for cycling, SPM for running/rowing)"
+      },
+      "calories": {
+        "type": "number",
+        "description": "Calories burned"
+      },
+      "indoor": {
+        "type": "boolean",
+        "description": "Indoor vs outdoor activity"
+      },
+      "gear": {
+        "type": "string",
+        "description": "Equipment used (bike name, shoe, etc.)"
+      },
+      "segments": {
+        "type": "array",
+        "description": "Strava segment efforts",
+        "items": {
+          "type": "object",
+          "properties": {
+            "segment_id": {"type": "string"},
+            "segment_name": {"type": "string"},
+            "elapsed_time": {"type": "number"},
+            "pr_rank": {"type": "number"},
+            "kom_rank": {"type": "number"}
+          }
+        }
+      },
+      "race_data": {
+        "type": "object",
+        "description": "Zwift race specific data",
+        "properties": {
+          "position": {"type": "number"},
+          "category": {"type": "string"},
+          "race_name": {"type": "string"},
+          "avg_wkg": {"type": "number"},
+          "participants": {"type": "number"}
+        }
+      },
+      "rowing_data": {
+        "type": "object",
+        "description": "Concept2 specific metrics",
+        "properties": {
+          "stroke_rate": {"type": "number"},
+          "split_pace": {"type": "string"},
+          "drag_factor": {"type": "number"}
+        }
+      }
+    }
+  },
+  
+  "wellness": {
+    "type": "object",
+    "required": ["date"],
+    "properties": {
+      "date": {
+        "type": "string",
+        "format": "date"
+      },
+      "sleep_hours": {
+        "type": "number",
+        "description": "Hours of sleep"
+      },
+      "sleep_quality": {
+        "type": "number",
+        "description": "Sleep quality rating (1-10)"
+      },
+      "hrv": {
+        "type": "number",
+        "description": "Heart rate variability (RMSSD)"
+      },
+      "resting_hr": {
+        "type": "number",
+        "description": "Resting heart rate in BPM"
+      },
+      "weight": {
+        "type": "number",
+        "description": "Weight in kg"
+      },
+      "fatigue": {
+        "type": "number",
+        "description": "Fatigue rating (1-10)"
+      },
+      "mood": {
+        "type": "number",
+        "description": "Mood rating (1-10)"
+      },
+      "soreness": {
+        "type": "number",
+        "description": "Muscle soreness (1-10)"
+      }
+    }
+  },
+  
+  "training_load": {
+    "type": "object",
+    "required": ["date"],
+    "properties": {
+      "date": {
+        "type": "string",
+        "format": "date"
+      },
+      "ctl": {
+        "type": "number",
+        "description": "Chronic Training Load (Fitness)"
+      },
+      "atl": {
+        "type": "number",
+        "description": "Acute Training Load (Fatigue)"
+      },
+      "tsb": {
+        "type": "number",
+        "description": "Training Stress Balance (Form)"
+      },
+      "daily_load": {
+        "type": "number",
+        "description": "Total training load for the day"
+      }
+    }
+  }
+}

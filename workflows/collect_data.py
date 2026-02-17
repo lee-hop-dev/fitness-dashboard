@@ -1,6 +1,6 @@
 """
-FITNESS DASHBOARD — DATA COLLECTOR v4.2
-Fetches from Intervals.icu + Strava and saves to docs/data/
+FITNESS DASHBOARD — DATA COLLECTOR v4.3
+Fetches from Intervals.icu + Strava + Concept2 and saves to docs/data/
 """
 
 import os, json, time, logging, argparse, requests
@@ -15,6 +15,8 @@ API_KEY              = os.getenv('INTERVALS_API_KEY', '')
 STRAVA_CLIENT_ID     = os.getenv('STRAVA_CLIENT_ID', '')
 STRAVA_CLIENT_SECRET = os.getenv('STRAVA_CLIENT_SECRET', '')
 STRAVA_REFRESH_TOKEN = os.getenv('STRAVA_REFRESH_TOKEN', '')
+CONCEPT2_USERNAME    = os.getenv('CONCEPT2_USERNAME', '')
+CONCEPT2_PASSWORD    = os.getenv('CONCEPT2_PASSWORD', '')
 BASE_URL             = 'https://intervals.icu/api/v1'
 HISTORY_START        = '2025-01-01'
 OUTPUT_DIR           = Path(__file__).parent.parent / 'docs' / 'data'
@@ -121,6 +123,63 @@ class StravaClient:
         return data.get('segment_efforts', []) if data else []
 
 
+class Concept2Client:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.session = requests.Session()
+        self.access_token = None
+        self.token_expiry = None
+
+    def authenticate(self):
+        log.info('Authenticating with Concept2...')
+        try:
+            r = requests.post('https://log.concept2.com/api/auth/token', data={
+                'username': self.username,
+                'password': self.password,
+                'grant_type': 'password'
+            })
+            r.raise_for_status()
+            data = r.json()
+            self.access_token = data.get('access_token')
+            expires_in = data.get('expires_in', 3600)
+            self.token_expiry = datetime.now() + timedelta(seconds=expires_in)
+            self.session.headers['Authorization'] = f'Bearer {self.access_token}'
+            log.info('Concept2 authentication successful')
+            return True
+        except Exception as e:
+            log.error(f'Concept2 authentication failed: {e}')
+            return False
+
+    def _get(self, endpoint, params=None):
+        if not self.access_token or datetime.now() >= self.token_expiry:
+            if not self.authenticate():
+                return None
+        
+        url = f'https://log.concept2.com/api/{endpoint}'
+        try:
+            time.sleep(0.5)
+            r = self.session.get(url, params=params or {})
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            log.error(f'Concept2 request failed: {e}')
+            return None
+
+    def get_workouts(self, start_date):
+        log.info('Fetching Concept2 workouts...')
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        data = self._get('users/me/results', {'from': start_date, 'to': end_date})
+        
+        if data and 'data' in data:
+            workouts = data['data']
+            log.info(f'Got {len(workouts)} workouts from Concept2')
+            return workouts
+        else:
+            log.warning('No Concept2 workout data returned')
+            return []
+
+
 def process_intervals_activity(a):
     raw_if = a.get('icu_intensity')
     if_val = round(raw_if / 100, 2) if raw_if else None
@@ -186,7 +245,79 @@ def process_strava_activity(a):
     }
 
 
-def merge_activities(intervals_raw, strava_acts):
+def process_concept2_activity(w):
+    try:
+        # Enhanced time handling for Concept2's centisecond format
+        duration_raw = w.get('time', 0)
+        if duration_raw == 0:
+            print(f"⚠️ Concept2 workout missing time: {w.get('id')}")
+            return None
+            
+        # Concept2 time is in centiseconds (1/100 second)
+        duration_seconds = duration_raw / 100
+        distance = w.get('distance', 0)
+        
+        # Enhanced heart rate processing
+        hr_data = w.get('heart_rate', {})
+        avg_hr = None
+        max_hr = None
+        
+        if isinstance(hr_data, dict):
+            avg_hr = hr_data.get('average')
+            max_hr = hr_data.get('max')
+        elif isinstance(hr_data, (int, float)):
+            avg_hr = hr_data
+            
+        # Calculate average pace (seconds per 500m)
+        avg_pace = (duration_seconds / distance * 500) if distance > 0 else None
+        
+        # Enhanced workout naming
+        workout_date = w.get('date', '')[:10] if w.get('date') else 'Unknown'
+        if distance > 0:
+            workout_name = f"Concept2 Rowing - {distance}m"
+        elif duration_seconds > 0:
+            minutes = int(duration_seconds // 60)
+            seconds = int(duration_seconds % 60)
+            workout_name = f"Concept2 Rowing - {minutes}:{seconds:02d}"
+        else:
+            workout_name = "Concept2 Rowing"
+            
+        activity = {
+            'id':          f"concept2_{w.get('id', '')}",
+            'strava_id':   None,
+            'source':      'CONCEPT2',  # This is key!
+            'name':        workout_name,
+            'type':        'Rowing',    # This is key!
+            'date':        workout_date,
+            'duration':    duration_seconds,
+            'distance':    distance,
+            'elevation':   0,
+            'avg_power':   None,
+            'norm_power':  None,
+            'avg_hr':      avg_hr,
+            'max_hr':      max_hr,
+            'avg_speed':   distance / duration_seconds if duration_seconds > 0 else None,
+            'avg_cadence': w.get('stroke_rate'),  # Stroke rate in strokes per minute
+            'calories':    w.get('calories'),
+            'tss':         0,
+            'if_val':      None,
+            'ftp':         None,
+            'w_prime':     None,
+            'weight':      None,
+            'device':      'Concept2 RowErg',
+            'is_garmin':   False
+        }
+        
+        print(f"✅ Processed Concept2: {workout_name} on {workout_date}")
+        return activity
+        
+    except Exception as e:
+        print(f"❌ Error processing Concept2 workout {w.get('id', 'unknown')}: {e}")
+        print(f"Raw workout data: {w}")
+        return None
+
+
+def merge_activities(intervals_raw, strava_acts, concept2_acts):
     processed = []
     strava_ids_covered = set()
     skipped = 0
@@ -204,13 +335,21 @@ def merge_activities(intervals_raw, strava_acts):
 
     log.info(f'Intervals: {len(processed)} real activities, {skipped} stubs')
 
-    added = 0
+    added_strava = 0
     for a in strava_acts:
         if str(a.get('id','')) not in strava_ids_covered:
             processed.append(process_strava_activity(a))
-            added += 1
+            added_strava += 1
 
-    log.info(f'Strava: added {added} additional activities')
+    log.info(f'Strava: added {added_strava} additional activities')
+
+    added_concept2 = 0
+    for w in concept2_acts:
+        processed.append(process_concept2_activity(w))
+        added_concept2 += 1
+
+    log.info(f'Concept2: added {added_concept2} rowing workouts')
+
     return sorted(processed, key=lambda x: x['date'], reverse=True)
 
 
@@ -301,6 +440,7 @@ def calc_ytd(activities):
     ytd     = [a for a in activities if a['date'].startswith(year)]
     cycling = [a for a in ytd if a['type'] in ('Ride','VirtualRide')]
     running = [a for a in ytd if a['type'] in ('Run','VirtualRun')]
+    rowing  = [a for a in ytd if a['type'] in ('Rowing',)]
     def s(arr):
         return {
             'distance': round(sum(a['distance'] or 0 for a in arr)/1000),
@@ -308,7 +448,7 @@ def calc_ytd(activities):
             'tss':      sum(a['tss'] or 0 for a in arr),
             'count':    len(arr)
         }
-    return {'total': s(ytd), 'cycling': s(cycling), 'running': s(running)}
+    return {'total': s(ytd), 'cycling': s(cycling), 'running': s(running), 'rowing': s(rowing)}
 
 
 def build_heatmap(activities, days=365):
@@ -366,7 +506,18 @@ def main():
     else:
         log.warning('Strava credentials not configured')
 
-    activities = merge_activities(raw_intervals, strava_acts)
+    concept2_acts = []
+    if CONCEPT2_USERNAME and CONCEPT2_PASSWORD:
+        try:
+            concept2 = Concept2Client(CONCEPT2_USERNAME, CONCEPT2_PASSWORD)
+            if concept2.authenticate():
+                concept2_acts = concept2.get_workouts(args.oldest)
+        except Exception as e:
+            log.error(f'Concept2 fetch failed: {e}')
+    else:
+        log.warning('Concept2 credentials not configured')
+
+    activities = merge_activities(raw_intervals, strava_acts, concept2_acts)
     save_json(activities, 'activities.json')
 
     wellness = process_wellness(client.get_wellness(args.oldest))
