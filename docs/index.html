@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,181 +17,51 @@
 <div class="app">
 
 <nav class="sidebar">
-
 <div class="sidebar-brand">
 <span class="brand-initials">LH</span>
 <span class="brand-text">Training<br>OS</span>
 </div>
 
 <ul class="nav-links">
-<li class="nav-item active"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
-<li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
-<li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
-<li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
-<li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
-<li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
+<li class="nav-item active"><a href="index.html">Overview</a></li>
+<li class="nav-item"><a href="cycling.html">Cycling</a></li>
+<li class="nav-item"><a href="running.html">Running</a></li>
+<li class="nav-item"><a href="rowing.html">Rowing</a></li>
+<li class="nav-item"><a href="cardio.html">Cardio</a></li>
+<li class="nav-item"><a href="other.html">Other</a></li>
 </ul>
 
 <div class="sidebar-footer">
 <div class="sync-status">
 <span class="sync-dot"></span>
-<span class="sync-text" id="last-sync">Loading...</span>
+<span id="last-sync">Loading...</span>
 </div>
 </div>
-
 </nav>
 
 
 <main class="main-content">
 
 <header class="page-header">
-
-<div class="header-left">
-<h1 class="page-title">Overview</h1>
-<span class="page-subtitle" id="page-subtitle">—</span>
-</div>
-
-<div class="header-right">
-
 <div>
-
-<div class="year-totals">
-<div class="year-stat">
-<span class="year-stat-value" id="ytd-distance">—</span>
-<span class="year-stat-label">km YTD</span>
+<h1 class="page-title">Overview</h1>
+<div id="page-subtitle">—</div>
 </div>
-
-<div class="year-stat">
-<span class="year-stat-value" id="ytd-hours">—</span>
-<span class="year-stat-label">hrs YTD</span>
-</div>
-
-<div class="year-stat">
-<span class="year-stat-value" id="ytd-tss">—</span>
-<span class="year-stat-label">TSS YTD</span>
-</div>
-</div>
-
-
-<div class="ytd-breakdown">
-
-<div class="ytd-sport cycling">
-<span class="ytd-sport-label">⬡ Cycling</span>
-
-<div class="ytd-sport-stats">
-<div class="ytd-mini">
-<span class="ytd-mini-val" id="ytd-cy-dist">—</span>
-<span class="ytd-mini-lbl">km</span>
-</div>
-
-<div class="ytd-mini">
-<span class="ytd-mini-val" id="ytd-cy-hrs">—</span>
-<span class="ytd-mini-lbl">hrs</span>
-</div>
-
-<div class="ytd-mini">
-<span class="ytd-mini-val" id="ytd-cy-tss">—</span>
-<span class="ytd-mini-lbl">TSS</span>
-</div>
-
-</div>
-</div>
-
-
-<div class="ytd-sport running">
-<span class="ytd-sport-label">▷ Running</span>
-
-<div class="ytd-sport-stats">
-<div class="ytd-mini">
-<span class="ytd-mini-val" id="ytd-ru-dist">—</span>
-<span class="ytd-mini-lbl">km</span>
-</div>
-
-<div class="ytd-mini">
-<span class="ytd-mini-val" id="ytd-ru-hrs">—</span>
-<span class="ytd-mini-lbl">hrs</span>
-</div>
-
-<div class="ytd-mini">
-<span class="ytd-mini-val" id="ytd-ru-tss">—</span>
-<span class="ytd-mini-lbl">TSS</span>
-</div>
-
-</div>
-</div>
-
-</div>
-</div>
-</div>
-
 </header>
 
 
+<div id="loading-state">Loading dashboard data...</div>
 
-<div id="loading-state" class="loading-overlay">
-<div class="loading-spinner"></div>
-<span id="loading-msg">Loading dashboard data...</span>
+<div id="error-state" class="hidden">
+No data found. <span id="error-msg"></span>
 </div>
-
-<div id="error-state" class="error-state hidden">
-<strong>No data found.</strong>
-<span id="error-msg"></span>
-</div>
-
 
 <div id="dashboard-content" class="hidden">
 
-
-<section class="metrics-row">
-
-<div class="metric-card fitness">
-<div class="metric-label">Fitness</div>
-<div class="metric-value metric-accent" id="ctl-value">—</div>
-<div class="metric-delta" id="ctl-delta">—</div>
-<div class="metric-bar">
-<div class="metric-bar-fill" id="ctl-bar"></div>
-</div>
-<div class="metric-sub">Chronic Training Load</div>
-</div>
-
-
-<div class="metric-card fatigue">
-<div class="metric-label">Fatigue</div>
-<div class="metric-value metric-orange" id="atl-value">—</div>
-<div class="metric-delta" id="atl-delta">ATL</div>
-<div class="metric-bar">
-<div class="metric-bar-fill" id="atl-bar"></div>
-</div>
-<div class="metric-sub">Acute Training Load</div>
-</div>
-
-
-<div class="metric-card form">
-<div class="metric-label">Form</div>
-<div class="metric-value metric-green" id="tsb-value">—</div>
-<div class="metric-delta" id="tsb-delta">—</div>
-<div class="metric-bar">
-<div class="metric-bar-fill" id="tsb-bar"></div>
-</div>
-<div class="metric-sub">Training Stress Balance</div>
-</div>
-
+<section class="section">
+<h2 class="section-title">Calendar</h2>
+<div class="calendar-wrap" id="calendar-wrap"></div>
 </section>
-
-
-
-<!-- CALENDAR SECTION -->
-
-<section class="calendar-section">
-
-<div class="section-header">
-<h2>Training Calendar</h2>
-</div>
-
-<div id="calendar-body" class="calendar-grid"></div>
-
-</section>
-
 
 </div>
 </main>
@@ -200,12 +69,54 @@
 
 
 
+<script src="assets/js/data-loader.js"></script>
+<script src="assets/js/charts.js"></script>
+
+
+
 <script>
 
+//
+// ===============================
+// SAFE HELPERS
+// ===============================
+//
 
+// ISO week number fallback
+function getISOWeekNum(date)
+{
+if(!date) return '';
+
+const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+const dayNum = d.getUTCDay() || 7;
+d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+
+// duration formatter fallback
+function safeFormatDuration(sec)
+{
+if(typeof formatDuration === 'function')
+return formatDuration(sec);
+
+if(!sec) return '';
+
+const h = Math.floor(sec/3600);
+const m = Math.floor((sec%3600)/60);
+
+if(h > 0) return `${h}h ${m}m`;
+return `${m}m`;
+}
+
+
+
+//
 // ===============================
-// FORM / TSB HELPERS
+// FORM HELPERS
 // ===============================
+//
 
 function getFormClass(tsb)
 {
@@ -214,101 +125,243 @@ return tsb >= 0 ? 'fresh' : 'tired';
 }
 
 
-function predictTSB(lastCTL,lastATL,futureTSS=0)
+function predictNextCTLATL(ctl, atl, tss)
 {
-const ctlTau=42;
-const atlTau=7;
-
-const newCTL=lastCTL+(futureTSS-lastCTL)/ctlTau;
-const newATL=lastATL+(futureTSS-lastATL)/atlTau;
-
-return newCTL-newATL;
+return {
+ctl: ctl + (tss - ctl) / 42,
+atl: atl + (tss - atl) / 7
+};
 }
 
 
 
+//
+// ===============================
+// LOAD DATA
+// ===============================
+//
+
+document.addEventListener('DOMContentLoaded', async () =>
+{
+
+try
+{
+
+const { activities, wellness, meta } = await DATA.loadAll();
+
+
+// sync time
+
+if(meta?.last_updated)
+{
+const updated = new Date(meta.last_updated);
+
+document.getElementById('last-sync').textContent =
+'Updated ' + updated.toLocaleDateString('en-GB',
+{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+
+// subtitle
+
+const weekNum = getISOWeekNum(new Date());
+
+document.getElementById('page-subtitle').textContent =
+`${new Date().getFullYear()} · Week ${weekNum}`;
+
+
+
+//
+// CALENDAR
+//
+
+renderCalendar(activities || [], wellness || []);
+
+
+
+document.getElementById('loading-state').classList.add('hidden');
+document.getElementById('dashboard-content').classList.remove('hidden');
+
+}
+catch(err)
+{
+
+document.getElementById('loading-state').classList.add('hidden');
+document.getElementById('error-state').classList.remove('hidden');
+document.getElementById('error-msg').textContent = err.message;
+
+console.error(err);
+
+}
+
+});
+
+
+
+//
 // ===============================
 // CALENDAR RENDER
 // ===============================
+//
 
-function renderCalendar(days,lastKnownCTL=null,lastKnownATL=null)
+function renderCalendar(activities, wellness)
 {
 
-if(!Array.isArray(days)) return;
+const wrap = document.getElementById('calendar-wrap');
 
-let html='';
-let ctl=lastKnownCTL;
-let atl=lastKnownATL;
+if(!wrap) return;
 
-for(let w=0;w<days.length;w+=7)
+
+const today = new Date();
+
+const actByDate = {};
+
+activities.forEach(a =>
 {
+if(!a?.date) return;
 
-const week=days.slice(w,w+7);
-if(!week.length) continue;
+if(!actByDate[a.date]) actByDate[a.date] = [];
+actByDate[a.date].push(a);
+});
 
-const firstDate=week[0]?.ds;
-const wkNum=firstDate?getISOWeekNum(new Date(firstDate)):'';
 
-html+=`<div class="calendar-row">`;
-html+=`<div class="cal-week-num">W${wkNum}</div>`;
+const wellnessByDate = {};
 
-week.forEach(day=>
+wellness.forEach(w =>
 {
+if(!w?.date) return;
+wellnessByDate[w.date] = w;
+});
 
-if(!day) return;
 
-const act=day.acts?.[0]||null;
+//
+// find latest ctl/atl
+//
 
-let tsb=null;
+let ctl = null;
+let atl = null;
 
-if(day.lw && day.lw.tsb!=null)
+for(let i = wellness.length - 1; i >= 0; i--)
 {
-tsb=day.lw.tsb;
-ctl=day.lw.ctl ?? ctl;
-atl=day.lw.atl ?? atl;
+if(wellness[i]?.ctl != null && wellness[i]?.atl != null)
+{
+ctl = wellness[i].ctl;
+atl = wellness[i].atl;
+break;
+}
 }
 
-else if(ctl!=null && atl!=null)
+
+
+//
+// build 5 weeks
+//
+
+const start = new Date(today);
+
+const dow = start.getDay();
+
+start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1));
+start.setDate(start.getDate() - 28);
+
+
+let html = '';
+
+const cursor = new Date(start);
+
+
+for(let w = 0; w < 5; w++)
 {
-const tss=act?.tss||0;
 
-tsb=predictTSB(ctl,atl,tss);
+html += `<div class="calendar-row">`;
 
-ctl=ctl+(tss-ctl)/42;
-atl=atl+(tss-atl)/7;
+const weekNum = getISOWeekNum(cursor);
+
+html += `<div class="cal-week-num">W${weekNum}</div>`;
+
+
+for(let d = 0; d < 7; d++)
+{
+
+const ds = cursor.toISOString().split('T')[0];
+
+const acts = actByDate[ds] || [];
+const act = acts.length ? acts[0] : null;
+
+
+//
+// determine tsb
+//
+
+let tsb = null;
+
+const wEntry = wellnessByDate[ds];
+
+if(wEntry && wEntry.tsb != null)
+{
+tsb = wEntry.tsb;
+ctl = wEntry.ctl ?? ctl;
+atl = wEntry.atl ?? atl;
+}
+else if(ctl != null && atl != null)
+{
+tsb = ctl - atl;
+
+const next = predictNextCTLATL(ctl, atl, act?.tss || 0);
+
+ctl = next.ctl;
+atl = next.atl;
 }
 
-const formClass=getFormClass(tsb);
 
-html+=`
-<div class="cal-day-cell ${formClass}">
-<div class="cal-date-num">${day.dayNum||''}</div>
+const formClass = getFormClass(tsb);
+
+
+
+html += `<div class="cal-day-cell ${formClass} ${act ? 'has-activity' : ''}">
+
+<div class="cal-date-num">${cursor.getDate()}</div>`;
+
+
+if(act)
+{
+
+html += `
+<div class="cal-activity-mini">
+
+<div class="cal-mini-name">
+${act.name ? act.name.substring(0,16) : ''}
+</div>
+
+<div class="cal-mini-stats">
+${safeFormatDuration(act.duration)} · ${act.tss || 0}tss
+</div>
+
 </div>
 `;
 
-});
-
-html+=`</div>`;
-}
-
-const el=document.getElementById("calendar-body");
-
-if(el) el.innerHTML=html;
-
 }
 
 
+html += `</div>`;
 
-// SAFE INIT
-document.addEventListener("DOMContentLoaded",function()
-{
-console.log("Training OS ready");
-});
 
+cursor.setDate(cursor.getDate() + 1);
+
+}
+
+
+html += `</div>`;
+
+}
+
+
+wrap.innerHTML = html;
+
+}
 
 </script>
 
 
 </body>
 </html>
-```
