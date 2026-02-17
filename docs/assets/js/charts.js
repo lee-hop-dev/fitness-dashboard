@@ -372,7 +372,7 @@ function buildPaceBestsChart(canvasId, data) {
       scales: {
         x: { grid: { color: 'rgba(255,255,255,0.04)' } },
         yPace: {
-          position: 'left', reverse: false,
+          position: 'left', reverse: true,
           grid: { color: 'rgba(255,255,255,0.04)' },
           ticks: { maxTicksLimit: 5, callback: v => { const m=Math.floor(v/60); const s=Math.floor(v%60); return `${m}:${String(s).padStart(2,'0')}`; } }
         },
