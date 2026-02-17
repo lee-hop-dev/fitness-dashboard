@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rides90  = allRides.filter(a => a.date >= cutoff90);
     const rides14  = allRides.filter(a => a.date >= cutoff14);
     const ridesWk  = allRides.filter(a => a.date >= weekAgo);
+    const withPower = rides90.filter(a => a.avg_power != null);
 
     // YTD
     const year = new Date().getFullYear();
@@ -205,8 +206,8 @@ if (cp) {
     document.getElementById('cy-week-sub').textContent   = `${wkHrs.toFixed(1)} hrs · TSS ${ridesWk.reduce((s,a)=>s+(a.tss||0),0)}`;
     document.getElementById('cy-week-bar').style.width   = Math.min(100, ridesWk.length * 25) + '%';
 
-        // Power curve chart — use true Intervals.icu data
-    if (meta?.power_curve && Array.isArray(meta.power_curve)) {
+            // Power curve chart — use true Intervals.icu data if available
+    if (meta?.power_curve && Array.isArray(meta.power_curve) && meta.power_curve.length > 0) {
 
         const powerBests = meta.power_curve
             .sort((a, b) => a.duration - b.duration)
@@ -225,10 +226,11 @@ if (cp) {
             peak20min
         );
 
-    } else if (rides90.length) {
+    } else if (withPower.length > 0) {
 
-        // Fallback to estimated curve if Intervals curve missing
-        const powerBests = buildPowerBestsFromRides(rides90, cp);
+        // Safe fallback if Intervals curve not present
+        const powerBests = buildPowerBestsFromRides(withPower, cp);
+
         buildPowerCurveChart(
             'powerCurveChart',
             powerBests,
@@ -238,6 +240,7 @@ if (cp) {
             peak20min
         );
     }
+
 
 
     // Fitness chart
