@@ -19,7 +19,7 @@
     </div>
     <ul class="nav-links">
       <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
-      <li class="nav-item active"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
+      <li class="nav-item active"><a href="cycling.html"><span class="nav-icon">🚲</span><span>Cycling</span></a></li>
       <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
       <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
       <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
@@ -161,33 +161,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cy-hours').textContent     = (ytdRides.reduce((s,a)=>s+(a.duration||0),0)/3600).toFixed(1);
     document.getElementById('cy-elevation').textContent = Math.round(ytdRides.reduce((s,a)=>s+(a.elevation||0),0)).toLocaleString();
 
-    // 90-day CP estimate (best 20min power if available, else best avg_power * 0.95)
-    const withPower = rides90.filter(r => r.avg_power);
-    const cp = withPower.length
-      ? Math.round(Math.max(...withPower.map(r => r.avg_power)) * 0.95)
-      : null;
+    // TRUE Intervals CP
+const cp = latest?.cp || meta?.cp || null;
 
-    document.getElementById('cp-value').textContent = cp ? cp + 'W' : '—';
-    if (cp) {
-      const pct = Math.min(100, (cp / 400) * 100);
-      document.getElementById('cp-bar').style.width = pct + '%';
+document.getElementById('cp-value').textContent = cp ? cp + 'W' : '—';
 
-      if (weight) {
-        const wkg = (cp / weight).toFixed(2);
-        document.getElementById('wkg-value').textContent = wkg;
-        document.getElementById('wkg-sub').textContent = `at CP · ${weight}kg`;
-        document.getElementById('wkg-bar').style.width = Math.min(100, (parseFloat(wkg) / 6) * 100) + '%';
-      }
+if (cp) {
+  const pct = Math.min(100, (cp / 400) * 100);
+  document.getElementById('cp-bar').style.width = pct + '%';
+
+  if (weight) {
+    const wkg = (cp / weight).toFixed(2);
+    document.getElementById('wkg-value').textContent = wkg;
+    document.getElementById('wkg-sub').textContent = `at CP · ${weight}kg`;
+    document.getElementById('wkg-bar').style.width =
+      Math.min(100, (parseFloat(wkg) / 6) * 100) + '%';
+  }
+}
+
+        // Peak power from Intervals.icu (defensive-safe)
+    const peak1min  = Number(latest?.p1  ?? meta?.p1);
+    const peak5min  = Number(latest?.p5  ?? meta?.p5);
+    const peak20min = Number(latest?.p20 ?? meta?.p20 ?? cp);
+
+    if (!isNaN(peak1min) && peak1min > 0) {
+        document.getElementById('peak-1min').textContent = peak1min + 'W';
     }
 
-    // Peak power 1min, 5min, 20min estimates
-    const peakPower = withPower.length ? Math.round(Math.max(...withPower.map(r => r.avg_power)) * 1.5) : null;
-    const peak1min  = peakPower ? Math.round(peakPower * 0.64) : null;  // ~1min from peak
-    const peak5min  = cp ? Math.round(cp * 1.1) : null;
-    const peak20min = cp ? cp : null;
-    if (peak1min)  { document.getElementById('peak-1min').textContent  = peak1min  + 'W'; }
-    if (peak5min)  { document.getElementById('peak-5min').textContent  = peak5min  + 'W'; }
-    if (peak20min) { document.getElementById('peak-20min').textContent = peak20min + 'W'; }
+    if (!isNaN(peak5min) && peak5min > 0) {
+        document.getElementById('peak-5min').textContent = peak5min + 'W';
+    }
+
+    if (!isNaN(peak20min) && peak20min > 0) {
+        document.getElementById('peak-20min').textContent = peak20min + 'W';
+    }
+
 
     // This week
     const wkDist = ridesWk.reduce((s,a)=>s+(a.distance||0),0)/1000;
