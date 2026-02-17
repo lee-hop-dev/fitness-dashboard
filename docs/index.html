@@ -35,6 +35,9 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
   for (let w = 0; w < days.length; w += 7) {
 
     const week = days.slice(w, w + 7);
+
+    if (!week.length) continue;
+
     const wkNum = getISOWeekNum(new Date(week[0].ds));
 
     html += `
@@ -47,16 +50,12 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
       const act = day.acts?.[0] || null;
       const info = act ? getTypeInfo(act.type) : null;
 
-      // -----------------------
       // Determine TSB
-      // -----------------------
-
       let tsb = null;
 
       if (day.lw && day.lw.tsb != null) {
 
         tsb = day.lw.tsb;
-
         ctl = day.lw.ctl ?? ctl;
         atl = day.lw.atl ?? atl;
 
@@ -72,10 +71,6 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
       }
 
       const formClass = getFormClass(tsb);
-
-      // -----------------------
-      // Build day cell
-      // -----------------------
 
       html += `
         <div class="cal-day-cell
@@ -109,5 +104,10 @@ function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
     html += `</div>`;
   }
 
-  document.getElementById('calendar-body').innerHTML = html;
+  const el = document.getElementById('calendar-body');
+
+  if (el) {
+    el.innerHTML = html;
+  }
+
 }
