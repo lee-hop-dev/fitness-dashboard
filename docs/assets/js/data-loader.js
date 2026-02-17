@@ -144,18 +144,54 @@ function formatPace(secPerKm) {
   return `${Math.floor(secPerKm/60)}:${String(Math.round(secPerKm%60)).padStart(2,'0')}`;
 }
 
-function getTypeInfo(type) {
-  const map = {
-    'VirtualRide':{ label:'Cycling', colorClass:'type-ride',    dotClass:'dot-ride',    page:'cycling.html' },
-    'Ride':       { label:'Cycling', colorClass:'type-ride',    dotClass:'dot-ride',    page:'cycling.html' },
-    'VirtualRun': { label:'Running', colorClass:'type-run',     dotClass:'dot-run',     page:'running.html' },
-    'Run':        { label:'Running', colorClass:'type-run',     dotClass:'dot-run',     page:'running.html' },
-    'Rowing':     { label:'Rowing',  colorClass:'type-row',     dotClass:'dot-row',     page:'rowing.html'  },
-    'Workout':    { label:'Workout', colorClass:'type-workout', dotClass:'dot-workout', page:'cardio.html'  },
-    'Walk':       { label:'Walking', colorClass:'type-walk',    dotClass:'dot-walk',    page:'other.html'   }
+function getTypeInfo(type = '') {
+
+  const t = type.toLowerCase();
+
+  if (t.includes('ride') || t.includes('cycle')) {
+    return {
+      label: 'Cycling',
+      colorClass: 'cycling',
+      dotClass: 'dot-cycling',
+      page: 'cycling.html'
+    };
+  }
+
+  if (t.includes('run')) {
+    return {
+      label: 'Running',
+      colorClass: 'running',
+      dotClass: 'dot-running',
+      page: 'running.html'
+    };
+  }
+
+  if (t.includes('row') || t.includes('erg')) {
+    return {
+      label: 'Rowing',
+      colorClass: 'rowing',
+      dotClass: 'dot-rowing',
+      page: 'rowing.html'
+    };
+  }
+
+  if (t.includes('strength') || t.includes('cardio') || t.includes('gym')) {
+    return {
+      label: 'Cardio',
+      colorClass: 'cardio',
+      dotClass: 'dot-cardio',
+      page: 'cardio.html'
+    };
+  }
+
+  return {
+    label: 'Other',
+    colorClass: 'other',
+    dotClass: 'dot-other',
+    page: 'other.html'
   };
-  return map[type] || { label: type, colorClass:'type-default', dotClass:'dot-default', page:'other.html' };
 }
+
 
 function getISOWeekNum(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
