@@ -360,7 +360,36 @@ wrap.innerHTML = html;
 
 }
 
+<script>
+
+document.addEventListener("DOMContentLoaded", async function () {
+
+  console.log("Training OS ready");
+
+  try {
+
+   
+    console.log("Dashboard data loaded", data);
+
+    renderCalendar(data.activities, data.wellness);
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('dashboard-content').classList.remove('hidden');
+
+  } catch (err) {
+
+    console.error("Dashboard failed to load:", err);
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+    document.getElementById('error-msg').textContent = err.message;
+
+  }
+
+});
+
 </script>
+
 
 
 </body>
