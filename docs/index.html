@@ -2,20 +2,17 @@
 // FORM / TSB HELPERS
 // ===============================
 
-// classify form state -> CSS class
 function getFormClass(tsb) {
   if (tsb == null) return '';
   return tsb >= 0 ? 'fresh' : 'tired';
 }
 
-// forward predict TSB using same decay model
 function predictTSB(lastCTL, lastATL, futureTSS = 0) {
-
   const ctlTau = 42;
   const atlTau = 7;
 
-  const newCTL = lastCTL + (futureTSS - lastCTL) * (1 / ctlTau);
-  const newATL = lastATL + (futureTSS - lastATL) * (1 / atlTau);
+  const newCTL = lastCTL + (futureTSS - lastCTL) / ctlTau;
+  const newATL = lastATL + (futureTSS - lastATL) / atlTau;
 
   return newCTL - newATL;
 }
@@ -27,87 +24,79 @@ function predictTSB(lastCTL, lastATL, futureTSS = 0) {
 
 function renderCalendar(days, lastKnownCTL = null, lastKnownATL = null) {
 
-  let html = '';
+  if (!Array.isArray(days)) return;
 
+  let html = '';
   let ctl = lastKnownCTL;
   let atl = lastKnownATL;
 
   for (let w = 0; w < days.length; w += 7) {
 
     const week = days.slice(w, w + 7);
-
     if (!week.length) continue;
 
-    const wkNum = getISOWeekNum(new Date(week[0].ds));
+    const firstDate = week[0]?.ds;
+    const wkNum = firstDate ? getISOWeekNum(new Date(firstDate)) : '';
 
-    html += `
-      <div class="calendar-row">
-        <div class="cal-week-num">W${wkNum}</div>
-    `;
+    html += `<div class="calendar-row">`;
+    html += `<div class="cal-week-num">W${wkNum}</div>`;
 
     week.forEach(day => {
 
-      const act = day.acts?.[0] || null;
+      if (!day) return;
+
+      const act = day.acts && day.acts.length ? day.acts[0] : null;
       const info = act ? getTypeInfo(act.type) : null;
 
-      // Determine TSB
       let tsb = null;
 
+      // Historical form
       if (day.lw && day.lw.tsb != null) {
-
         tsb = day.lw.tsb;
         ctl = day.lw.ctl ?? ctl;
         atl = day.lw.atl ?? atl;
-
       }
+
+      // Forward prediction
       else if (ctl != null && atl != null) {
-
         const tss = act?.tss || 0;
-
         tsb = predictTSB(ctl, atl, tss);
 
-        ctl = ctl + (tss - ctl) * (1 / 42);
-        atl = atl + (tss - atl) * (1 / 7);
+        ctl = ctl + (tss - ctl) / 42;
+        atl = atl + (tss - atl) / 7;
       }
 
       const formClass = getFormClass(tsb);
 
       html += `
-        <div class="cal-day-cell
-          ${!day.inRange ? 'empty' : ''}
-          ${day.acts.length ? 'has-activity' : ''}
-          ${day.isToday ? 'today' : ''}
+        <div class="cal-day-cell 
+          ${!day.inRange ? 'empty' : ''} 
+          ${act ? 'has-activity' : ''} 
+          ${day.isToday ? 'today' : ''} 
           ${formClass}
         ">
-
-          <div class="cal-date-num">${day.dayNum}</div>
-
-          ${act ? `
-            <div class="cal-activity-mini">
-
-              <div class="cal-mini-name ${info?.colorClass || ''}">
-                ${act.name.substring(0,16)}
-              </div>
-
-              <div class="cal-mini-stats">
-                ${formatDuration(act.duration)} · ${act.tss}tss
-              </div>
-
-            </div>
-          ` : ''}
-
-        </div>
+          <div class="cal-date-num">${day.dayNum || ''}</div>
       `;
 
+      if (act) {
+        html += `
+          <div class="cal-activity-mini">
+            <div class="cal-mini-name ${info?.colorClass || ''}">
+              ${act.name ? act.name.substring(0, 16) : ''}
+            </div>
+            <div class="cal-mini-stats">
+              ${formatDuration ? formatDuration(act.duration) : ''} · ${act.tss || 0}tss
+            </div>
+          </div>
+        `;
+      }
+
+      html += `</div>`; // close day cell
     });
 
-    html += `</div>`;
+    html += `</div>`; // close week row
   }
 
   const el = document.getElementById('calendar-body');
-
-  if (el) {
-    el.innerHTML = html;
-  }
-
+  if (el) el.innerHTML = html;
 }
