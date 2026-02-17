@@ -28,7 +28,18 @@ const DATA = {
         this._load('meta.json')
       ]);
 
+        // Normalize Intervals.icu power curve for consistent access
+    if (meta) {
+      meta.power_curve =
+        meta.power_curve ||
+        meta.powerCurve ||
+        meta.best_efforts ||
+        meta.powerCurveWatts ||
+        null;
+    }
+
     return { activities, wellness, weeklyTSS, ytd, heatmap1y, heatmap3y, athlete, meta };
+
   },
 
   // Latest wellness metrics
