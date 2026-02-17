@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, meta } = await DATA.loadAll();
     const latest = DATA.latestWellness(wellness);
-    const weight = latest.weight;
+    const weight = latest?.weight ?? meta?.weight ?? null;
 
     const today = new Date().toISOString().split('T')[0];
     const cutoff90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cy-elevation').textContent = Math.round(ytdRides.reduce((s,a)=>s+(a.elevation||0),0)).toLocaleString();
 
     // TRUE Intervals CP
-const cp = latest?.cp || meta?.cp || null;
+const cp = Number(latest?.cp ?? meta?.cp ?? null);
 
 document.getElementById('cp-value').textContent = cp ? cp + 'W' : '—';
 
@@ -181,21 +181,23 @@ if (cp) {
 }
 
         // Peak power from Intervals.icu (defensive-safe)
-    const peak1min  = Number(latest?.p1  ?? meta?.p1);
-    const peak5min  = Number(latest?.p5  ?? meta?.p5);
-    const peak20min = Number(latest?.p20 ?? meta?.p20 ?? cp);
+        const peak1min  = Number(latest?.p1  ?? meta?.p1  ?? null);
+        const peak5min  = Number(latest?.p5  ?? meta?.p5  ?? null);
+        const peak20min = Number(latest?.p20 ?? meta?.p20 ?? cp ?? null);
 
-    if (!isNaN(peak1min) && peak1min > 0) {
-        document.getElementById('peak-1min').textContent = peak1min + 'W';
-    }
+        if (peak1min > 0) {
+            document.getElementById('peak-1min').textContent = peak1min + 'W';
+        }
 
-    if (!isNaN(peak5min) && peak5min > 0) {
-        document.getElementById('peak-5min').textContent = peak5min + 'W';
-    }
+        if (peak5min > 0) {
+            document.getElementById('peak-5min').textContent = peak5min + 'W';
+        }
 
-    if (!isNaN(peak20min) && peak20min > 0) {
-        document.getElementById('peak-20min').textContent = peak20min + 'W';
-    }
+        if (peak20min > 0) {
+            document.getElementById('peak-20min').textContent = peak20min + 'W';
+        }
+
+
 
 
     // This week
