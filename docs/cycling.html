@@ -205,11 +205,40 @@ if (cp) {
     document.getElementById('cy-week-sub').textContent   = `${wkHrs.toFixed(1)} hrs · TSS ${ridesWk.reduce((s,a)=>s+(a.tss||0),0)}`;
     document.getElementById('cy-week-bar').style.width   = Math.min(100, ridesWk.length * 25) + '%';
 
-    // Power curve chart
-    if (withPower.length) {
-      const powerBests = buildPowerBestsFromRides(withPower, cp);
-      buildPowerCurveChart('powerCurveChart', powerBests, null, cp, peak5min, peak20min);
+        // Power curve chart — use true Intervals.icu data
+    if (meta?.power_curve && Array.isArray(meta.power_curve)) {
+
+        const powerBests = meta.power_curve
+            .sort((a, b) => a.duration - b.duration)
+            .map(p => ({
+                label: formatDurationLabel(p.duration),
+                value: Number(p.power),
+                hr: null
+            }));
+
+        buildPowerCurveChart(
+            'powerCurveChart',
+            powerBests,
+            null,
+            cp,
+            peak5min,
+            peak20min
+        );
+
+    } else if (rides90.length) {
+
+        // Fallback to estimated curve if Intervals curve missing
+        const powerBests = buildPowerBestsFromRides(rides90, cp);
+        buildPowerCurveChart(
+            'powerCurveChart',
+            powerBests,
+            null,
+            cp,
+            peak5min,
+            peak20min
+        );
     }
+
 
     // Fitness chart
     const fitnessTrend = wellness.filter(w => w.ctl != null).slice(-42);
@@ -263,9 +292,12 @@ function buildPowerBestsFromRides(rides, cp) {
 }
 
 function formatDuration(s) {
-  if (!s) return '—';
-  return s >= 3600 ? `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m` : `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  function formatDurationLabel(seconds) {
+    if (seconds < 60) return seconds + 's';
+    if (seconds < 3600) return Math.round(seconds / 60) + 'min';
+    return Math.round(seconds / 3600) + 'h';
 }
+
 </script>
 </body>
 </html>
