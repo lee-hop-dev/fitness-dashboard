@@ -481,20 +481,38 @@ function renderCalendar(activities) {
       weekDist += acts.reduce((s,a)=>s+(a.distance||0),0);
       days.push({ ds, dayNum:cursor.getDate(), acts, isToday:ds===today.toISOString().split('T')[0], inRange:cursor<=today });
       cursor.setDate(cursor.getDate()+1);
-    }
-    const wkNum = getISOWeekNum(new Date(days[0].ds));
-    html += `<div class="calendar-row"><div class="cal-week-num">W${wkNum}</div>`;
     days.forEach(day => {
-      const act=day.acts[0];
-      const info=act?getTypeInfo(act.type):null;
-      html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}">
-        <div class="cal-date-num">${day.dayNum}</div>
-        ${act?`<div class="cal-activity-mini">
-          <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
-          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss}tss</div>
-        </div>`:''}
-      </div>`;
-    });
+  const act = day.acts[0];
+  const info = act ? getTypeInfo(act.type) : null;
+
+  // Get wellness entry for this date
+  const w = wellness.find(x => x.date === day.ds);
+
+  // Determine form class (fresh vs tired)
+  let formClass = '';
+
+  if (w) {
+    const tsb =
+      (w.tsb != null)
+        ? w.tsb
+        : (w.ctl != null && w.atl != null)
+          ? (w.ctl - w.atl)
+          : null;
+
+    if (tsb != null) {
+      formClass = tsb >= 0 ? 'fresh' : 'tired';
+    }
+  }
+
+  html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''} ${formClass}">
+    <div class="cal-date-num">${day.dayNum}</div>
+    ${act?`<div class="cal-activity-mini">
+      <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
+      <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss}tss</div>
+    </div>`:''}
+  </div>`;
+});
+
     html += `<div class="cal-week-total">
       <span class="cal-week-tss">${weekTSS}</span>
       <span class="cal-week-label">TSS</span>
