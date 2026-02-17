@@ -259,7 +259,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const lw = DATA.latestWellness(wellness);
     document.getElementById('ctl-value').textContent   = lw.ctl?.toFixed(1) ?? '—';
     document.getElementById('atl-value').textContent   = lw.atl?.toFixed(1) ?? '—';
-    document.getElementById('tsb-value').textContent   = lw.tsb != null ? (lw.tsb >= 0 ? '+' : '') + lw.tsb.toFixed(1) : '—';
+    const tsbLocal = (lw.ctl != null && lw.atl != null) ? (lw.ctl - lw.atl) : null;
+
+document.getElementById('tsb-value').textContent =
+  tsbLocal != null ? (tsbLocal >= 0 ? '+' : '') + tsbLocal.toFixed(1) : '—';
     document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
     document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
     document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
