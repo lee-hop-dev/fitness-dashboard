@@ -287,6 +287,7 @@ function buildPowerBestsFromRides(rides, cp) {
   const factors  = [3.6, 3.3, 3.1, 2.8, 2.3, 1.85, 1.65, 1.45, 1.38, 1.28, 1.18, 1.12, 1.07, 1.02, 0.96, 0.92, 0.87, 0.80];
   const hrBases  = [158, 160, 162, 165, 172, 178, 180, 182, 181, 180, 178, 177, 175, 173, 170, 168, 165, 161];
   const base = cp || Math.max(...rides.map(r => r.avg_power));
+
   return labels.map((label, i) => ({
     label,
     value: Math.round(base * factors[i]),
@@ -294,13 +295,17 @@ function buildPowerBestsFromRides(rides, cp) {
   }));
 }
 
-function formatDuration(s) {
-  function formatDurationLabel(seconds) {
-    if (seconds < 60) return seconds + 's';
-    if (seconds < 3600) return Math.round(seconds / 60) + 'min';
-    return Math.round(seconds / 3600) + 'h';
+function formatDuration(seconds) {
+  if (!seconds) return '—';
+
+  if (seconds >= 3600)
+    return `${Math.floor(seconds/3600)}h ${Math.floor((seconds%3600)/60)}m`;
+
+  return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
 }
 
-</script>
-</body>
-</html>
+function formatDurationLabel(seconds) {
+  if (seconds < 60) return seconds + 's';
+  if (seconds < 3600) return Math.round(seconds / 60) + 'min';
+  return Math.round(seconds / 3600) + 'h';
+}
