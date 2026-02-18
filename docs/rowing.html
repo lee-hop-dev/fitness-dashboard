@@ -12,6 +12,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
+<!-- ONLY CHANGE: Hide the injected Data Sources panel -->
+<style>
+#sync-info { display: none !important; }
+</style>
+
 </head>
 <body>
 
@@ -251,10 +256,10 @@ ${a.date}
 // ---------- charts ----------
 
 if(typeof renderPaceChart==="function")
-renderPaceChart(activities);
+renderPaceChart(rows);
 
 if(typeof renderVolumeChart==="function")
-renderVolumeChart(activities);
+renderVolumeChart(rows);
 
 
 }
