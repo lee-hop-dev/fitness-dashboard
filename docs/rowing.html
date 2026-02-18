@@ -1,61 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Rowing</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Rowing</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="assets/css/main.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="assets/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
-
 <body>
 
 <div class="container">
 
-  <h1>🚣 Rowing</h1>
-  <p class="subtitle">Concept2 · Erg Data</p>
+<h1>🚣 Rowing</h1>
+<p class="subtitle">Concept2 · Erg Data</p>
 
-  <!-- Personal Bests -->
-  <div class="grid-3">
-    <div class="card">
-      <h3>2K Best</h3>
-      <div id="best-2k">—</div>
-    </div>
+<div class="grid-3">
 
-    <div class="card">
-      <h3>5K Best</h3>
-      <div id="best-5k">—</div>
-    </div>
+<div class="card">
+<h3>2K Best</h3>
+<div id="best-2k">—</div>
+</div>
 
-    <div class="card">
-      <h3>60 Min Best</h3>
-      <div id="best-60m">—</div>
-    </div>
-  </div>
+<div class="card">
+<h3>5K Best</h3>
+<div id="best-5k">—</div>
+</div>
 
-  <!-- This Week -->
-  <div class="card">
-    <h2>This Week</h2>
-    <div id="week-summary">Loading...</div>
-  </div>
+<div class="card">
+<h3>60 Min Best</h3>
+<div id="best-60m">—</div>
+</div>
 
-  <!-- Recent Sessions -->
-  <div class="card">
-    <h2>Recent Rowing Sessions</h2>
-    <div id="recent-rows">Loading...</div>
-  </div>
+</div>
 
-  <!-- Charts -->
-  <div class="card">
-    <h2>Pace Trend · 30 Days</h2>
-    <canvas id="paceChart"></canvas>
-  </div>
+<div class="card">
+<h2>This Week</h2>
+<div id="week-summary">Loading...</div>
+</div>
 
-  <div class="card">
-    <h2>Volume · Weekly</h2>
-    <canvas id="volumeChart"></canvas>
-  </div>
+<div class="card">
+<h2>Recent Rowing Sessions</h2>
+<div id="recent-rows">Loading...</div>
+</div>
+
+<div class="card">
+<h2>Pace Trend · 30 Days</h2>
+<canvas id="paceChart"></canvas>
+</div>
+
+<div class="card">
+<h2>Volume · Weekly</h2>
+<canvas id="volumeChart"></canvas>
+</div>
 
 </div>
 
@@ -63,80 +61,131 @@
 <script src="assets/js/charts.js"></script>
 
 <script>
+
 document.addEventListener("DOMContentLoaded", async () => {
 
-  const activities = await loadActivities();
+try {
 
-  const rows = activities.filter(a =>
-    (a.type || '').toLowerCase().includes('row')
-  );
+const { activities } = await DATA.loadAll();
 
-  // ---------- Personal Bests ----------
-  const formatTime = s => {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2,'0')}`;
-  };
+const rows = activities.filter(a =>
+(a.type || '').toLowerCase().includes('row')
+|| (a.name || '').toLowerCase().includes('row')
+|| (a.source || '').toLowerCase().includes('concept2')
+);
 
-  const best2k = rows
-    .filter(a => a.distance >= 1900 && a.distance <= 2100)
-    .sort((a,b) => a.duration - b.duration)[0];
+function formatTime(seconds)
+{
+if (!seconds) return "—";
 
-  if (best2k) {
-    document.getElementById("best-2k").innerHTML =
-      `${formatTime(best2k.duration)}<br>${best2k.date}`;
-  }
+const m = Math.floor(seconds/60);
+const s = Math.floor(seconds%60);
 
-  const best5k = rows
-    .filter(a => a.distance >= 4900 && a.distance <= 5100)
-    .sort((a,b) => a.duration - b.duration)[0];
+return `${m}:${s.toString().padStart(2,'0')}`;
+}
 
-  if (best5k) {
-    document.getElementById("best-5k").innerHTML =
-      `${formatTime(best5k.duration)}<br>${best5k.date}`;
-  }
+//
+// BEST 2K
+//
 
-  const best60 = rows
-    .filter(a => a.duration >= 3500 && a.duration <= 3900)
-    .sort((a,b) => b.distance - a.distance)[0];
+const best2k = rows
+.filter(a => a.distance >= 1900 && a.distance <= 2100)
+.sort((a,b)=>a.duration-b.duration)[0];
 
-  if (best60) {
-    document.getElementById("best-60m").innerHTML =
-      `${(best60.distance/1000).toFixed(1)} km<br>${best60.date}`;
-  }
+if(best2k)
+{
+document.getElementById("best-2k").innerHTML =
+`${formatTime(best2k.duration)}<br>${best2k.date}`;
+}
 
-  // ---------- This Week ----------
-  const weekCutoff = new Date(Date.now() - 7*864e5)
-    .toISOString().split('T')[0];
+//
+// BEST 5K
+//
 
-  const weekRows = rows.filter(a => a.date >= weekCutoff);
+const best5k = rows
+.filter(a => a.distance >= 4900 && a.distance <= 5100)
+.sort((a,b)=>a.duration-b.duration)[0];
 
-  const totalKm = weekRows.reduce((sum,a)=>sum+(a.distance||0),0)/1000;
-  const totalMin = weekRows.reduce((sum,a)=>sum+(a.duration||0),0)/60;
+if(best5k)
+{
+document.getElementById("best-5k").innerHTML =
+`${formatTime(best5k.duration)}<br>${best5k.date}`;
+}
 
-  document.getElementById("week-summary").innerHTML =
-    `${weekRows.length} session(s) · ${totalKm.toFixed(1)} km · ${Math.round(totalMin)} min`;
+//
+// BEST 60 MIN
+//
 
-  // ---------- Recent Sessions ----------
-  const recent = rows
-    .sort((a,b)=>b.date.localeCompare(a.date))
-    .slice(0,10);
+const best60 = rows
+.filter(a => a.duration >= 3500 && a.duration <= 3900)
+.sort((a,b)=>b.distance-a.distance)[0];
 
-  const recentHtml = recent.map(a => `
-    <div class="session">
-      <strong>${a.name || 'Rowing'}</strong><br>
-      ${formatTime(a.duration)} · ${(a.distance/1000).toFixed(1)} km<br>
-      ${a.date}
-    </div>
-  `).join('');
+if(best60)
+{
+document.getElementById("best-60m").innerHTML =
+`${(best60.distance/1000).toFixed(1)} km<br>${best60.date}`;
+}
 
-  document.getElementById("recent-rows").innerHTML = recentHtml;
+//
+// THIS WEEK
+//
 
-  // ---------- Charts ----------
-  renderPaceChart(rows);
-  renderVolumeChart(rows);
+const weekCutoff =
+new Date(Date.now()-7*864e5)
+.toISOString()
+.split("T")[0];
+
+const weekRows =
+rows.filter(a => a.date >= weekCutoff);
+
+const totalKm =
+weekRows.reduce((sum,a)=>sum+(a.distance||0),0)/1000;
+
+const totalMin =
+weekRows.reduce((sum,a)=>sum+(a.duration||0),0)/60;
+
+document.getElementById("week-summary").innerHTML =
+`${weekRows.length} session(s) · ${totalKm.toFixed(1)} km · ${Math.round(totalMin)} min`;
+
+//
+// RECENT
+//
+
+const recent =
+rows.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+
+document.getElementById("recent-rows").innerHTML =
+recent.map(a=>`
+
+<div class="session">
+<strong>${a.name || "Rowing"}</strong><br>
+${formatTime(a.duration)} · ${(a.distance/1000).toFixed(1)} km<br>
+${a.date}
+</div>
+
+`).join("");
+
+//
+// CHARTS
+//
+
+if(typeof renderPaceChart === "function")
+renderPaceChart(rows);
+
+if(typeof renderVolumeChart === "function")
+renderVolumeChart(rows);
+
+}
+catch(err)
+{
+console.error(err);
+
+document.getElementById("recent-rows").innerHTML =
+"Error loading rowing data";
+}
 
 });
+
 </script>
 
 </body>
