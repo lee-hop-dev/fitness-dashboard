@@ -91,7 +91,7 @@ class IntervalsClient:
             normalized['max_hr'] = activity['max_heartrate']
         
         # Map and convert intensity factor (percentage to decimal)
-        if 'icu_intensity' in activity:
+        if 'icu_intensity' in activity and activity['icu_intensity'] is not None:
             normalized['intensity_factor'] = activity['icu_intensity'] / 100.0
         
         # Map FTP and W'bal
@@ -109,7 +109,8 @@ class IntervalsClient:
 
     def fetch_power_curve(self, days=90):
         """
-        Fetch power curve data for Critical Power calculations.
+        Fetch power curve data from Intervals.icu.
+        This gets the actual max power values at each duration.
         
         Args:
             days: Number of days to look back (default 90)
@@ -118,22 +119,22 @@ class IntervalsClient:
             dict: Power curve data with duration:watts mappings
         """
         try:
-            # Fetch power curve endpoint
-            url = f'athlete/{self.athlete_id}/power-curve'
-            params = {
-                'period': f'{days}d',
-                'type': 'power'
-            }
+            # Intervals.icu power curve endpoint
+            # GET /api/v1/athlete/{id}/power-curve
+            # Query params: oldest=YYYY-MM-DD or newest=YYYY-MM-DD
+            oldest = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
             
-            response = self._get(url, params=params)
+            response = self._get(f'athlete/{self.athlete_id}/power-curve', {
+                'oldest': oldest
+            })
             
-            # Transform into usable format
+            # Response is a list of {secs, watts} objects
             power_curve = {}
-            if response and 'curve' in response:
-                for point in response['curve']:
+            if response and isinstance(response, list):
+                for point in response:
                     duration = point.get('secs', 0)
                     watts = point.get('watts', 0)
-                    if duration > 0:
+                    if duration > 0 and watts > 0:
                         power_curve[duration] = watts
                 
                 log.info(f'Fetched power curve: {len(power_curve)} data points')
@@ -145,58 +146,6 @@ class IntervalsClient:
         except Exception as e:
             log.error(f'Error fetching power curve: {e}')
             return {}
-
-    def calculate_cp_metrics(self, power_curve):
-        """
-        Calculate Critical Power (CP) and W' from power curve data.
-        Uses 5-minute and 20-minute power values.
-        
-        Args:
-            power_curve: dict mapping duration (seconds) to watts
-        
-        Returns:
-            dict: CP metrics including CP, W', and peak powers
-        """
-        # Standard durations for CP calculation
-        DURATION_1MIN = 60
-        DURATION_5MIN = 300
-        DURATION_20MIN = 1200
-        
-        # Get power values (with fallback to 0)
-        power_1min = power_curve.get(DURATION_1MIN, 0)
-        power_5min = power_curve.get(DURATION_5MIN, 0)
-        power_20min = power_curve.get(DURATION_20MIN, 0)
-        
-        if power_5min == 0 or power_20min == 0:
-            log.warning('Insufficient data for CP calculation')
-            return {
-                'cp': 0,
-                'w_prime': 0,
-                'power_1min': power_1min,
-                'power_5min': power_5min,
-                'power_20min': power_20min
-            }
-        
-        # Calculate CP using 2-parameter model
-        # W' = (P5 - P20) * (t1 * t2) / (t2 - t1)
-        # CP = (P5 * t1 - P20 * t2) / (t1 - t2)
-        
-        t1, t2 = 300, 1200
-        p1, p2 = power_5min, power_20min
-        
-        w_prime = (p1 - p2) * (t1 * t2) / (t2 - t1)
-        cp = (p1 * t1 - p2 * t2) / (t1 - t2)
-        
-        log.info(f'Calculated CP: {cp:.1f}W, W\': {w_prime:.0f}J')
-        
-        return {
-            'cp': round(cp, 1),
-            'w_prime': round(w_prime, 0),
-            'power_1min': power_1min,
-            'power_5min': power_5min,
-            'power_20min': power_20min
-        }
-
 
 class StravaClient:
     def __init__(self, client_id, client_secret, refresh_token):
@@ -516,9 +465,8 @@ def main():
     athlete = client.get_athlete()
     raw_intervals = deduplicate(client.get_activities(args.oldest))
 
-    # Fetch power curve and calculate CP metrics
+    # Fetch power curve from Intervals.icu (full curve data for chart)
     power_curve = client.fetch_power_curve(days=90)
-    cp_metrics = client.calculate_cp_metrics(power_curve)
 
     # Fetch Strava data
     strava_acts = []
@@ -554,12 +502,28 @@ def main():
     wellness = process_wellness(client.get_wellness(args.oldest))
     save_json(wellness, 'wellness.json')
 
-    # Get latest metrics
-    weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
-    ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
-    w_prime = next((a['w_prime'] for a in activities if a.get('w_prime')), None)
+    # Get latest metrics from activities
+    weight  = next((a.get('weight')  for a in activities if a.get('weight')),  None)
+    ftp     = next((a.get('ftp')     for a in activities if a.get('ftp')),     None)
+    w_prime = next((a.get('w_prime') for a in activities if a.get('w_prime')), None)
+    
+    # Fallback to wellness data for weight
     if weight is None:
         weight = next((w['weight'] for w in reversed(wellness) if w.get('weight')), None)
+    
+    # Fallback to athlete endpoint for CP and FTP if not in activities
+    cp = athlete.get('cp', 0)
+    if ftp is None:
+        ftp = athlete.get('ftp', 0)
+    if w_prime is None:
+        w_prime = athlete.get('w_prime_balance', 0)
+    if weight is None:
+        weight = athlete.get('weight', 0)
+
+    # Get peak power values from power curve
+    power_1min = power_curve.get(60, 0)
+    power_5min = power_curve.get(300, 0)
+    power_20min = power_curve.get(1200, 0)
 
     # Save athlete data
     save_json({
@@ -567,22 +531,23 @@ def main():
         'name': athlete.get('name',''), 
         'weight': weight, 
         'ftp': ftp, 
-        'w_prime': w_prime
+        'w_prime': w_prime,
+        'cp': cp
     }, 'athlete.json')
 
     # Save cycling-specific metrics
     cycling_metrics = {
-        'cp_90d': cp_metrics['cp'],
-        'w_prime': cp_metrics['w_prime'],
+        'cp_90d': cp,  # Use Intervals.icu CP directly
+        'w_prime': w_prime,
         'ftp': ftp or 0,
         'weight': weight or 0,
-        'w_per_kg': round(cp_metrics['cp'] / weight, 2) if cp_metrics['cp'] and weight else 0,
+        'w_per_kg': round(cp / weight, 2) if cp and weight else 0,
         'peak_power': {
-            '1min': cp_metrics['power_1min'],
-            '5min': cp_metrics['power_5min'],
-            '20min': cp_metrics['power_20min']
+            '1min': power_1min,
+            '5min': power_5min,
+            '20min': power_20min
         },
-        'power_curve': power_curve,
+        'power_curve': power_curve,  # Full curve for chart
         'last_updated': datetime.now().isoformat()
     }
     save_json(cycling_metrics, 'cycling_metrics.json')
@@ -610,7 +575,7 @@ def main():
         'weight': weight, 
         'ftp': ftp, 
         'w_prime': w_prime,
-        'cp_90d': cp_metrics['cp']
+        'cp_90d': cp
     }, 'meta.json')
 
     log.info(f'Done. {len(activities)} total activities')
