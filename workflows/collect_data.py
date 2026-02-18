@@ -91,7 +91,7 @@ class IntervalsClient:
             normalized['max_hr'] = activity['max_heartrate']
         
         # Map and convert intensity factor (percentage to decimal)
-        if 'icu_intensity' in activity and activity['icu_intensity'] is not None:
+        if 'icu_intensity' in activity:
             normalized['intensity_factor'] = activity['icu_intensity'] / 100.0
         
         # Map FTP and W'bal
