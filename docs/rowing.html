@@ -1,416 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rowing — Fitness Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="assets/css/main.css">
-</head>
-<body>
-<div class="app">
-  <nav class="sidebar">
-    <div class="sidebar-brand">
-      <span class="brand-initials">LH</span>
-      <span class="brand-text">Training<br>OS</span>
-    </div>
-    <ul class="nav-links">
-      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
-      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
-      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
-      <li class="nav-item active"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
-      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
-      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
-    </ul>
-    <div class="sidebar-footer">
-      <div class="sync-status"><span class="sync-dot"></span><span class="sync-text">Synced 6:00 AM</span></div>
-    </div>
-  </nav>
-  <main class="main-content">
-    <header class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">Rowing</h1>
-        <span class="page-subtitle">Concept2 · Erg Data</span>
-      </div>
-    </header>
-    <section class="metrics-row" style="grid-template-columns:repeat(4,1fr)">
-      <div class="metric-card fitness">
-        <div class="metric-label">2K BEST</div>
-        <div class="metric-value" style="color:var(--accent)" id="best-2k">—</div>
-        <div class="metric-delta neutral" id="best-2k-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:78%"></div></div>
-        <div class="metric-sub">All-time best</div>
-      </div>
-      <div class="metric-card hrv">
-        <div class="metric-label">5K BEST</div>
-        <div class="metric-value" style="color:var(--purple)" id="best-5k">—</div>
-        <div class="metric-delta neutral" id="best-5k-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:65%;background:var(--purple)"></div></div>
-        <div class="metric-sub">All-time best</div>
-      </div>
-      <div class="metric-card form">
-        <div class="metric-label">60 MIN BEST</div>
-        <div class="metric-value" style="color:var(--green)" id="best-60min">—</div>
-        <div class="metric-delta neutral" id="best-60min-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:55%;background:var(--green)"></div></div>
-        <div class="metric-sub">All-time best</div>
-      </div>
-      <div class="metric-card sleep">
-        <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)" id="week-count">—</div>
-        <div class="metric-delta neutral" id="week-summary">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:28%;background:var(--yellow)"></div></div>
-        <div class="metric-sub" id="week-details">—</div>
-      </div>
-    </section>
-    
-    <!-- DATA SYNC STATUS -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Data Sources</h2>
-        <span class="section-meta" id="sync-status">Multiple sources detected</span>
-      </div>
-      <div id="sync-info" style="font-family:var(--font-mono);font-size:12px;padding:15px;background:var(--bg-secondary);border-radius:8px;margin-bottom:20px;">
-        <div id="sync-details">Loading data sources...</div>
-      </div>
-      
-      <!-- ERGDATA SETUP INSTRUCTIONS -->
-      <div id="ergdata-setup" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:15px;margin-bottom:20px;">
-        <h3 style="margin:0 0 10px 0;color:var(--text-primary);">📱 Add ErgData for Better Erg Tracking</h3>
-        <div style="font-size:14px;color:var(--text-secondary);line-height:1.4;">
-          <p><strong>To sync Concept2 erg workouts:</strong></p>
-          <ol style="margin:10px 0;padding-left:20px;">
-            <li>Download the <strong>ErgData</strong> app (free from Concept2)</li>
-            <li>Connect your PM5 monitor via Bluetooth</li>
-            <li>Complete a workout with ErgData connected</li>
-            <li>In ErgData, go to Settings → Connect accounts → Strava</li>
-            <li>Your erg workouts will automatically sync here</li>
-          </ol>
-          <p style="margin:10px 0 0 0;font-style:italic;">Currently showing rowing activities from Strava and other sources.</p>
-        </div>
-      </div>
-    </section>
+  <meta charset="UTF-8">
+  <title>Rowing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <section class="section">
-      <div class="section-header">
-        <h2>Recent Rowing Sessions</h2>
-        <span class="section-meta">Last 30 days · All sources</span>
-      </div>
-      <div class="activity-cards" id="row-cards">
-        <div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px">Loading rowing activities...</div>
-      </div>
-    </section>
-    <section class="charts-row" style="grid-template-columns:1fr 1fr">
-      <div class="chart-card">
-        <div class="chart-header"><h3>Pace Trend · 30 Days</h3></div>
-        <div class="chart-wrap"><canvas id="rowPaceChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-header"><h3>Volume · Weekly</h3></div>
-        <div class="chart-wrap"><canvas id="rowVolumeChart"></canvas></div>
-      </div>
-    </section>
-  </main>
+  <link rel="stylesheet" href="assets/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🚣 Rowing</h1>
+  <p class="subtitle">Concept2 · Erg Data</p>
+
+  <!-- Personal Bests -->
+  <div class="grid-3">
+    <div class="card">
+      <h3>2K Best</h3>
+      <div id="best-2k">—</div>
+    </div>
+
+    <div class="card">
+      <h3>5K Best</h3>
+      <div id="best-5k">—</div>
+    </div>
+
+    <div class="card">
+      <h3>60 Min Best</h3>
+      <div id="best-60m">—</div>
+    </div>
+  </div>
+
+  <!-- This Week -->
+  <div class="card">
+    <h2>This Week</h2>
+    <div id="week-summary">Loading...</div>
+  </div>
+
+  <!-- Recent Sessions -->
+  <div class="card">
+    <h2>Recent Rowing Sessions</h2>
+    <div id="recent-rows">Loading...</div>
+  </div>
+
+  <!-- Charts -->
+  <div class="card">
+    <h2>Pace Trend · 30 Days</h2>
+    <canvas id="paceChart"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Volume · Weekly</h2>
+    <canvas id="volumeChart"></canvas>
+  </div>
+
 </div>
 
-<script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
+<script src="assets/js/charts.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 Rowing page starting...');
-  
-  try {
-    const { activities, weeklyTSS } = await DATA.loadAll();
-    console.log('📊 Total activities loaded:', activities.length);
+document.addEventListener("DOMContentLoaded", async () => {
 
-    // ULTRA-COMPREHENSIVE ROWING FILTERING - catch everything possible
-    const rows = activities.filter(a => {
-      const type = (a.type || '').toLowerCase();
-      const name = (a.name || '').toLowerCase();
-      const description = (a.description || '').toLowerCase();
-      const source = (a.source || '').toLowerCase();
-      const sport = (a.sport || '').toLowerCase();
-      
-      // All possible rowing/erg terms
-      const rowingTerms = [
-        'row', 'rowing', 'erg', 'ergo', 'concept', 'c2', 'concept2', 
-        'indoor row', 'indoor rowing', 'ergometer', 'rower', 'sculling',
-        'sweep', 'oar', 'paddle', 'kayak', 'canoe', 'dragon boat'
-      ];
-      
-      const allText = `${type} ${name} ${description} ${source} ${sport}`.toLowerCase();
-      
-      // Check if any rowing term appears anywhere in the activity data
-      const hasRowingTerm = rowingTerms.some(term => allText.includes(term));
-      
-      // Also check exact type matches (case sensitive)
-      const exactTypeMatch = [
-        'Rowing', 'Row', 'Erg', 'Indoor Rowing', 'Concept2', 
-        'Ergometer', 'Kayaking', 'Canoeing', 'Canoe', 'Kayak'
-      ].includes(a.type);
-      
-      return hasRowingTerm || exactTypeMatch;
-    });
-    
-    console.log('🚣 Filtered rowing activities:', rows.length);
-    
-    // Detailed breakdown by source
-    const sourceBreakdown = {};
-    rows.forEach(a => {
-      const source = a.source || 'Unknown';
-      sourceBreakdown[source] = (sourceBreakdown[source] || 0) + 1;
-    });
-    console.log('📊 Rowing activities by source:', sourceBreakdown);
-    
-    // Check specifically for different erg data sources
-    const ergDataActivities = activities.filter(a => 
-      (a.source || '').toLowerCase().includes('ergdata') ||
-      (a.source || '').toLowerCase().includes('concept2') ||
-      (a.name || '').toLowerCase().includes('ergdata') ||
-      (a.description || '').toLowerCase().includes('concept2')
-    );
-    
-    const stravaRowingActivities = activities.filter(a => 
-      (a.source || '').toLowerCase().includes('strava') && 
-      ((a.type || '').toLowerCase().includes('row') || 
-       (a.name || '').toLowerCase().includes('row') ||
-       (a.sport || '').toLowerCase().includes('row'))
-    );
-    
-    console.log('📱 ErgData activities:', ergDataActivities.length);
-    console.log('🏃 Strava rowing activities:', stravaRowingActivities.length);
-    
-    // Show detailed info about found activities
-    if (rows.length > 0) {
-      console.log('📋 All rowing activities found:');
-      rows.forEach((a, i) => {
-        console.log(`${i+1}. "${a.name}" | Type: ${a.type} | Source: ${a.source} | Date: ${a.date}`);
-        if (a.distance) console.log(`   Distance: ${(a.distance/1000).toFixed(1)}km | Duration: ${Math.floor((a.duration||0)/60)}min`);
-      });
-    }
-    
-    // Update sync status display
-    const syncStatus = document.getElementById('sync-status');
-    const syncDetails = document.getElementById('sync-details');
-    
-    let statusHtml = '';
-    
-    if (ergDataActivities.length > 0) {
-      const latestErg = ergDataActivities.sort((a,b) => b.date.localeCompare(a.date))[0];
-      statusHtml += `<div style="color:var(--green);">✅ ErgData: ${ergDataActivities.length} workouts (Latest: ${latestErg.date})</div>`;
-      syncStatus.textContent = '✅ ErgData Connected';
-      syncStatus.style.color = 'var(--green)';
-    } else {
-      statusHtml += `<div style="color:var(--yellow);">⚠️ ErgData: Not connected</div>`;
-      syncStatus.textContent = `✅ ${Object.keys(sourceBreakdown).length} Sources`;
-      syncStatus.style.color = 'var(--blue)';
-    }
-    
-    if (stravaRowingActivities.length > 0) {
-      const latestStrava = stravaRowingActivities.sort((a,b) => b.date.localeCompare(a.date))[0];
-      statusHtml += `<div style="color:var(--green);">✅ Strava: ${stravaRowingActivities.length} rowing workouts (Latest: ${latestStrava.date})</div>`;
-    }
-    
-    // Show breakdown by source
-    statusHtml += '<div style="margin-top:10px;"><strong>Data Sources:</strong></div>';
-    Object.entries(sourceBreakdown).forEach(([source, count]) => {
-      statusHtml += `<div>📊 ${source}: ${count} rowing activities</div>`;
-    });
-    
-    statusHtml += `<div style="margin-top:10px;color:var(--text-muted);">📅 Last updated: ${new Date().toLocaleString()}</div>`;
-    
-    syncDetails.innerHTML = statusHtml;
+  const activities = await loadActivities();
 
-    const weekCutoff = new Date(Date.now() - 7*864e5).toISOString().split('T')[0];
-    const weekRows = rows.filter(a => a.date >= weekCutoff);
-    const recent30 = rows.filter(a => {
-      const cutoff = new Date(Date.now() - 30*864e5).toISOString().split('T')[0];
-      return a.date >= cutoff;
-    });
-    
-    console.log('📅 This week activities:', weekRows.length);
-    console.log('📅 Last 30 days activities:', recent30.length);
+  const rows = activities.filter(a =>
+    (a.type || '').toLowerCase().includes('row')
+  );
 
-    // Calculate personal bests from actual data
-    const calculatePBs = () => {
-      // 2K best (distance around 2000m, allow 10% tolerance)
-      const twoKs = rows.filter(a => a.distance && Math.abs(a.distance - 2000) < 200);
-      const best2K = twoKs.length > 0 ? Math.min(...twoKs.map(a => a.duration)) : null;
-      
-      // 5K best (distance around 5000m, allow 5% tolerance)
-      const fiveKs = rows.filter(a => a.distance && Math.abs(a.distance - 5000) < 250);
-      const best5K = fiveKs.length > 0 ? Math.min(...fiveKs.map(a => a.duration)) : null;
-      
-      // 60min best (duration around 3600 seconds, allow 10 min tolerance)
-      const sixtyMins = rows.filter(a => a.duration && Math.abs(a.duration - 3600) < 600);
-      const best60Min = sixtyMins.length > 0 ? Math.max(...sixtyMins.map(a => a.distance)) : null;
-      
-      console.log('🏆 Personal bests search:', {
-        '2K candidates': twoKs.length,
-        '5K candidates': fiveKs.length,
-        '60min candidates': sixtyMins.length,
-        best2K, best5K, best60Min
-      });
-      
-      return { best2K, best5K, best60Min };
-    };
+  // ---------- Personal Bests ----------
+  const formatTime = s => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2,'0')}`;
+  };
 
-    const { best2K, best5K, best60Min } = calculatePBs();
-    
-    // Update PB displays
-    if (best2K) {
-      const minutes = Math.floor(best2K / 60);
-      const seconds = best2K % 60;
-      const pace500 = Math.round(best2K / 4);
-      const paceMin = Math.floor(pace500 / 60);
-      const paceSec = pace500 % 60;
-      document.getElementById('best-2k').textContent = `${minutes}:${seconds.toString().padStart(2,'0')}`;
-      document.getElementById('best-2k-pace').textContent = `${paceMin}:${paceSec.toString().padStart(2,'0')}/500m`;
-    }
-    
-    if (best5K) {
-      const minutes = Math.floor(best5K / 60);
-      const seconds = best5K % 60;
-      const pace500 = Math.round(best5K / 10);
-      const paceMin = Math.floor(pace500 / 60);
-      const paceSec = pace500 % 60;
-      document.getElementById('best-5k').textContent = `${minutes}:${seconds.toString().padStart(2,'0')}`;
-      document.getElementById('best-5k-pace').textContent = `${paceMin}:${paceSec.toString().padStart(2,'0')}/500m`;
-    }
-    
-    if (best60Min) {
-      const distanceKm = (best60Min / 1000).toFixed(1);
-      const pace500 = Math.round(3600 / (best60Min / 500));
-      const paceMin = Math.floor(pace500 / 60);
-      const paceSec = pace500 % 60;
-      document.getElementById('best-60min').textContent = distanceKm;
-      document.getElementById('best-60min-pace').textContent = `km · ${paceMin}:${paceSec.toString().padStart(2,'0')}/500m`;
-    }
+  const best2k = rows
+    .filter(a => a.distance >= 1900 && a.distance <= 2100)
+    .sort((a,b) => a.duration - b.duration)[0];
 
-    // Update this week summary
-    const weekDist = weekRows.reduce((s,a) => s+(a.distance||0),0)/1000;
-    const weekHrs = weekRows.reduce((s,a) => s+(a.duration||0),0)/3600;
-    const weekTSS = weekRows.reduce((s,a) => s+(a.tss||0),0);
-    
-    document.getElementById('week-count').textContent = weekRows.length;
-    document.getElementById('week-summary').textContent = `session${weekRows.length!==1?'s':''} · ${weekDist.toFixed(0)} km`;
-    document.getElementById('week-details').textContent = `${Math.round(weekHrs * 60)} min · TSS ${weekTSS}`;
-
-    // Activity cards - FORCE DISPLAY ALL ROWING ACTIVITIES
-    const container = document.getElementById('row-cards');
-    if (container) {
-      console.log('📦 Updating activity cards with', recent30.length, 'recent activities...');
-      
-      if (recent30.length === 0) {
-        // Show helpful message with total count
-        container.innerHTML = `
-          <div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px;">
-            <div>No rowing sessions in last 30 days</div>
-            <div style="margin-top:10px;">
-              📊 Found ${rows.length} total rowing activities<br>
-              📊 Sources: ${Object.keys(sourceBreakdown).join(', ')}<br>
-              💡 Activities older than 30 days aren't shown here
-            </div>
-          </div>
-        `;
-      } else {
-        const formatDuration = (seconds) => {
-          if (!seconds) return '—';
-          const mins = Math.floor(seconds / 60);
-          const secs = seconds % 60;
-          return `${mins}:${secs.toString().padStart(2,'0')}`;
-        };
-        
-        container.innerHTML = recent30.map(a => {
-          // Convert avg_speed (m/s) to 500m split pace
-          let splitStr = '—';
-          if (a.avg_speed && a.avg_speed > 0) {
-            const split500 = Math.round(500 / a.avg_speed);
-            splitStr = Math.floor(split500/60) + ':' + String(split500%60).padStart(2,'0');
-          } else if (a.distance && a.duration && a.distance > 0) {
-            const split500 = Math.round((a.duration / a.distance) * 500);
-            splitStr = Math.floor(split500/60) + ':' + String(split500%60).padStart(2,'0');
-          }
-          
-          // Get source icon
-          const sourceIcon = a.source === 'STRAVA' ? '🏃' : 
-                           a.source === 'ERGDATA' ? '📱' : 
-                           a.source === 'ZWIFT' ? '🚴' : '📊';
-          
-          return `<div class="activity-card">
-            <div class="activity-card-type type-row"><span class="type-dot dot-row"></span>${a.type || 'Rowing'}</div>
-            <div class="activity-card-name">${a.name || 'Rowing Session'}</div>
-            <div class="activity-card-stats">
-              <div class="activity-stat"><span class="activity-stat-value">${formatDuration(a.duration)}</span><span class="activity-stat-label">Duration</span></div>
-              <div class="activity-stat"><span class="activity-stat-value">${a.distance ? (a.distance/1000).toFixed(1) : '—'}</span><span class="activity-stat-label">km</span></div>
-              <div class="activity-stat"><span class="activity-stat-value">${splitStr}</span><span class="activity-stat-label">/500m</span></div>
-              <div class="activity-stat"><span class="activity-stat-value">${a.avg_hr || '—'}</span><span class="activity-stat-label">Avg HR</span></div>
-            </div>
-            <div class="activity-card-footer"><span>${a.date} ${sourceIcon} ${a.source || 'Unknown'}</span><span class="tss-val">TSS ${a.tss || 0}</span></div>
-          </div>`;
-        }).join('');
-      }
-      
-      console.log('✅ Activity cards updated successfully');
-    }
-
-    // Build charts if we have data
-    const trendRows = rows.slice(0,20).reverse();
-    if (trendRows.length >= 2) {
-      const dates = trendRows.map(a => a.date);
-      const splits = trendRows.map(a => {
-        if (a.avg_speed && a.avg_speed > 0) {
-          return Math.round(500 / a.avg_speed);
-        } else if (a.distance && a.duration && a.distance > 0) {
-          return Math.round((a.duration / a.distance) * 500);
-        }
-        return null;
-      });
-      try {
-        buildPaceTrendChart('rowPaceChart', dates, splits);
-        console.log('📈 Pace trend chart built');
-      } catch(e) {
-        console.log('📈 Chart error:', e.message);
-      }
-    } else {
-      console.log('📈 Not enough data for pace trend chart');
-    }
-
-    const rowWeekly = weeklyTSS.slice(-12).map(w => ({
-      week: w.week,
-      year: w.year,
-      ride: 0, run: 0, row: w.row || 0, other: 0
-    }));
-    if (rowWeekly.some(w => w.row > 0)) {
-      try {
-        buildTSSChart('rowVolumeChart', rowWeekly);
-        console.log('📊 Volume chart built');
-      } catch(e) {
-        console.log('📊 Chart error:', e.message);
-      }
-    } else {
-      console.log('📊 No weekly rowing data for volume chart');
-    }
-
-    console.log('🏁 Rowing page loaded successfully');
-
-  } catch(err) {
-    console.error('💥 Rowing page error:', err);
-    const container = document.getElementById('row-cards');
-    if (container) {
-      container.innerHTML = `<div style="color:var(--red);font-family:var(--font-mono);font-size:12px;padding:20px;">
-        ❌ Error loading data: ${err.message}<br>
-        <details style="margin-top:10px;">
-          <summary>Debug Info</summary>
-          <pre style="font-size:10px;">${err.stack}</pre>
-        </details>
-      </div>`;
-    }
+  if (best2k) {
+    document.getElementById("best-2k").innerHTML =
+      `${formatTime(best2k.duration)}<br>${best2k.date}`;
   }
+
+  const best5k = rows
+    .filter(a => a.distance >= 4900 && a.distance <= 5100)
+    .sort((a,b) => a.duration - b.duration)[0];
+
+  if (best5k) {
+    document.getElementById("best-5k").innerHTML =
+      `${formatTime(best5k.duration)}<br>${best5k.date}`;
+  }
+
+  const best60 = rows
+    .filter(a => a.duration >= 3500 && a.duration <= 3900)
+    .sort((a,b) => b.distance - a.distance)[0];
+
+  if (best60) {
+    document.getElementById("best-60m").innerHTML =
+      `${(best60.distance/1000).toFixed(1)} km<br>${best60.date}`;
+  }
+
+  // ---------- This Week ----------
+  const weekCutoff = new Date(Date.now() - 7*864e5)
+    .toISOString().split('T')[0];
+
+  const weekRows = rows.filter(a => a.date >= weekCutoff);
+
+  const totalKm = weekRows.reduce((sum,a)=>sum+(a.distance||0),0)/1000;
+  const totalMin = weekRows.reduce((sum,a)=>sum+(a.duration||0),0)/60;
+
+  document.getElementById("week-summary").innerHTML =
+    `${weekRows.length} session(s) · ${totalKm.toFixed(1)} km · ${Math.round(totalMin)} min`;
+
+  // ---------- Recent Sessions ----------
+  const recent = rows
+    .sort((a,b)=>b.date.localeCompare(a.date))
+    .slice(0,10);
+
+  const recentHtml = recent.map(a => `
+    <div class="session">
+      <strong>${a.name || 'Rowing'}</strong><br>
+      ${formatTime(a.duration)} · ${(a.distance/1000).toFixed(1)} km<br>
+      ${a.date}
+    </div>
+  `).join('');
+
+  document.getElementById("recent-rows").innerHTML = recentHtml;
+
+  // ---------- Charts ----------
+  renderPaceChart(rows);
+  renderVolumeChart(rows);
+
 });
 </script>
+
 </body>
 </html>
