@@ -64,30 +64,30 @@ class IntervalsClient:
         log.info(f'Got {len(data)} wellness entries')
         return data
 
-    def get_running_bests(self, days=90):
-        """Fetch running pace bests from Intervals.icu for specified period"""
-        log.info(f'Fetching running bests (last {days} days) from Intervals.icu')
+    def get_power_curve(self):
+        """Fetch power curve data (cycling bests) from Intervals.icu"""
+        log.info('Fetching power curve from Intervals.icu')
         try:
-            # Get bests for various distances over the specified period
-            data = self._get(f'athlete/{self.athlete_id}/bests', {'type': 'RUN', 'period': f'{days}d'})
+            # Get current power curve which contains bests for various durations
+            data = self._get(f'athlete/{self.athlete_id}/power-curve')
             if data:
-                log.info(f'Got running bests: {list(data.keys()) if isinstance(data, dict) else len(data)}')
+                log.info(f'Got power curve data with {len(data) if isinstance(data, list) else "unknown"} points')
             return data
         except Exception as e:
-            log.error(f'Could not fetch running bests: {e}')
+            log.error(f'Could not fetch power curve: {e}')
             return None
 
-    def get_power_bests(self, days=90):
-        """Fetch power bests from Intervals.icu for specified period"""
-        log.info(f'Fetching power bests (last {days} days) from Intervals.icu')
+    def get_pace_curve(self):
+        """Fetch pace curve data (running bests) from Intervals.icu"""
+        log.info('Fetching pace curve from Intervals.icu')
         try:
-            # Get power bests for various durations over the specified period
-            data = self._get(f'athlete/{self.athlete_id}/bests', {'type': 'RIDE', 'period': f'{days}d'})
+            # Get current pace curve which contains bests for various distances
+            data = self._get(f'athlete/{self.athlete_id}/pace-curve')
             if data:
-                log.info(f'Got power bests: {list(data.keys()) if isinstance(data, dict) else len(data)}')
+                log.info(f'Got pace curve data with {len(data) if isinstance(data, list) else "unknown"} points')
             return data
         except Exception as e:
-            log.error(f'Could not fetch power bests: {e}')
+            log.error(f'Could not fetch pace curve: {e}')
             return None
 
 
@@ -587,23 +587,23 @@ def main():
     wellness = process_wellness(client.get_wellness(args.oldest))
     save_json(wellness, 'wellness.json')
 
-    # Fetch running bests from Intervals.icu (90-day period)
-    running_bests_90d = client.get_running_bests(days=90)
-    if running_bests_90d:
-        save_json(running_bests_90d, 'running_bests_90d.json')
-        log.info('Saved 90-day running bests from Intervals.icu')
+    # Fetch power curve (cycling bests) from Intervals.icu
+    power_curve = client.get_power_curve()
+    if power_curve:
+        save_json(power_curve, 'power_curve.json')
+        log.info('Saved power curve from Intervals.icu')
     else:
-        log.warning('Running bests not available')
-        save_json({}, 'running_bests_90d.json')
+        log.warning('Power curve not available')
+        save_json([], 'power_curve.json')
 
-    # Fetch power bests from Intervals.icu (90-day period)
-    power_bests_90d = client.get_power_bests(days=90)
-    if power_bests_90d:
-        save_json(power_bests_90d, 'power_bests_90d.json')
-        log.info('Saved 90-day power bests from Intervals.icu')
+    # Fetch pace curve (running bests) from Intervals.icu
+    pace_curve = client.get_pace_curve()
+    if pace_curve:
+        save_json(pace_curve, 'pace_curve.json')
+        log.info('Saved pace curve from Intervals.icu')
     else:
-        log.warning('Power bests not available')
-        save_json({}, 'power_bests_90d.json')
+        log.warning('Pace curve not available')
+        save_json([], 'pace_curve.json')
 
     weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
     ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
