@@ -190,38 +190,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     let best10k = null;
     
     if (paceCurves90d && Array.isArray(paceCurves90d) && paceCurves90d.length > 0) {
-      // Intervals returns array of curves, each curve has an array of points
-      // Structure: [{ label: "90d", data: [{ secs, watts, ... }, ...] }]
-      console.log('Processing Intervals 90-day pace curves');
-      const curve90d = paceCurves90d.find(c => c.label === '90d') || paceCurves90d[0];
+      console.log('=== Pace Curves Data Structure ===');
+      console.log('Number of curves:', paceCurves90d.length);
+      console.log('First curve:', JSON.stringify(paceCurves90d[0], null, 2).substring(0, 500));
       
-      if (curve90d && curve90d.data) {
-        console.log('Found curve with', curve90d.data.length, 'points');
+      // Try to find the 90d curve
+      const curve90d = paceCurves90d.find(c => c.label === '90d') || 
+                       paceCurves90d.find(c => c.id === '90d') ||
+                       paceCurves90d[0];
+      
+      console.log('Using curve:', curve90d?.label || curve90d?.id || 'first');
+      
+      if (curve90d) {
+        // Check what properties the curve has
+        console.log('Curve properties:', Object.keys(curve90d));
         
-        // Find 5000m point
-        const point5k = curve90d.data.find(p => p.secs === 5000);
-        if (point5k) {
-          best5k = point5k.pace * 5000; // pace is sec/meter, multiply by distance
-          console.log('Using Intervals 5K best:', best5k, 'seconds');
-        }
+        // The data might be directly in the curve or in a 'data' property
+        const points = curve90d.data || curve90d.points || curve90d;
         
-        // Find 10000m point
-        const point10k = curve90d.data.find(p => p.secs === 10000);
-        if (point10k) {
-          best10k = point10k.pace * 10000;
-          console.log('Using Intervals 10K best:', best10k, 'seconds');
+        if (Array.isArray(points)) {
+          console.log('Found', points.length, 'data points');
+          console.log('Sample point:', JSON.stringify(points[0]));
+          console.log('Sample point keys:', Object.keys(points[0] || {}));
+          
+          // Look for 5000m and 10000m - distance might be in different fields
+          const point5k = points.find(p => p.secs === 5000 || p.distance === 5000 || p.distM === 5000);
+          const point10k = points.find(p => p.secs === 10000 || p.distance === 10000 || p.distM === 10000);
+          
+          console.log('5K point:', point5k);
+          console.log('10K point:', point10k);
+          
+          if (point5k) {
+            // Time might be in 'time', 'secs', 'totalSecs' etc
+            best5k = point5k.time || point5k.totalSecs || point5k.secs || (point5k.pace ? point5k.pace * 5000 : null);
+            console.log('Extracted 5K time:', best5k);
+          }
+          
+          if (point10k) {
+            best10k = point10k.time || point10k.totalSecs || point10k.secs || (point10k.pace ? point10k.pace * 10000 : null);
+            console.log('Extracted 10K time:', best10k);
+          }
+        } else {
+          console.error('Points is not an array:', typeof points);
         }
       }
+    } else {
+      console.log('No pace curves data available');
     }
     
     // Display the bests
     if (best5k) {
       document.getElementById('best-5k-time').textContent = fmtTime(best5k);
       document.getElementById('best-5k-pace').textContent = fmtPaceKm(best5k, 5);
+    } else {
+      console.warn('Could not extract 5K best time');
     }
     if (best10k) {
       document.getElementById('best-10k-time').textContent = fmtTime(best10k);
       document.getElementById('best-10k-pace').textContent = fmtPaceKm(best10k, 10);
+    } else {
+      console.warn('Could not extract 10K best time');
     }
 
     // Load all-time PBs from athlete data
