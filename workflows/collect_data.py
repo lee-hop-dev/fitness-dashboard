@@ -68,8 +68,12 @@ class IntervalsClient:
         """Fetch power curves from Intervals.icu"""
         log.info(f'Fetching power curves ({period}) from Intervals.icu')
         try:
-            # Curves parameter expects array: ?curves=90d (requests handles array formatting)
-            data = self._get(f'athlete/{self.athlete_id}/power-curves', {'curves': [period]})
+            # Power curves requires 'type' parameter (sport type)
+            params = {
+                'curves': [period],
+                'type': 'Ride'  # Required parameter for power curves
+            }
+            data = self._get(f'athlete/{self.athlete_id}/power-curves', params)
             if data:
                 log.info(f'Got power curves: {len(data.get("list", []))} curves')
             return data
