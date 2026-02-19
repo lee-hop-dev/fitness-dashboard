@@ -148,6 +148,18 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, weeklyTSS, ytd, meta, athlete } = await DATA.loadAll();
+    
+    // Try to load running bests from Intervals.icu
+    let runningBests = null;
+    try {
+      const response = await fetch('data/running_bests.json');
+      if (response.ok) {
+        runningBests = await response.json();
+        console.log('Loaded running bests from Intervals.icu:', runningBests);
+      }
+    } catch(e) {
+      console.log('Running bests not available from Intervals, will calculate from activities');
+    }
 
     const year = new Date().getFullYear().toString();
     const runs = activities.filter(a => a.type === 'Run' || a.type === 'VirtualRun');
@@ -174,19 +186,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('week-stats').textContent = `runs · ${weekDist.toFixed(1)} km`;
     document.getElementById('week-hours').textContent = `${weekHrs.toFixed(1)} hrs running`;
 
-    // 5K and 10K bests from last 90 days
-    const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
-    const recent90 = runs.filter(a => a.date >= d90);
-    const best5k = best90(recent90, 5000);
-    const best10k = best90(recent90, 10000);
+    // 5K and 10K bests - use Intervals data if available
+    let best5k = null;
+    let best10k = null;
+    
+    if (runningBests) {
+      // Use Intervals.icu calculated bests
+      // Intervals typically provides bests at: 400m, 800m, 1km, 1mi, 5km, 10km, half, full
+      const best5kData = runningBests.find(b => b.secs && (b.distance === 5000 || b.label === '5k' || b.label === '5km'));
+      const best10kData = runningBests.find(b => b.secs && (b.distance === 10000 || b.label === '10k' || b.label === '10km'));
+      
+      if (best5kData) {
+        best5k = best5kData.secs;
+        console.log('Using Intervals 5K best:', best5k);
+      }
+      if (best10kData) {
+        best10k = best10kData.secs;
+        console.log('Using Intervals 10K best:', best10k);
+      }
+    }
+    
+    // Fallback: calculate from activities if Intervals data not available
+    if (!best5k || !best10k) {
+      const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
+      const recent90 = runs.filter(a => a.date >= d90);
+      console.log('90-day runs found:', recent90.length);
+      
+      if (!best5k) best5k = best90(recent90, 5000);
+      if (!best10k) best10k = best90(recent90, 10000);
+      console.log('Calculated - Best 5K:', best5k, 'Best 10K:', best10k);
+    }
     
     if (best5k) {
       document.getElementById('best-5k-time').textContent = fmtTime(best5k);
       document.getElementById('best-5k-pace').textContent = fmtPaceKm(best5k, 5);
+    } else {
+      console.warn('No 5K data available');
     }
     if (best10k) {
       document.getElementById('best-10k-time').textContent = fmtTime(best10k);
       document.getElementById('best-10k-pace').textContent = fmtPaceKm(best10k, 10);
+    } else {
+      console.warn('No 10K data available');
     }
 
     // Load all-time PBs from athlete data
@@ -246,13 +287,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 function best90(runs, distTarget) {
   // Find best time for activities close to target distance
   const margin = distTarget * 0.15;
-  const candidates = runs.filter(a => a.distance && Math.abs(a.distance - distTarget) < margin);
+  const candidates = runs.filter(a => a.distance && Math.abs(a.distance - distTarget) < margin && a.duration);
+  
+  console.log(`Looking for ${distTarget}m runs (±${margin}m tolerance)`);
+  console.log('Candidates found:', candidates.map(a => ({
+    name: a.name,
+    date: a.date,
+    distance: a.distance,
+    duration: a.duration,
+    pace: a.avg_speed ? (1000/a.avg_speed).toFixed(0) + ' sec/km' : 'N/A'
+  })));
+  
   if (!candidates.length) return null;
-  // Estimate time based on pace
+  
+  // Use actual duration, scaled to exact target distance
   return candidates.reduce((best, a) => {
-    if (!a.avg_speed) return best;
-    const t = distTarget / a.avg_speed;
-    return (!best || t < best) ? t : best;
+    if (!a.duration || !a.distance) return best;
+    // Scale the actual duration to the target distance
+    const scaledTime = (a.duration / a.distance) * distTarget;
+    console.log(`  ${a.name}: ${a.distance}m in ${a.duration}s → scaled to ${distTarget}m = ${scaledTime.toFixed(1)}s (${Math.floor(scaledTime/60)}:${Math.round(scaledTime%60).toString().padStart(2,'0')})`);
+    return (!best || scaledTime < best) ? scaledTime : best;
   }, null);
 }
 
