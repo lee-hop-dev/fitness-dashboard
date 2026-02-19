@@ -68,10 +68,10 @@ class IntervalsClient:
         """Fetch power curves from Intervals.icu"""
         log.info(f'Fetching power curves ({period}) from Intervals.icu')
         try:
-            # Curves parameter: 90d = past 90 days, 1y = past year, all = all time
-            data = self._get(f'athlete/{self.athlete_id}/power-curves', {'curves': period})
+            # Curves parameter expects array: ?curves=90d (requests handles array formatting)
+            data = self._get(f'athlete/{self.athlete_id}/power-curves', {'curves': [period]})
             if data:
-                log.info(f'Got power curves: {len(data)} curves')
+                log.info(f'Got power curves: {len(data.get("list", []))} curves')
             return data
         except Exception as e:
             log.error(f'Could not fetch power curves: {e}')
@@ -81,10 +81,10 @@ class IntervalsClient:
         """Fetch pace curves from Intervals.icu"""
         log.info(f'Fetching pace curves ({period}) from Intervals.icu')
         try:
-            # Curves parameter: 90d = past 90 days, 1y = past year, all = all time
-            data = self._get(f'athlete/{self.athlete_id}/pace-curves', {'curves': period})
+            # Curves parameter expects array: ?curves=90d (requests handles array formatting)
+            data = self._get(f'athlete/{self.athlete_id}/pace-curves', {'curves': [period]})
             if data:
-                log.info(f'Got pace curves: {len(data)} curves')
+                log.info(f'Got pace curves: {len(data.get("list", []))} curves')
             return data
         except Exception as e:
             log.error(f'Could not fetch pace curves: {e}')
