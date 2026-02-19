@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v4 fixed -->
+<!-- v5 with Intervals.icu power curves API -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -83,7 +83,7 @@
               <span style="font-size:16px;font-weight:700;color:var(--purple)" id="peak-20min">—</span>
             </div>
           </div>
-          <div class="metric-sub">W · estimated from rides</div>
+          <div class="metric-sub">W · from Intervals.icu</div>
         </div>
         <div class="metric-card sleep-card">
           <div class="metric-label">This Week</div>
@@ -141,6 +141,19 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, meta } = await DATA.loadAll();
+    
+    // Load 90-day power curves from Intervals.icu
+    let powerCurves90d = null;
+    try {
+      const response = await fetch('data/power_curves_90d.json');
+      if (response.ok) {
+        powerCurves90d = await response.json();
+        console.log('Loaded 90-day power curves from Intervals:', powerCurves90d);
+      }
+    } catch(e) {
+      console.log('90-day power curves not available');
+    }
+    
     const latest = DATA.latestWellness(wellness);
     const weight = latest?.weight ?? meta?.weight ?? null;
 
@@ -162,59 +175,96 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cy-hours').textContent     = (ytdRides.reduce((s,a)=>s+(a.duration||0),0)/3600).toFixed(1);
     document.getElementById('cy-elevation').textContent = Math.round(ytdRides.reduce((s,a)=>s+(a.elevation||0),0)).toLocaleString();
 
-    // TRUE Intervals CP
-const cp = Number(latest?.cp ?? meta?.cp ?? null);
+    // Extract power bests from Intervals power curves
+    let cp = null;
+    let peak1min = null;
+    let peak5min = null;
+    let peak20min = null;
+    let powerBests = [];
 
-document.getElementById('cp-value').textContent = cp ? cp + 'W' : '—';
+    if (powerCurves90d && powerCurves90d.list && powerCurves90d.list.length > 0) {
+      const curve = powerCurves90d.list[0]; // 90-day curve
+      console.log('Processing power curve:', curve.label);
+      
+      // API Schema: secs array has durations (in seconds), values array has watts
+      const durations = curve.secs || [];
+      const watts = curve.values || [];
+      
+      console.log('Durations available:', durations.length);
+      console.log('Watts available:', watts.length);
+      console.log('Sample durations:', durations.slice(0, 10));
+      console.log('Sample watts:', watts.slice(0, 10));
+      
+      // Build power bests array for chart
+      powerBests = durations.map((sec, idx) => ({
+        label: formatDurationLabel(sec),
+        value: watts[idx],
+        hr: null
+      }));
+      
+      // Find specific power values
+      const idx1min = durations.findIndex(s => s === 60);
+      const idx5min = durations.findIndex(s => s === 300);
+      const idx20min = durations.findIndex(s => s === 1200);
+      
+      if (idx1min >= 0) peak1min = watts[idx1min];
+      if (idx5min >= 0) peak5min = watts[idx5min];
+      if (idx20min >= 0) {
+        peak20min = watts[idx20min];
+        cp = peak20min; // CP is 20min power
+      }
+      
+      console.log('1min power:', peak1min, 'W');
+      console.log('5min power:', peak5min, 'W');
+      console.log('20min power (CP):', peak20min, 'W');
+    } else {
+      // Fallback to old method if Intervals data not available
+      cp = Number(latest?.cp ?? meta?.cp ?? null);
+      
+      peak1min  = latest?.p1  ?? meta?.p1  ?? null;
+      peak5min  = latest?.p5  ?? meta?.p5  ?? null;
+      peak20min = latest?.p20 ?? meta?.p20 ?? cp ?? null;
 
-if (cp) {
-  const pct = Math.min(100, (cp / 400) * 100);
-  document.getElementById('cp-bar').style.width = pct + '%';
+      if (meta?.power_curve && Array.isArray(meta.power_curve)) {
+        const findPower = (sec) => meta.power_curve.find(p => p.duration === sec)?.power;
+        peak1min  = peak1min  ?? findPower(60);
+        peak5min  = peak5min  ?? findPower(300);
+        peak20min = peak20min ?? findPower(1200);
+      }
 
-  if (weight) {
-    const wkg = (cp / weight).toFixed(2);
-    document.getElementById('wkg-value').textContent = wkg;
-    document.getElementById('wkg-sub').textContent = `at CP · ${weight}kg`;
-    document.getElementById('wkg-bar').style.width =
-      Math.min(100, (parseFloat(wkg) / 6) * 100) + '%';
-  }
-}
+      peak1min  = Number(peak1min);
+      peak5min  = Number(peak5min);
+      peak20min = Number(peak20min);
+    }
 
-                // Peak power from Intervals.icu (supports multiple formats)
-        let peak1min  = latest?.p1  ?? meta?.p1  ?? null;
-        let peak5min  = latest?.p5  ?? meta?.p5  ?? null;
-        let peak20min = latest?.p20 ?? meta?.p20 ?? cp ?? null;
+    // Display CP
+    document.getElementById('cp-value').textContent = cp ? cp + 'W' : '—';
 
-        // Fallback to power_curve if direct values missing
-        if (meta?.power_curve && Array.isArray(meta.power_curve)) {
+    if (cp) {
+      const pct = Math.min(100, (cp / 400) * 100);
+      document.getElementById('cp-bar').style.width = pct + '%';
 
-            const findPower = (sec) =>
-                meta.power_curve.find(p => p.duration === sec)?.power;
+      if (weight) {
+        const wkg = (cp / weight).toFixed(2);
+        document.getElementById('wkg-value').textContent = wkg;
+        document.getElementById('wkg-sub').textContent = `at CP · ${weight}kg`;
+        document.getElementById('wkg-bar').style.width =
+          Math.min(100, (parseFloat(wkg) / 6) * 100) + '%';
+      }
+    }
 
-            peak1min  = peak1min  ?? findPower(60);
-            peak5min  = peak5min  ?? findPower(300);
-            peak20min = peak20min ?? findPower(1200);
-        }
+    // Display peak powers
+    if (peak1min > 0) {
+      document.getElementById('peak-1min').textContent = peak1min + 'W';
+    }
 
-            peak1min  = Number(peak1min);
-            peak5min  = Number(peak5min);
-            peak20min = Number(peak20min);
+    if (peak5min > 0) {
+      document.getElementById('peak-5min').textContent = peak5min + 'W';
+    }
 
-        if (peak1min > 0) {
-            document.getElementById('peak-1min').textContent = peak1min + 'W';
-        }
-
-        if (peak5min > 0) {
-            document.getElementById('peak-5min').textContent = peak5min + 'W';
-        }
-
-        if (peak20min > 0) {
-            document.getElementById('peak-20min').textContent = peak20min + 'W';
-        }
-
-
-
-
+    if (peak20min > 0) {
+      document.getElementById('peak-20min').textContent = peak20min + 'W';
+    }
 
     // This week
     const wkDist = ridesWk.reduce((s,a)=>s+(a.distance||0),0)/1000;
@@ -224,42 +274,44 @@ if (cp) {
     document.getElementById('cy-week-sub').textContent   = `${wkHrs.toFixed(1)} hrs · TSS ${ridesWk.reduce((s,a)=>s+(a.tss||0),0)}`;
     document.getElementById('cy-week-bar').style.width   = Math.min(100, ridesWk.length * 25) + '%';
 
-            // Power curve chart — use true Intervals.icu data if available
-    if (meta?.power_curve && Array.isArray(meta.power_curve) && meta.power_curve.length > 0) {
+    // Power curve chart from Intervals data
+    if (powerBests.length > 0) {
+      buildPowerCurveChart(
+        'powerCurveChart',
+        powerBests,
+        null,
+        cp,
+        peak5min,
+        peak20min
+      );
+    } else if (meta?.power_curve && Array.isArray(meta.power_curve) && meta.power_curve.length > 0) {
+      const powerBests = meta.power_curve
+        .sort((a, b) => a.duration - b.duration)
+        .map(p => ({
+          label: formatDurationLabel(p.duration),
+          value: Number(p.power),
+          hr: null
+        }));
 
-        const powerBests = meta.power_curve
-            .sort((a, b) => a.duration - b.duration)
-            .map(p => ({
-                label: formatDurationLabel(p.duration),
-                value: Number(p.power),
-                hr: null
-            }));
-
-        buildPowerCurveChart(
-            'powerCurveChart',
-            powerBests,
-            null,
-            cp,
-            peak5min,
-            peak20min
-        );
-
+      buildPowerCurveChart(
+        'powerCurveChart',
+        powerBests,
+        null,
+        cp,
+        peak5min,
+        peak20min
+      );
     } else if (withPower.length > 0) {
-
-        // Safe fallback if Intervals curve not present
-        const powerBests = buildPowerBestsFromRides(withPower, cp);
-
-        buildPowerCurveChart(
-            'powerCurveChart',
-            powerBests,
-            null,
-            cp,
-            peak5min,
-            peak20min
-        );
+      const fallbackBests = buildPowerBestsFromRides(withPower, cp);
+      buildPowerCurveChart(
+        'powerCurveChart',
+        fallbackBests,
+        null,
+        cp,
+        peak5min,
+        peak20min
+      );
     }
-
-
 
     // Fitness chart
     const fitnessTrend = wellness.filter(w => w.ctl != null).slice(-42);
