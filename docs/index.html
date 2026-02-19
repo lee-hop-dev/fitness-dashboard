@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
@@ -243,11 +244,199 @@
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
 <script>
+// Helper function to build power curve line chart (same as cycling.html)
+function buildPowerCurveLineChart(canvasId, data) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  
+  const labels = data.map(d => d.label);
+  const values = data.map(d => d.value);
+  
+  // Find indices for 10s, 1min, 5min, 20min
+  const idx10s = labels.indexOf('10s');
+  const idx1min = labels.indexOf('1min');
+  const idx5min = labels.indexOf('5min');
+  const idx20min = labels.indexOf('20min');
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Power',
+        data: values,
+        borderColor: 'rgb(108, 99, 255)',
+        backgroundColor: 'rgba(108, 99, 255, 0.1)',
+        borderWidth: 2,
+        pointRadius: function(context) {
+          const index = context.dataIndex;
+          if (index === idx10s || index === idx1min || index === idx5min || index === idx20min) {
+            return 5;
+          }
+          return 0;
+        },
+        pointBackgroundColor: function(context) {
+          const index = context.dataIndex;
+          if (index === idx10s) return '#f97316';
+          if (index === idx1min) return '#22c55e';
+          if (index === idx5min) return '#6c63ff';
+          if (index === idx20min) return '#a855f7';
+          return 'rgb(108, 99, 255)';
+        },
+        pointHoverRadius: 6,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10, 10, 15, 0.95)',
+          padding: 12,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + 'W';
+            }
+          }
+        },
+        annotation: {
+          annotations: {
+            line10s: idx10s >= 0 ? {
+              type: 'line',
+              xMin: idx10s,
+              xMax: idx10s,
+              borderColor: '#f97316',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: '10s: ' + values[idx10s] + 'W',
+                position: 'start',
+                backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                color: '#fff',
+                font: { size: 10 }
+              }
+            } : {},
+            line1min: idx1min >= 0 ? {
+              type: 'line',
+              xMin: idx1min,
+              xMax: idx1min,
+              borderColor: '#22c55e',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: '1min: ' + values[idx1min] + 'W',
+                position: 'start',
+                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                color: '#fff',
+                font: { size: 10 }
+              }
+            } : {},
+            line5min: idx5min >= 0 ? {
+              type: 'line',
+              xMin: idx5min,
+              xMax: idx5min,
+              borderColor: '#6c63ff',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: '5min: ' + values[idx5min] + 'W',
+                position: 'start',
+                backgroundColor: 'rgba(108, 99, 255, 0.8)',
+                color: '#fff',
+                font: { size: 10 }
+              }
+            } : {},
+            line20min: idx20min >= 0 ? {
+              type: 'line',
+              xMin: idx20min,
+              xMax: idx20min,
+              borderColor: '#a855f7',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: '20min: ' + values[idx20min] + 'W',
+                position: 'start',
+                backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                color: '#fff',
+                font: { size: 10 }
+              }
+            } : {}
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { 
+            color: '#6b6b7e', 
+            font: { size: 11 },
+            autoSkip: true,
+            maxTicksLimit: 12,
+            callback: function(value) {
+              const label = this.getLabelForValue(value);
+              const showLabels = ['5s', '30s', '1min', '5min', '20min', '30min', '60min'];
+              return showLabels.includes(label) ? label : '';
+            }
+          }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { 
+            color: '#6b6b7e',
+            font: { size: 11 },
+            callback: function(value) {
+              return value + 'W';
+            },
+            stepSize: 50
+          },
+          beginAtZero: false
+        }
+      }
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, weeklyTSS, ytd, heatmap1y, athlete, meta } = await DATA.loadAll();
 
-    // Sync time
+    // Load 90-day curves from Intervals.icu
+    let powerCurves90d = null;
+    let paceCurves90d = null;
+    
+    try {
+      const powerResponse = await fetch('data/power_curves_90d.json');
+      if (powerResponse.ok) {
+        powerCurves90d = await response.json();
+        console.log('Loaded 90-day power curves');
+      }
+    } catch(e) {
+      console.log('Power curves not available');
+    }
+    
+    try {
+      const paceResponse = await fetch('data/pace_curves_90d.json');
+      if (paceResponse.ok) {
+        paceCurves90d = await paceResponse.json();
+        console.log('Loaded 90-day pace curves');
+      }
+    } catch(e) {
+      console.log('Pace curves not available');
+    }
+
+    // Sync time (FROM INTERVALS DATA)
     const updated = new Date(meta.last_updated);
     document.getElementById('last-sync').textContent = 'Updated ' + updated.toLocaleDateString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
 
@@ -255,94 +444,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     const weekNum = getISOWeekNum(new Date());
     document.getElementById('page-subtitle').textContent = `${new Date().getFullYear()} · Week ${weekNum}`;
 
-    // ---- METRICS ----
-const lw = DATA.latestWellness(wellness);
+    // ---- METRICS (ALL FROM INTERVALS DATA) ----
+    const lw = DATA.latestWellness(wellness);
 
-document.getElementById('ctl-value').textContent = lw.ctl?.toFixed(1) ?? '—';
-document.getElementById('atl-value').textContent = lw.atl?.toFixed(1) ?? '—';
+    document.getElementById('ctl-value').textContent = lw.ctl?.toFixed(1) ?? '—';
+    document.getElementById('atl-value').textContent = lw.atl?.toFixed(1) ?? '—';
 
-// Prefer Intervals TSB, fallback to local calculation
-let tsbValue = null;
+    // Prefer Intervals TSB, fallback to local calculation
+    let tsbValue = null;
+    if (lw.tsb != null) {
+      tsbValue = lw.tsb;
+    } else if (lw.ctl != null && lw.atl != null) {
+      tsbValue = lw.ctl - lw.atl;
+    }
 
-if (lw.tsb != null) {
-  tsbValue = lw.tsb; // preferred: Intervals value
-} else if (lw.ctl != null && lw.atl != null) {
-  tsbValue = lw.ctl - lw.atl; // fallback: local calculation
-}
+    document.getElementById('tsb-value').textContent =
+      tsbValue != null
+        ? (tsbValue >= 0 ? '+' : '') + tsbValue.toFixed(1)
+        : '—';
 
-document.getElementById('tsb-value').textContent =
-  tsbValue != null
-    ? (tsbValue >= 0 ? '+' : '') + tsbValue.toFixed(1)
-    : '—';
+    document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
+    document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
+    document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
 
-document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
-document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
-document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
+    const weight = athlete?.weight ?? lw.weight;
+    document.getElementById('weight-value').textContent =
+      weight ? weight.toFixed(1) : '—';
 
-const weight = athlete?.weight ?? lw.weight;
-document.getElementById('weight-value').textContent =
-  weight ? weight.toFixed(1) : '—';
+    // W'bal and FTP from athlete data (FROM INTERVALS)
+    if (athlete?.w_prime) {
+      const wbalEl = document.getElementById('wbal-value');
+      const wbalBar = document.getElementById('wbal-bar');
+      if (wbalEl) wbalEl.textContent = Math.round(athlete.w_prime / 1000);
+      if (wbalBar) wbalBar.style.width =
+        Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
+    }
 
-if (athlete?.w_prime) {
-  const wbalEl = document.getElementById('wbal-value');
-  const wbalBar = document.getElementById('wbal-bar');
-  if (wbalEl) wbalEl.textContent = Math.round(athlete.w_prime / 1000);
-  if (wbalBar) wbalBar.style.width =
-    Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
-}
+    if (athlete?.ftp) {
+      const ftpEl = document.getElementById('ftp-value');
+      if (ftpEl) ftpEl.textContent = athlete.ftp;
+    }
 
-if (athlete?.ftp) {
-  const ftpEl = document.getElementById('ftp-value');
-  if (ftpEl) ftpEl.textContent = athlete.ftp;
-}
+    const setBar = (id, val, max) => {
+      const el = document.getElementById(id);
+      if (el && val) el.style.width =
+        Math.min(100, (val / max) * 100) + '%';
+    };
 
-const setBar = (id, val, max) => {
-  const el = document.getElementById(id);
-  if (el && val) el.style.width =
-    Math.min(100, (val / max) * 100) + '%';
-};
+    setBar('ctl-bar', lw.ctl, 120);
+    setBar('atl-bar', lw.atl, 120);
+    setBar('hrv-bar', lw.hrv, 100);
+    setBar('sleep-bar', lw.sleep, 10);
 
-setBar('ctl-bar', lw.ctl, 120);
-setBar('atl-bar', lw.atl, 120);
-setBar('hrv-bar', lw.hrv, 100);
-setBar('sleep-bar', lw.sleep, 10);
+    // CTL delta (FROM INTERVALS DATA)
+    const ctlDelta = document.getElementById('ctl-delta');
+    const prevCtl = [...wellness].reverse().slice(7).find(w => w.ctl != null);
 
-// CTL delta
-const ctlDelta = document.getElementById('ctl-delta');
-const prevCtl = [...wellness].reverse().slice(7).find(w => w.ctl != null);
+    if (lw.ctl && prevCtl) {
+      const diff = (lw.ctl - prevCtl.ctl).toFixed(1);
+      ctlDelta.textContent =
+        (diff > 0 ? '+' : '') + diff + ' this week';
+      ctlDelta.className =
+        'metric-delta ' + (diff >= 0 ? 'positive' : 'negative');
+    }
 
-if (lw.ctl && prevCtl) {
-  const diff = (lw.ctl - prevCtl.ctl).toFixed(1);
-  ctlDelta.textContent =
-    (diff > 0 ? '+' : '') + diff + ' this week';
-  ctlDelta.className =
-    'metric-delta ' + (diff >= 0 ? 'positive' : 'negative');
-}
+    // TSB status (FROM INTERVALS DATA)
+    const tsbEl = document.getElementById('tsb-delta');
+    const tsbSource = (lw && lw.tsb != null) ? lw.tsb : tsbValue;
 
-// TSB status — prefer Intervals value, fallback to local tsbValue
+    if (tsbSource != null) {
+      tsbEl.textContent =
+        tsbSource > 10  ? 'Fresh · Ready to race' :
+        tsbSource > 0   ? 'Fresh · Ready to train' :
+        tsbSource > -10 ? 'Slight fatigue' :
+                          'Fatigued';
 
-const tsbEl = document.getElementById('tsb-delta');
+      tsbEl.className =
+        'metric-delta ' + (tsbSource >= 0 ? 'positive' : 'negative');
+    }
 
-const tsbSource =
-  (lw && lw.tsb != null)
-    ? lw.tsb        // Intervals value (preferred)
-    : tsbValue;     // local calculated fallback
-
-if (tsbSource != null) {
-
-  tsbEl.textContent =
-    tsbSource > 10  ? 'Fresh · Ready to race' :
-    tsbSource > 0   ? 'Fresh · Ready to train' :
-    tsbSource > -10 ? 'Slight fatigue' :
-                      'Fatigued';
-
-  tsbEl.className =
-    'metric-delta ' + (tsbSource >= 0 ? 'positive' : 'negative');
-
-}
-
-
-    // ---- YTD ----
+    // ---- YTD (FROM INTERVALS DATA) ----
     document.getElementById('ytd-distance').textContent = ytd.total.distance.toLocaleString();
     document.getElementById('ytd-hours').textContent    = ytd.total.hours.toFixed(1);
     document.getElementById('ytd-tss').textContent      = ytd.total.tss.toLocaleString();
@@ -384,12 +565,50 @@ if (tsbSource != null) {
       });
     });
 
-    // ---- BESTS ----
-    const powerBests = DATA.powerBests(activities);
-    const paceBests  = DATA.paceBests(activities);
-    if (powerBests.length) buildPowerBestsChart('powerBestsChart', powerBests);
-    if (paceBests.length)  buildPaceBestsChart('paceBestsChart', paceBests);
-    renderBestsTables(powerBests, paceBests);
+    // ---- 90-DAY BESTS (FROM INTERVALS API) ----
+    let powerBestsData = [];
+    let paceBestsData = [];
+    
+    // Parse power curves from Intervals
+    if (powerCurves90d && powerCurves90d.list && powerCurves90d.list.length > 0) {
+      const curve = powerCurves90d.list[0];
+      const durations = curve.secs || [];
+      const watts = curve.values || [];
+      
+      powerBestsData = durations.map((sec, idx) => ({
+        label: formatDurationLabel(sec),
+        value: watts[idx],
+        secs: sec
+      }));
+      console.log('Using Intervals power bests:', powerBestsData.length, 'points');
+    } else {
+      // Fallback to DATA.powerBests if Intervals data not available
+      powerBestsData = DATA.powerBests(activities);
+      console.log('Using fallback power bests');
+    }
+    
+    // Parse pace curves from Intervals
+    if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
+      const curve = paceCurves90d.list[0];
+      const distances = curve.distance || [];
+      const times = curve.values || [];
+      
+      paceBestsData = distances.map((distM, idx) => ({
+        label: formatDistanceLabel(distM),
+        totalSec: times[idx],
+        distM: distM
+      }));
+      console.log('Using Intervals pace bests:', paceBestsData.length, 'points');
+    } else {
+      // Fallback to DATA.paceBests if Intervals data not available
+      paceBestsData = DATA.paceBests(activities);
+      console.log('Using fallback pace bests');
+    }
+    
+    // Build charts with line instead of scatter
+    if (powerBestsData.length) buildPowerCurveLineChart('powerBestsChart', powerBestsData);
+    if (paceBestsData.length)  buildPaceBestsChart('paceBestsChart', paceBestsData);
+    renderBestsTables(powerBestsData, paceBestsData);
 
     // ---- TABS ----
     document.querySelectorAll('.tab').forEach(tab => {
@@ -411,6 +630,17 @@ if (tsbSource != null) {
     console.error(err);
   }
 });
+
+function formatDurationLabel(seconds) {
+  if (seconds < 60) return seconds + 's';
+  if (seconds < 3600) return Math.round(seconds / 60) + 'min';
+  return Math.round(seconds / 3600) + 'h';
+}
+
+function formatDistanceLabel(meters) {
+  if (meters < 1000) return meters + 'm';
+  return (meters / 1000).toFixed(1) + 'km';
+}
 
 function renderActivityCards(activities) {
   const container = document.getElementById('activity-cards');
