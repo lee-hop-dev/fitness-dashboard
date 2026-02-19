@@ -373,7 +373,8 @@ function buildPowerCurveChartLine(canvasId, data, compare, cp, p5, p20) {
   const labels = data.map(d => d.label);
   const values = data.map(d => d.value);
   
-  // Find indices for 1min, 5min, 20min
+  // Find indices for 10s, 1min, 5min, 20min
+  const idx10s = labels.indexOf('10s');
   const idx1min = labels.indexOf('1min');
   const idx5min = labels.indexOf('5min');
   const idx20min = labels.indexOf('20min');
@@ -389,15 +390,16 @@ function buildPowerCurveChartLine(canvasId, data, compare, cp, p5, p20) {
         backgroundColor: 'rgba(108, 99, 255, 0.1)',
         borderWidth: 2,
         pointRadius: function(context) {
-          // Show larger points at 1min, 5min, 20min
+          // Show larger points at 10s, 1min, 5min, 20min
           const index = context.dataIndex;
-          if (index === idx1min || index === idx5min || index === idx20min) {
+          if (index === idx10s || index === idx1min || index === idx5min || index === idx20min) {
             return 5;
           }
           return 0;
         },
         pointBackgroundColor: function(context) {
           const index = context.dataIndex;
+          if (index === idx10s) return '#f97316'; // orange
           if (index === idx1min) return '#22c55e'; // green
           if (index === idx5min) return '#6c63ff'; // purple
           if (index === idx20min) return '#a855f7'; // purple
@@ -434,6 +436,22 @@ function buildPowerCurveChartLine(canvasId, data, compare, cp, p5, p20) {
         },
         annotation: {
           annotations: {
+            line10s: idx10s >= 0 ? {
+              type: 'line',
+              xMin: idx10s,
+              xMax: idx10s,
+              borderColor: '#f97316',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: '10s: ' + values[idx10s] + 'W',
+                position: 'start',
+                backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                color: '#fff',
+                font: { size: 10 }
+              }
+            } : {},
             line1min: idx1min >= 0 ? {
               type: 'line',
               xMin: idx1min,
@@ -497,8 +515,8 @@ function buildPowerCurveChartLine(canvasId, data, compare, cp, p5, p20) {
             minRotation: 0,
             callback: function(value, index) {
               const label = this.getLabelForValue(value);
-              // Show only key labels: 5s, 30s, 1min, 5min, 10min, 20min, 30min, 60min
-              const showLabels = ['5s', '30s', '1min', '5min', '10min', '20min', '30min', '60min'];
+              // Show only key labels: 5s, 30s, 1min, 5min, 20min, 30min, 60min (removed 10min)
+              const showLabels = ['5s', '30s', '1min', '5min', '20min', '30min', '60min'];
               return showLabels.includes(label) ? label : '';
             }
           }
