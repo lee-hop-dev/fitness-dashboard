@@ -64,15 +64,30 @@ class IntervalsClient:
         log.info(f'Got {len(data)} wellness entries')
         return data
 
-    def get_running_bests(self):
-        """Fetch running pace bests from Intervals.icu"""
-        log.info('Fetching running pace bests from Intervals.icu')
+    def get_running_bests(self, days=90):
+        """Fetch running pace bests from Intervals.icu for specified period"""
+        log.info(f'Fetching running bests (last {days} days) from Intervals.icu')
         try:
-            # Intervals calculates bests for various distances
-            data = self._get(f'athlete/{self.athlete_id}/pace-bests')
+            # Get bests for various distances over the specified period
+            data = self._get(f'athlete/{self.athlete_id}/bests', {'type': 'RUN', 'period': f'{days}d'})
+            if data:
+                log.info(f'Got running bests: {list(data.keys()) if isinstance(data, dict) else len(data)}')
             return data
         except Exception as e:
-            log.warning(f'Could not fetch pace bests: {e}')
+            log.error(f'Could not fetch running bests: {e}')
+            return None
+
+    def get_power_bests(self, days=90):
+        """Fetch power bests from Intervals.icu for specified period"""
+        log.info(f'Fetching power bests (last {days} days) from Intervals.icu')
+        try:
+            # Get power bests for various durations over the specified period
+            data = self._get(f'athlete/{self.athlete_id}/bests', {'type': 'RIDE', 'period': f'{days}d'})
+            if data:
+                log.info(f'Got power bests: {list(data.keys()) if isinstance(data, dict) else len(data)}')
+            return data
+        except Exception as e:
+            log.error(f'Could not fetch power bests: {e}')
             return None
 
 
@@ -572,13 +587,23 @@ def main():
     wellness = process_wellness(client.get_wellness(args.oldest))
     save_json(wellness, 'wellness.json')
 
-    # Fetch running pace bests from Intervals.icu
-    running_bests = client.get_running_bests()
-    if running_bests:
-        save_json(running_bests, 'running_bests.json')
-        log.info('Saved running bests from Intervals.icu')
+    # Fetch running bests from Intervals.icu (90-day period)
+    running_bests_90d = client.get_running_bests(days=90)
+    if running_bests_90d:
+        save_json(running_bests_90d, 'running_bests_90d.json')
+        log.info('Saved 90-day running bests from Intervals.icu')
     else:
-        log.warning('Running bests not available, will calculate from activities')
+        log.warning('Running bests not available')
+        save_json({}, 'running_bests_90d.json')
+
+    # Fetch power bests from Intervals.icu (90-day period)
+    power_bests_90d = client.get_power_bests(days=90)
+    if power_bests_90d:
+        save_json(power_bests_90d, 'power_bests_90d.json')
+        log.info('Saved 90-day power bests from Intervals.icu')
+    else:
+        log.warning('Power bests not available')
+        save_json({}, 'power_bests_90d.json')
 
     weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
     ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
