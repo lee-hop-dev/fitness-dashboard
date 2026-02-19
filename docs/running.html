@@ -192,41 +192,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
       console.log('=== Pace Curves Data Structure ===');
       const curve = paceCurves90d.list[0];
-      console.log('Curve:', curve.label, '(', curve.days, 'days )');
-      console.log('Curve keys:', Object.keys(curve));
+      console.log('Curve:', curve.label);
       
-      // The actual data points are likely in a property like 'data', 'points', 'values', etc.
-      const dataKey = Object.keys(curve).find(k => 
-        Array.isArray(curve[k]) && curve[k].length > 5
-      );
+      // Find all array properties
+      const arrayProps = Object.keys(curve).filter(k => Array.isArray(curve[k]));
+      console.log('Array properties:', arrayProps);
       
-      console.log('Data array key:', dataKey);
+      // Show first few values of each array
+      arrayProps.forEach(prop => {
+        console.log(`${prop}:`, curve[prop].slice(0, 5), '... (', curve[prop].length, 'items)');
+      });
       
-      if (dataKey) {
-        const points = curve[dataKey];
-        console.log('Found', points.length, 'data points');
-        console.log('First point:', points[0]);
-        console.log('Point keys:', Object.keys(points[0]));
-        
-        // Look for 5000m and 10000m points
-        const point5k = points.find(p => p.secs === 5000);
-        const point10k = points.find(p => p.secs === 10000);
-        
-        console.log('5K point:', point5k);
-        console.log('10K point:', point10k);
-        
-        if (point5k) {
-          best5k = point5k.watts;
-          console.log('5K best time:', best5k, 'seconds');
-        }
-        
-        if (point10k) {
-          best10k = point10k.watts;
-          console.log('10K best time:', best10k, 'seconds');
-        }
-      } else {
-        console.error('Could not find data array in curve');
-        console.log('Full curve object:', curve);
+      // Typical structure: distance array has distances, watts/time/secs array has times
+      // Find index of 5000m and 10000m in distance array
+      const distances = curve.distance || [];
+      const times = curve.watts || curve.time || curve.secs || [];
+      
+      console.log('Using distances:', distances.slice(0, 10));
+      console.log('Using times:', times.slice(0, 10));
+      
+      const idx5k = distances.findIndex(d => Math.abs(d - 5000) < 10);
+      const idx10k = distances.findIndex(d => Math.abs(d - 10000) < 10);
+      
+      console.log('5K index:', idx5k, 'distance:', distances[idx5k]);
+      console.log('10K index:', idx10k, 'distance:', distances[idx10k]);
+      
+      if (idx5k >= 0 && times[idx5k]) {
+        best5k = times[idx5k];
+        console.log('5K best time:', best5k, 'seconds');
+      }
+      
+      if (idx10k >= 0 && times[idx10k]) {
+        best10k = times[idx10k];
+        console.log('10K best time:', best10k, 'seconds');
       }
     } else {
       console.log('No pace curves data available');
