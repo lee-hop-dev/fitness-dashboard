@@ -1,6 +1,7 @@
 """
-FITNESS DASHBOARD — DATA COLLECTOR v4.3
+FITNESS DASHBOARD — DATA COLLECTOR v4.4
 Fetches from Intervals.icu + Strava + Concept2 and saves to docs/data/
+Includes all-time PB tracking for running distances
 """
 
 import os, json, time, logging, argparse, requests
@@ -473,6 +474,43 @@ def build_heatmap(activities, days=365):
     return cells
 
 
+def calculate_pb(activities, target_distance, tolerance=0.15):
+    """
+    Calculate personal best time for a target distance.
+    
+    Args:
+        activities: List of activity dictionaries
+        target_distance: Target distance in meters (e.g., 5000 for 5K)
+        tolerance: Distance tolerance as percentage (default 15%)
+    
+    Returns:
+        Best time in seconds, or None if no qualifying activities found
+    """
+    runs = [a for a in activities if a['type'] in ('Run', 'VirtualRun')]
+    margin = target_distance * tolerance
+    
+    candidates = [
+        a for a in runs 
+        if a.get('distance') and 
+        abs(a['distance'] - target_distance) < margin and
+        a.get('avg_speed') and
+        a['avg_speed'] > 0
+    ]
+    
+    if not candidates:
+        return None
+    
+    best_time = None
+    for a in candidates:
+        # Estimate time based on average speed
+        estimated_time = target_distance / a['avg_speed']
+        if best_time is None or estimated_time < best_time:
+            best_time = estimated_time
+    
+    log.info(f'PB for {target_distance}m: {best_time:.1f}s from {len(candidates)} candidates')
+    return round(best_time, 1) if best_time else None
+
+
 def save_json(data, filename):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     path = OUTPUT_DIR / filename
@@ -529,7 +567,25 @@ def main():
     if weight is None:
         weight = next((w['weight'] for w in reversed(wellness) if w.get('weight')), None)
 
-    save_json({'id': ATHLETE_ID, 'name': athlete.get('name',''), 'weight': weight, 'ftp': ftp, 'w_prime': w_prime}, 'athlete.json')
+    # Calculate all-time PBs for running distances
+    log.info('Calculating running PBs...')
+    pb_5k = calculate_pb(activities, 5000)
+    pb_10k = calculate_pb(activities, 10000)
+    pb_half_marathon = calculate_pb(activities, 21097.5)
+    pb_marathon = calculate_pb(activities, 42195)
+
+    save_json({
+        'id': ATHLETE_ID, 
+        'name': athlete.get('name',''), 
+        'weight': weight, 
+        'ftp': ftp, 
+        'w_prime': w_prime,
+        'pb_5k': pb_5k,
+        'pb_10k': pb_10k,
+        'pb_half_marathon': pb_half_marathon,
+        'pb_marathon': pb_marathon
+    }, 'athlete.json')
+    
     save_json(aggregate_weekly_tss(activities), 'weekly_tss.json')
     save_json(calc_ytd(activities), 'ytd.json')
     save_json(build_heatmap(activities, 365), 'heatmap_1y.json')
