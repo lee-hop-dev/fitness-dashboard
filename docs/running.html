@@ -189,30 +189,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     let best5k = null;
     let best10k = null;
     
-    if (paceCurves90d) {
+    if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
       console.log('=== Pace Curves Data Structure ===');
-      console.log('Type:', typeof paceCurves90d);
-      console.log('Keys:', Object.keys(paceCurves90d));
+      const curve = paceCurves90d.list[0];
+      console.log('Curve:', curve.label, '(', curve.days, 'days )');
+      console.log('Curve keys:', Object.keys(curve));
       
-      // Structure is: { activities: {...}, list: [{ id, secs, watts, ... }] }
-      if (paceCurves90d.list && Array.isArray(paceCurves90d.list)) {
-        console.log('Found', paceCurves90d.list.length, 'data points in list');
-        
-        if (paceCurves90d.list.length > 0) {
-          console.log('First point:', paceCurves90d.list[0]);
-          console.log('Point keys:', Object.keys(paceCurves90d.list[0]));
-        }
+      // The actual data points are likely in a property like 'data', 'points', 'values', etc.
+      const dataKey = Object.keys(curve).find(k => 
+        Array.isArray(curve[k]) && curve[k].length > 5
+      );
+      
+      console.log('Data array key:', dataKey);
+      
+      if (dataKey) {
+        const points = curve[dataKey];
+        console.log('Found', points.length, 'data points');
+        console.log('First point:', points[0]);
+        console.log('Point keys:', Object.keys(points[0]));
         
         // Look for 5000m and 10000m points
-        // The 'secs' field is the distance in meters for pace curves
-        const point5k = paceCurves90d.list.find(p => p.secs === 5000);
-        const point10k = paceCurves90d.list.find(p => p.secs === 10000);
+        const point5k = points.find(p => p.secs === 5000);
+        const point10k = points.find(p => p.secs === 10000);
         
-        console.log('5K point found:', point5k);
-        console.log('10K point found:', point10k);
+        console.log('5K point:', point5k);
+        console.log('10K point:', point10k);
         
         if (point5k) {
-          // For pace curves, 'watts' actually contains the time in seconds
           best5k = point5k.watts;
           console.log('5K best time:', best5k, 'seconds');
         }
@@ -221,6 +224,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           best10k = point10k.watts;
           console.log('10K best time:', best10k, 'seconds');
         }
+      } else {
+        console.error('Could not find data array in curve');
+        console.log('Full curve object:', curve);
       }
     } else {
       console.log('No pace curves data available');
