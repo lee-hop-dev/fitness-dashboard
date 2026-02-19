@@ -64,6 +64,17 @@ class IntervalsClient:
         log.info(f'Got {len(data)} wellness entries')
         return data
 
+    def get_running_bests(self):
+        """Fetch running pace bests from Intervals.icu"""
+        log.info('Fetching running pace bests from Intervals.icu')
+        try:
+            # Intervals calculates bests for various distances
+            data = self._get(f'athlete/{self.athlete_id}/pace-bests')
+            return data
+        except Exception as e:
+            log.warning(f'Could not fetch pace bests: {e}')
+            return None
+
 
 class StravaClient:
     def __init__(self, client_id, client_secret, refresh_token):
@@ -560,6 +571,14 @@ def main():
 
     wellness = process_wellness(client.get_wellness(args.oldest))
     save_json(wellness, 'wellness.json')
+
+    # Fetch running pace bests from Intervals.icu
+    running_bests = client.get_running_bests()
+    if running_bests:
+        save_json(running_bests, 'running_bests.json')
+        log.info('Saved running bests from Intervals.icu')
+    else:
+        log.warning('Running bests not available, will calculate from activities')
 
     weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
     ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
