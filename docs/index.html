@@ -756,7 +756,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (distM === 800) label = '800m';
         else if (distM === 1000) label = '1km';
         else if (distM === 1500) label = '1500m';
-        else if (distM === 1609) label = 'Mile';
+        else if (distM === 1609) label = '1 mile';
         else if (distM === 3000) label = '3km';
         else if (distM === 5000) label = '5km';
         else if (distM === 8000) label = '5 mile';
@@ -772,7 +772,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           totalSec: times[idx],
           distM: distM
         };
-      });
+      }).filter(d => d.distM >= 100); // Start at 100m
       console.log('Using Intervals pace bests:', paceBestsData.length, 'points');
     } else {
       // Fallback to DATA.paceBests if Intervals data not available
@@ -931,9 +931,16 @@ function renderBestsTables(powerBests, paceBests) {
     ? powerBests.map(b=>`<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${b.value}W</span></div>`).join('')
     : '<div style="color:var(--text-muted);font-size:11px;padding:10px;font-family:var(--font-mono)">No cycling data in last 90 days</div>';
 
+  // Only show specific key running distances: 400m, 800m, 1km, 1 mile, 3km, 5km, 5 mile, 10km
+  const keyDistances = ['400m', '800m', '1km', '1 mile', '3km', '5km', '5 mile', '10km'];
+  const filteredPaceBests = paceBests.filter(b => keyDistances.includes(b.label));
+  
   const rg = document.getElementById('pace-bests-grid');
-  if (rg) rg.innerHTML = paceBests.length
-    ? paceBests.map(b=>{ const spk=(b.totalSec/b.distM)*1000; return `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${Math.floor(spk/60)}:${String(Math.floor(spk%60)).padStart(2,'0')}/km</span></div>`; }).join('')
+  if (rg) rg.innerHTML = filteredPaceBests.length
+    ? filteredPaceBests.map(b=>{ 
+        const spk=(b.totalSec/b.distM)*1000; 
+        return `<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${Math.floor(spk/60)}:${String(Math.floor(spk%60)).padStart(2,'0')}/km</span></div>`; 
+      }).join('')
     : '<div style="color:var(--text-muted);font-size:11px;padding:10px;font-family:var(--font-mono)">No running data in last 90 days</div>';
 }
 </script>
