@@ -148,16 +148,16 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, weeklyTSS, ytd, meta, athlete } = await DATA.loadAll();
-    // Try to load running bests from Intervals.icu
-    let runningBests = null;
+    // Try to load pace curve (running bests) from Intervals.icu
+    let paceCurveData = null;
     try {
-      const response = await fetch('data/running_bests_90d.json');
+      const response = await fetch('data/pace_curve.json');
       if (response.ok) {
-        runningBests = await response.json();
-        console.log('Loaded running bests from Intervals.icu:', runningBests);
+        paceCurveData = await response.json();
+        console.log('Loaded pace curve from Intervals.icu:', paceCurveData);
       }
     } catch(e) {
-      console.log('Running bests not available from Intervals, will calculate from activities');
+      console.log('Pace curve not available from Intervals');
     }
 
     const year = new Date().getFullYear().toString();
@@ -185,25 +185,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('week-stats').textContent = `runs · ${weekDist.toFixed(1)} km`;
     document.getElementById('week-hours').textContent = `${weekHrs.toFixed(1)} hrs running`;
 
-    // 5K and 10K bests - use Intervals data if available
+    // 5K and 10K bests - use Intervals pace curve if available
     let best5k = null;
     let best10k = null;
     
-    if (runningBests && Object.keys(runningBests).length > 0) {
-      // Intervals.icu returns bests as an object with keys like "5000", "10000" etc
-      // Each value contains { secs, watts, name, date, id }
-      console.log('Processing Intervals bests data:', Object.keys(runningBests));
+    if (paceCurveData && Array.isArray(paceCurveData) && paceCurveData.length > 0) {
+      // Pace curve is an array of objects with format: { secs, distM, label, ... }
+      console.log('Processing Intervals pace curve, entries:', paceCurveData.length);
+      console.log('Sample entries:', paceCurveData.slice(0, 3));
       
-      // Look for 5000m (5K)
-      if (runningBests['5000'] && runningBests['5000'].secs) {
-        best5k = runningBests['5000'].secs;
-        console.log('Using Intervals 5K best:', best5k, 'seconds from', runningBests['5000'].date);
+      // Look for 5000m (5K) - find closest match
+      const entry5k = paceCurveData.find(e => e.distM === 5000) || 
+                      paceCurveData.find(e => Math.abs(e.distM - 5000) < 100);
+      if (entry5k && entry5k.secs) {
+        best5k = entry5k.secs;
+        console.log('Using Intervals 5K best:', best5k, 'seconds (', entry5k.distM, 'm)');
       }
       
-      // Look for 10000m (10K)
-      if (runningBests['10000'] && runningBests['10000'].secs) {
-        best10k = runningBests['10000'].secs;
-        console.log('Using Intervals 10K best:', best10k, 'seconds from', runningBests['10000'].date);
+      // Look for 10000m (10K) - find closest match  
+      const entry10k = paceCurveData.find(e => e.distM === 10000) ||
+                       paceCurveData.find(e => Math.abs(e.distM - 10000) < 100);
+      if (entry10k && entry10k.secs) {
+        best10k = entry10k.secs;
+        console.log('Using Intervals 10K best:', best10k, 'seconds (', entry10k.distM, 'm)');
       }
     }
     
