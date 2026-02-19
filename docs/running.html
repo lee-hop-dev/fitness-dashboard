@@ -190,58 +190,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     let best10k = null;
     
     if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
-      console.log('=== Pace Curves Data Structure ===');
-      const curve = paceCurves90d.list[0];
-      console.log('Curve:', curve.label);
+      const curve = paceCurves90d.list[0]; // 90-day curve
+      console.log('Processing pace curve:', curve.label);
       
-      // Find all array properties
-      const arrayProps = Object.keys(curve).filter(k => Array.isArray(curve[k]));
-      console.log('Array properties:', arrayProps);
-      
-      // Show first few values of each array
-      arrayProps.forEach(prop => {
-        console.log(`${prop}:`, curve[prop].slice(0, 5), '... (', curve[prop].length, 'items)');
-      });
-      
-      // Typical structure: distance array has distances, watts/time/secs array has times
-      // Find index of 5000m and 10000m in distance array
+      // API Schema: distance array has meters, values array has times in seconds
       const distances = curve.distance || [];
-      const times = curve.watts || curve.time || curve.secs || [];
+      const times = curve.values || [];
       
-      console.log('Using distances:', distances.slice(0, 10));
-      console.log('Using times:', times.slice(0, 10));
+      console.log('Distances available:', distances.length);
+      console.log('Times available:', times.length);
+      console.log('Sample distances:', distances.slice(0, 10));
+      console.log('Sample times:', times.slice(0, 10));
       
+      // Find 5000m and 10000m in distance array
       const idx5k = distances.findIndex(d => Math.abs(d - 5000) < 10);
       const idx10k = distances.findIndex(d => Math.abs(d - 10000) < 10);
       
-      console.log('5K index:', idx5k, 'distance:', distances[idx5k]);
-      console.log('10K index:', idx10k, 'distance:', distances[idx10k]);
+      console.log('5K index:', idx5k, '→ distance:', distances[idx5k], '→ time:', times[idx5k]);
+      console.log('10K index:', idx10k, '→ distance:', distances[idx10k], '→ time:', times[idx10k]);
       
       if (idx5k >= 0 && times[idx5k]) {
         best5k = times[idx5k];
-        console.log('5K best time:', best5k, 'seconds');
+        console.log('✓ 5K best:', best5k, 'seconds');
       }
       
       if (idx10k >= 0 && times[idx10k]) {
         best10k = times[idx10k];
-        console.log('10K best time:', best10k, 'seconds');
+        console.log('✓ 10K best:', best10k, 'seconds');
       }
-    } else {
-      console.log('No pace curves data available');
     }
     
     // Display the bests
     if (best5k) {
       document.getElementById('best-5k-time').textContent = fmtTime(best5k);
       document.getElementById('best-5k-pace').textContent = fmtPaceKm(best5k, 5);
-    } else {
-      console.warn('Could not extract 5K best time');
     }
     if (best10k) {
       document.getElementById('best-10k-time').textContent = fmtTime(best10k);
       document.getElementById('best-10k-pace').textContent = fmtPaceKm(best10k, 10);
-    } else {
-      console.warn('Could not extract 10K best time');
     }
 
     // Load all-time PBs from athlete data
