@@ -69,12 +69,18 @@ class IntervalsClient:
         log.info('Fetching power curve from Intervals.icu')
         try:
             # Get current power curve which contains bests for various durations
-            data = self._get(f'athlete/{self.athlete_id}/power-curve')
+            endpoint = f'athlete/{self.athlete_id}/power-curve'
+            log.info(f'Calling endpoint: {BASE_URL}/{endpoint}')
+            data = self._get(endpoint)
+            log.info(f'Power curve response type: {type(data)}')
             if data:
-                log.info(f'Got power curve data with {len(data) if isinstance(data, list) else "unknown"} points')
+                log.info(f'Power curve data: {str(data)[:200]}...')
+                log.info(f'Got power curve data with {len(data) if isinstance(data, list) else "non-list"} points')
+            else:
+                log.warning('Power curve returned None or empty')
             return data
         except Exception as e:
-            log.error(f'Could not fetch power curve: {e}')
+            log.error(f'Could not fetch power curve: {e}', exc_info=True)
             return None
 
     def get_pace_curve(self):
@@ -82,12 +88,18 @@ class IntervalsClient:
         log.info('Fetching pace curve from Intervals.icu')
         try:
             # Get current pace curve which contains bests for various distances
-            data = self._get(f'athlete/{self.athlete_id}/pace-curve')
+            endpoint = f'athlete/{self.athlete_id}/pace-curve'
+            log.info(f'Calling endpoint: {BASE_URL}/{endpoint}')
+            data = self._get(endpoint)
+            log.info(f'Pace curve response type: {type(data)}')
             if data:
-                log.info(f'Got pace curve data with {len(data) if isinstance(data, list) else "unknown"} points')
+                log.info(f'Pace curve data: {str(data)[:200]}...')
+                log.info(f'Got pace curve data with {len(data) if isinstance(data, list) else "non-list"} points')
+            else:
+                log.warning('Pace curve returned None or empty')
             return data
         except Exception as e:
-            log.error(f'Could not fetch pace curve: {e}')
+            log.error(f'Could not fetch pace curve: {e}', exc_info=True)
             return None
 
 
@@ -588,21 +600,23 @@ def main():
     save_json(wellness, 'wellness.json')
 
     # Fetch power curve (cycling bests) from Intervals.icu
+    log.info('=== Fetching Power Curve ===')
     power_curve = client.get_power_curve()
-    if power_curve:
+    if power_curve and len(power_curve) > 0:
         save_json(power_curve, 'power_curve.json')
-        log.info('Saved power curve from Intervals.icu')
+        log.info(f'✓ Saved power curve with {len(power_curve)} entries')
     else:
-        log.warning('Power curve not available')
+        log.warning('✗ Power curve not available or empty')
         save_json([], 'power_curve.json')
 
     # Fetch pace curve (running bests) from Intervals.icu
+    log.info('=== Fetching Pace Curve ===')
     pace_curve = client.get_pace_curve()
-    if pace_curve:
+    if pace_curve and len(pace_curve) > 0:
         save_json(pace_curve, 'pace_curve.json')
-        log.info('Saved pace curve from Intervals.icu')
+        log.info(f'✓ Saved pace curve with {len(pace_curve)} entries')
     else:
-        log.warning('Pace curve not available')
+        log.warning('✗ Pace curve not available or empty')
         save_json([], 'pace_curve.json')
 
     weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
