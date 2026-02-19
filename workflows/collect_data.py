@@ -19,7 +19,7 @@ STRAVA_REFRESH_TOKEN = os.getenv('STRAVA_REFRESH_TOKEN', '')
 CONCEPT2_USERNAME    = os.getenv('CONCEPT2_USERNAME', '')
 CONCEPT2_PASSWORD    = os.getenv('CONCEPT2_PASSWORD', '')
 BASE_URL             = 'https://intervals.icu/api/v1'
-HISTORY_START        = '2025-01-01'
+HISTORY_START        = '2020-01-01'  # Go back further for all-time PBs
 OUTPUT_DIR           = Path(__file__).parent.parent / 'docs' / 'data'
 
 
