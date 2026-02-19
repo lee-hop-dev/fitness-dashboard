@@ -3,20 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Running – Fitness Dashboard</title>
+<title>Running — Fitness Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="assets/css/main.css">
-<style>
-  .metric-pb {
-    font-size: 9px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    margin-top: 4px;
-    opacity: 0.7;
-  }
-</style>
 </head>
 <body>
 <div class="app">
@@ -71,19 +62,17 @@
     <section class="metrics-row" style="grid-template-columns: repeat(4,1fr)">
       <div class="metric-card form">
         <div class="metric-label">90-DAY BEST</div>
-        <div class="metric-value" style="color:var(--green)" id="best-5k-time">—</div>
-        <div class="metric-delta neutral" id="best-5k-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill best-5k-bar" style="width:0%;background:var(--green)"></div></div>
+        <div class="metric-value" style="color:var(--green)">20:45</div>
+        <div class="metric-delta neutral">4:09/km</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:72%;background:var(--green)"></div></div>
         <div class="metric-sub">5K best</div>
-        <div class="metric-pb" id="pb-5k">PB: —</div>
       </div>
       <div class="metric-card fitness">
         <div class="metric-label">90-DAY BEST</div>
-        <div class="metric-value" style="color:var(--accent)" id="best-10k-time">—</div>
-        <div class="metric-delta neutral" id="best-10k-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill best-10k-bar" style="width:0%"></div></div>
+        <div class="metric-value" style="color:var(--accent)">43:00</div>
+        <div class="metric-delta neutral">4:18/km</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:65%"></div></div>
         <div class="metric-sub">10K best</div>
-        <div class="metric-pb" id="pb-10k">PB: —</div>
       </div>
       <div class="metric-card hrv">
         <div class="metric-label">THRESHOLD PACE</div>
@@ -94,10 +83,10 @@
       </div>
       <div class="metric-card sleep">
         <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)" id="week-runs">—</div>
-        <div class="metric-delta neutral" id="week-stats">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill week-bar" style="width:0%;background:var(--yellow)"></div></div>
-        <div class="metric-sub" id="week-hours">—</div>
+        <div class="metric-value" style="color:var(--yellow)">2</div>
+        <div class="metric-delta neutral">runs · 16.9 km</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:38%;background:var(--yellow)"></div></div>
+        <div class="metric-sub">1.4 hrs running</div>
       </div>
     </section>
 
@@ -169,77 +158,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const weekRuns = runs.filter(a => a.date >= weekCutoff);
     const weekDist = weekRuns.reduce((s,a) => s+(a.distance||0),0)/1000;
     const weekHrs  = weekRuns.reduce((s,a) => s+(a.duration||0),0)/3600;
-    
-    document.getElementById('week-runs').textContent = weekRuns.length;
-    document.getElementById('week-stats').textContent = `runs · ${weekDist.toFixed(1)} km`;
-    document.getElementById('week-hours').textContent = `${weekHrs.toFixed(1)} hrs running`;
+    const weekEl = document.querySelector('.metric-card.sleep .metric-value');
+    const weekDelta = document.querySelector('.metric-card.sleep .metric-delta');
+    const weekSub = document.querySelector('.metric-card.sleep .metric-sub');
+    if (weekEl) weekEl.textContent = weekRuns.length;
+    if (weekDelta) weekDelta.textContent = `runs · ${weekDist.toFixed(1)} km`;
+    if (weekSub) weekSub.textContent = `${weekHrs.toFixed(1)} hrs running`;
 
     // 5K and 10K bests from last 90 days
     const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
     const recent90 = runs.filter(a => a.date >= d90);
     const best5k = best90(recent90, 5000);
     const best10k = best90(recent90, 10000);
-    
     if (best5k) {
-      document.getElementById('best-5k-time').textContent = fmtTime(best5k);
-      document.getElementById('best-5k-pace').textContent = fmtPaceKm(best5k, 5);
-      // Update progress bar (example: 20:00 = 100%, scale accordingly)
-      const bar5k = document.querySelector('.best-5k-bar');
-      if (bar5k) bar5k.style.width = Math.min(100, (1200 / best5k) * 100).toFixed(0) + '%';
+      document.querySelector('.metric-card.form .metric-value').textContent = fmtTime(best5k);
+      document.querySelector('.metric-card.form .metric-delta').textContent = fmtPaceKm(best5k, 5);
     }
     if (best10k) {
-      document.getElementById('best-10k-time').textContent = fmtTime(best10k);
-      document.getElementById('best-10k-pace').textContent = fmtPaceKm(best10k, 10);
-      // Update progress bar (example: 40:00 = 100%, scale accordingly)
-      const bar10k = document.querySelector('.best-10k-bar');
-      if (bar10k) bar10k.style.width = Math.min(100, (2400 / best10k) * 100).toFixed(0) + '%';
+      document.querySelector('.metric-card.fitness .metric-value').textContent = fmtTime(best10k);
+      document.querySelector('.metric-card.fitness .metric-delta').textContent = fmtPaceKm(best10k, 10);
     }
-
-    // Update week progress bar
-    const weekBar = document.querySelector('.week-bar');
-    if (weekBar && weekRuns.length > 0) {
-      // Scale: 4+ runs = 100%
-      weekBar.style.width = Math.min(100, (weekRuns.length / 4) * 100).toFixed(0) + '%';
-    }
-
-    // Fetch all-time PBs from Intervals.icu
-    await fetchAllTimePBs();
 
     // Pace curve (90d bests)
-    let paceBests = [];
-    if (typeof DATA.paceBests === 'function') {
-      paceBests = DATA.paceBests(runs);
-    } else {
-      // Calculate pace bests manually
-      const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
-      const recent90 = runs.filter(a => a.date >= d90);
-      
-      // Define target distances (in meters)
-      const distances = [400, 800, 1000, 1609, 3000, 5000, 10000];
-      
-      for (const dist of distances) {
-        const margin = dist * 0.2; // 20% tolerance
-        const candidates = recent90.filter(a => 
-          a.distance && 
-          Math.abs(a.distance - dist) < margin && 
-          a.avg_speed && 
-          a.avg_speed > 0
-        );
-        
-        if (candidates.length > 0) {
-          const best = candidates.reduce((best, a) => {
-            const pace = 1000 / a.avg_speed; // sec per km
-            if (!best || pace < best.pace) {
-              return { distance: dist, pace: pace, hr: a.avg_hr };
-            }
-            return best;
-          }, null);
-          
-          if (best) paceBests.push(best);
-        }
-      }
-    }
-    
+    const paceBests = DATA.paceBests ? DATA.paceBests(runs) : [];
     if (paceBests.length) buildPaceBestsChart('paceCurveChart', paceBests);
 
     // Pace trend (rolling avg from actual runs)
@@ -252,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Activity cards
     const meta2 = document.getElementById('ru-week-meta');
-    if (meta2) meta2.textContent = recent.length + ' runs · ' + (recent.reduce((s,a)=>s+(a.distance||0),0)/1000).toFixed(1) + ' km';
+    if (meta2) meta2.textContent = recent.length + ' runs · ' + recent.reduce((s,a)=>s+(a.distance||0),0)/1000 + ' km';
     const container = document.getElementById('ru-activity-cards');
     if (container) {
       container.innerHTML = recent.length ? recent.map(a => {
@@ -282,25 +223,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-async function fetchAllTimePBs() {
-  try {
-    // Fetch from athlete.json or a dedicated PB endpoint
-    const response = await fetch('data/athlete.json');
-    const data = await response.json();
-    
-    // Assuming PBs are stored in athlete.json with keys like pb_5k, pb_10k
-    if (data.pb_5k) {
-      document.getElementById('pb-5k').textContent = `PB: ${fmtTime(data.pb_5k)}`;
-    }
-    if (data.pb_10k) {
-      document.getElementById('pb-10k').textContent = `PB: ${fmtTime(data.pb_10k)}`;
-    }
-  } catch(err) {
-    console.warn('Could not load all-time PBs:', err);
-    // Keep default "PB: —" text
-  }
-}
-
 function best90(runs, distTarget) {
   // Find best time for activities close to target distance
   const margin = distTarget * 0.15;
@@ -324,160 +246,6 @@ function fmtPaceKm(totalSecs, km) {
   return Math.floor(secPer/60) + ':' + String(Math.floor(secPer%60)).padStart(2,'0') + '/km';
 }
 
-// Helper functions for chart building
-function buildPaceBestsChart(canvasId, paceBests) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-  
-  const distances = paceBests.map(p => p.distance);
-  const paces = paceBests.map(p => p.pace);
-  const hrs = paceBests.map(p => p.hr || null);
-  
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: distances,
-      datasets: [
-        {
-          label: 'Pace (sec/km)',
-          data: paces,
-          borderColor: 'var(--green)',
-          backgroundColor: 'rgba(34,197,94,0.1)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Avg HR',
-          data: hrs,
-          borderColor: 'var(--red)',
-          backgroundColor: 'transparent',
-          fill: false,
-          tension: 0.4,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          yAxisID: 'y1'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(10,10,15,0.95)',
-          padding: 12,
-          titleFont: { size: 11, family: 'var(--font-mono)' },
-          bodyFont: { size: 11, family: 'var(--font-mono)' },
-          callbacks: {
-            label: (context) => {
-              if (context.datasetIndex === 0) {
-                const pace = context.parsed.y;
-                return `Pace: ${formatPace(pace)}`;
-              } else {
-                return `HR: ${context.parsed.y}`;
-              }
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { 
-            color: 'var(--text-muted)',
-            font: { size: 10, family: 'var(--font-mono)' },
-            callback: (val, idx) => {
-              const dist = distances[idx] / 1000;
-              return dist >= 1 ? `${dist.toFixed(0)}km` : `${(dist * 1000).toFixed(0)}m`;
-            }
-          }
-        },
-        y: {
-          position: 'left',
-          reverse: true,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { 
-            color: 'var(--text-muted)',
-            font: { size: 10, family: 'var(--font-mono)' },
-            callback: (val) => formatPace(val)
-          }
-        },
-        y1: {
-          position: 'right',
-          grid: { display: false },
-          ticks: {
-            color: 'var(--red)',
-            font: { size: 9, family: 'var(--font-mono)' }
-          }
-        }
-      }
-    }
-  });
-}
-
-function buildPaceTrendChart(canvasId, dates, paces) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-  
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: dates,
-      datasets: [{
-        label: 'Pace',
-        data: paces,
-        borderColor: 'var(--green)',
-        backgroundColor: 'rgba(34,197,94,0.1)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 2,
-        pointHoverRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(10,10,15,0.95)',
-          padding: 12,
-          titleFont: { size: 11, family: 'var(--font-mono)' },
-          bodyFont: { size: 11, family: 'var(--font-mono)' },
-          callbacks: {
-            label: (context) => `Pace: ${formatPace(context.parsed.y)}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          display: false
-        },
-        y: {
-          reverse: true,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { 
-            color: 'var(--text-muted)',
-            font: { size: 10, family: 'var(--font-mono)' },
-            callback: (val) => formatPace(val)
-          }
-        }
-      }
-    }
-  });
-}
-
-function formatPace(secPerKm) {
-  const min = Math.floor(secPerKm / 60);
-  const sec = Math.floor(secPerKm % 60);
-  return `${min}:${String(sec).padStart(2, '0')}`;
-}
-
 function formatDuration(seconds) {
   if (!seconds) return '—';
   const h = Math.floor(seconds / 3600);
@@ -486,6 +254,12 @@ function formatDuration(seconds) {
   if (h > 0) return `${h}h ${m}m`;
   if (m > 0) return `${m}:${String(s).padStart(2, '0')}`;
   return `${s}s`;
+}
+
+function formatPace(secPerKm) {
+  const min = Math.floor(secPerKm / 60);
+  const sec = Math.floor(secPerKm % 60);
+  return `${min}:${String(sec).padStart(2, '0')}`;
 }
 </script>
 </body>
