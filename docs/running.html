@@ -189,49 +189,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     let best5k = null;
     let best10k = null;
     
-    if (paceCurves90d && Array.isArray(paceCurves90d) && paceCurves90d.length > 0) {
+    if (paceCurves90d) {
       console.log('=== Pace Curves Data Structure ===');
-      console.log('Number of curves:', paceCurves90d.length);
-      console.log('First curve:', JSON.stringify(paceCurves90d[0], null, 2).substring(0, 500));
+      console.log('Type:', typeof paceCurves90d);
+      console.log('Keys:', Object.keys(paceCurves90d));
       
-      // Try to find the 90d curve
-      const curve90d = paceCurves90d.find(c => c.label === '90d') || 
-                       paceCurves90d.find(c => c.id === '90d') ||
-                       paceCurves90d[0];
-      
-      console.log('Using curve:', curve90d?.label || curve90d?.id || 'first');
-      
-      if (curve90d) {
-        // Check what properties the curve has
-        console.log('Curve properties:', Object.keys(curve90d));
+      // Structure is: { activities: {...}, list: [{ id, secs, watts, ... }] }
+      if (paceCurves90d.list && Array.isArray(paceCurves90d.list)) {
+        console.log('Found', paceCurves90d.list.length, 'data points in list');
         
-        // The data might be directly in the curve or in a 'data' property
-        const points = curve90d.data || curve90d.points || curve90d;
+        if (paceCurves90d.list.length > 0) {
+          console.log('First point:', paceCurves90d.list[0]);
+          console.log('Point keys:', Object.keys(paceCurves90d.list[0]));
+        }
         
-        if (Array.isArray(points)) {
-          console.log('Found', points.length, 'data points');
-          console.log('Sample point:', JSON.stringify(points[0]));
-          console.log('Sample point keys:', Object.keys(points[0] || {}));
-          
-          // Look for 5000m and 10000m - distance might be in different fields
-          const point5k = points.find(p => p.secs === 5000 || p.distance === 5000 || p.distM === 5000);
-          const point10k = points.find(p => p.secs === 10000 || p.distance === 10000 || p.distM === 10000);
-          
-          console.log('5K point:', point5k);
-          console.log('10K point:', point10k);
-          
-          if (point5k) {
-            // Time might be in 'time', 'secs', 'totalSecs' etc
-            best5k = point5k.time || point5k.totalSecs || point5k.secs || (point5k.pace ? point5k.pace * 5000 : null);
-            console.log('Extracted 5K time:', best5k);
-          }
-          
-          if (point10k) {
-            best10k = point10k.time || point10k.totalSecs || point10k.secs || (point10k.pace ? point10k.pace * 10000 : null);
-            console.log('Extracted 10K time:', best10k);
-          }
-        } else {
-          console.error('Points is not an array:', typeof points);
+        // Look for 5000m and 10000m points
+        // The 'secs' field is the distance in meters for pace curves
+        const point5k = paceCurves90d.list.find(p => p.secs === 5000);
+        const point10k = paceCurves90d.list.find(p => p.secs === 10000);
+        
+        console.log('5K point found:', point5k);
+        console.log('10K point found:', point10k);
+        
+        if (point5k) {
+          // For pace curves, 'watts' actually contains the time in seconds
+          best5k = point5k.watts;
+          console.log('5K best time:', best5k, 'seconds');
+        }
+        
+        if (point10k) {
+          best10k = point10k.watts;
+          console.log('10K best time:', best10k, 'seconds');
         }
       }
     } else {
