@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Power curve chart from Intervals data
     if (powerBests.length > 0) {
-      buildPowerCurveChart(
+      buildPowerCurveChartLine(
         'powerCurveChart',
         powerBests,
         null,
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           hr: null
         }));
 
-      buildPowerCurveChart(
+      buildPowerCurveChartLine(
         'powerCurveChart',
         powerBests,
         null,
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
     } else if (withPower.length > 0) {
       const fallbackBests = buildPowerBestsFromRides(withPower, cp);
-      buildPowerCurveChart(
+      buildPowerCurveChartLine(
         'powerCurveChart',
         fallbackBests,
         null,
@@ -363,6 +363,76 @@ function buildPowerBestsFromRides(rides, cp) {
     value: Math.round(base * factors[i]),
     hr: hrBases[i]
   }));
+}
+
+function buildPowerCurveChartLine(canvasId, data, compare, cp, p5, p20) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  
+  const labels = data.map(d => d.label);
+  const values = data.map(d => d.value);
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Power',
+        data: values,
+        borderColor: 'rgb(108, 99, 255)',
+        backgroundColor: 'rgba(108, 99, 255, 0.1)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: 'rgb(108, 99, 255)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10, 10, 15, 0.95)',
+          titleColor: '#e8e8f0',
+          bodyColor: '#e8e8f0',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + 'W';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b6b7e', font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { 
+            color: '#6b6b7e',
+            font: { size: 11 },
+            callback: function(value) {
+              return value + 'W';
+            },
+            stepSize: 50  // Force increments of 50W
+          },
+          beginAtZero: false
+        }
+      }
+    }
+  });
 }
 
 function formatDuration(seconds) {
