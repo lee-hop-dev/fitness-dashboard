@@ -148,11 +148,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, weeklyTSS, ytd, meta, athlete } = await DATA.loadAll();
-    
     // Try to load running bests from Intervals.icu
     let runningBests = null;
     try {
-      const response = await fetch('data/running_bests.json');
+      const response = await fetch('data/running_bests_90d.json');
       if (response.ok) {
         runningBests = await response.json();
         console.log('Loaded running bests from Intervals.icu:', runningBests);
@@ -190,24 +189,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     let best5k = null;
     let best10k = null;
     
-    if (runningBests) {
-      // Use Intervals.icu calculated bests
-      // Intervals typically provides bests at: 400m, 800m, 1km, 1mi, 5km, 10km, half, full
-      const best5kData = runningBests.find(b => b.secs && (b.distance === 5000 || b.label === '5k' || b.label === '5km'));
-      const best10kData = runningBests.find(b => b.secs && (b.distance === 10000 || b.label === '10k' || b.label === '10km'));
+    if (runningBests && Object.keys(runningBests).length > 0) {
+      // Intervals.icu returns bests as an object with keys like "5000", "10000" etc
+      // Each value contains { secs, watts, name, date, id }
+      console.log('Processing Intervals bests data:', Object.keys(runningBests));
       
-      if (best5kData) {
-        best5k = best5kData.secs;
-        console.log('Using Intervals 5K best:', best5k);
+      // Look for 5000m (5K)
+      if (runningBests['5000'] && runningBests['5000'].secs) {
+        best5k = runningBests['5000'].secs;
+        console.log('Using Intervals 5K best:', best5k, 'seconds from', runningBests['5000'].date);
       }
-      if (best10kData) {
-        best10k = best10kData.secs;
-        console.log('Using Intervals 10K best:', best10k);
+      
+      // Look for 10000m (10K)
+      if (runningBests['10000'] && runningBests['10000'].secs) {
+        best10k = runningBests['10000'].secs;
+        console.log('Using Intervals 10K best:', best10k, 'seconds from', runningBests['10000'].date);
       }
     }
     
     // Fallback: calculate from activities if Intervals data not available
     if (!best5k || !best10k) {
+      console.log('Falling back to calculating bests from activities');
       const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
       const recent90 = runs.filter(a => a.date >= d90);
       console.log('90-day runs found:', recent90.length);
