@@ -1,346 +1,785 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Running — Fitness Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="assets/css/main.css">
-<style>
-  .metric-pb {
-    font-size: 9px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    margin-top: 2px;
-    opacity: 0.7;
-  }
-</style>
-</head>
-<body>
-<div class="app">
+"""
+FITNESS DASHBOARD — DATA COLLECTOR v4.4
+Fetches from Intervals.icu + Strava + Concept2 and saves to docs/data/
+Includes all-time PB tracking for running distances
+"""
 
-  <nav class="sidebar">
-    <div class="sidebar-brand">
-      <span class="brand-initials">LH</span>
-      <span class="brand-text">Training<br>OS</span>
-    </div>
-    <ul class="nav-links">
-      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
-      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
-      <li class="nav-item active"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
-      <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
-      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
-      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
-    </ul>
-    <div class="sidebar-footer">
-      <div class="sync-status">
-        <span class="sync-dot"></span>
-        <span class="sync-text">Synced 6:00 AM</span>
-      </div>
-    </div>
-  </nav>
+import os, json, time, logging, argparse, requests
+from datetime import datetime, timedelta
+from pathlib import Path
 
-  <main class="main-content">
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+log = logging.getLogger(__name__)
 
-    <header class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">Running</h1>
-        <span class="page-subtitle">Road · Trail · Treadmill</span>
-      </div>
-      <div class="header-right">
-        <div class="year-totals">
-          <div class="year-stat">
-            <span class="year-stat-value" id="ru-distance">—</span>
-            <span class="year-stat-label">km YTD</span>
-          </div>
-          <div class="year-stat">
-            <span class="year-stat-value" id="ru-runs">—</span>
-            <span class="year-stat-label">runs YTD</span>
-          </div>
-          <div class="year-stat">
-            <span class="year-stat-value" id="ru-elevation">—</span>
-            <span class="year-stat-label">m climb YTD</span>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Metric cards -->
-    <section class="metrics-row" style="grid-template-columns: repeat(4,1fr)">
-      <div class="metric-card form">
-        <div class="metric-label">90-DAY BEST</div>
-        <div class="metric-value" style="color:var(--green)" id="best-5k-time">—</div>
-        <div class="metric-delta neutral" id="best-5k-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:72%;background:var(--green)"></div></div>
-        <div class="metric-sub">5K best</div>
-        <div class="metric-pb" id="pb-5k">PB: —</div>
-      </div>
-      <div class="metric-card fitness">
-        <div class="metric-label">90-DAY BEST</div>
-        <div class="metric-value" style="color:var(--accent)" id="best-10k-time">—</div>
-        <div class="metric-delta neutral" id="best-10k-pace">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:65%"></div></div>
-        <div class="metric-sub">10K best</div>
-        <div class="metric-pb" id="pb-10k">PB: —</div>
-      </div>
-      <div class="metric-card hrv">
-        <div class="metric-label">THRESHOLD PACE</div>
-        <div class="metric-value" style="color:var(--purple)">4:25</div>
-        <div class="metric-delta neutral">per km</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:58%;background:var(--purple)"></div></div>
-        <div class="metric-sub">Current estimate</div>
-      </div>
-      <div class="metric-card sleep">
-        <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)" id="week-runs">—</div>
-        <div class="metric-delta neutral" id="week-stats">—</div>
-        <div class="metric-bar"><div class="metric-bar-fill" style="width:38%;background:var(--yellow)"></div></div>
-        <div class="metric-sub" id="week-hours">—</div>
-      </div>
-    </section>
-
-    <!-- Pace curve + Trend -->
-    <section class="charts-row" style="grid-template-columns: 2fr 1fr">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Pace Curve · 90 Days</h3>
-          <div class="chart-legend">
-            <span class="legend-item run">Pace</span>
-            <span style="font-size:10px;color:var(--red);font-family:var(--font-mono)">HR</span>
-          </div>
-        </div>
-        <div class="cp-chart-wrap"><canvas id="paceCurveChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-header"><h3>Pace Trend · 42 Days</h3></div>
-        <div class="chart-wrap"><canvas id="paceTrendChart"></canvas></div>
-      </div>
-    </section>
-
-    <!-- Recent runs -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Last 14 Days</h2>
-        <span class="section-meta" id="ru-week-meta">Loading...</span>
-      </div>
-      <div class="activity-cards" id="ru-activity-cards"></div>
-    </section>
-
-    <!-- Strava segments -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Strava Segments</h2>
-        <span class="section-meta">Personal bests & rankings</span>
-      </div>
-      <div class="segment-list" id="ru-segments"></div>
-    </section>
-
-  </main>
-</div>
+ATHLETE_ID           = os.getenv('INTERVALS_ATHLETE_ID', '5718022')
+API_KEY              = os.getenv('INTERVALS_API_KEY', '')
+STRAVA_CLIENT_ID     = os.getenv('STRAVA_CLIENT_ID', '')
+STRAVA_CLIENT_SECRET = os.getenv('STRAVA_CLIENT_SECRET', '')
+STRAVA_REFRESH_TOKEN = os.getenv('STRAVA_REFRESH_TOKEN', '')
+CONCEPT2_USERNAME    = os.getenv('CONCEPT2_USERNAME', '')
+CONCEPT2_PASSWORD    = os.getenv('CONCEPT2_PASSWORD', '')
+BASE_URL             = 'https://intervals.icu/api/v1'
+HISTORY_START        = '2020-01-01'  # Go back further for all-time PBs
+OUTPUT_DIR           = Path(__file__).parent.parent / 'docs' / 'data'
 
 
+class IntervalsClient:
+    def __init__(self, athlete_id, api_key):
+        self.athlete_id = athlete_id
+        self.session = requests.Session()
+        self.session.auth = ('API_KEY', api_key)
+        self.session.headers['Content-Type'] = 'application/json'
 
-<script src="assets/js/charts.js"></script>
-<script src="assets/js/data-loader.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const { activities, wellness, weeklyTSS, ytd, meta, athlete } = await DATA.loadAll();
-    // Try to load pace curve (running bests) from Intervals.icu
-    let paceCurveData = null;
-    try {
-      const response = await fetch('data/pace_curve.json');
-      if (response.ok) {
-        paceCurveData = await response.json();
-        console.log('Loaded pace curve from Intervals.icu:', paceCurveData);
-      }
-    } catch(e) {
-      console.log('Pace curve not available from Intervals');
+    def _get(self, endpoint, params=None, retries=3):
+        url = f'{BASE_URL}/{endpoint}'
+        for attempt in range(retries):
+            try:
+                time.sleep(0.5)
+                r = self.session.get(url, params=params or {})
+                r.raise_for_status()
+                return r.json()
+            except requests.HTTPError as e:
+                if e.response.status_code == 429:
+                    log.warning('Rate limited, waiting 60s...')
+                    time.sleep(60)
+                else:
+                    raise
+            except Exception as e:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(5 * (attempt + 1))
+
+    def get_athlete(self):
+        return self._get(f'athlete/{self.athlete_id}')
+
+    def get_activities(self, oldest=HISTORY_START):
+        log.info(f'Fetching Intervals activities from {oldest}')
+        data = self._get(f'athlete/{self.athlete_id}/activities', {'oldest': oldest})
+        log.info(f'Got {len(data)} raw activities from Intervals')
+        return data
+
+    def get_wellness(self, oldest=HISTORY_START):
+        today = datetime.now().strftime('%Y-%m-%d')
+        data = self._get(f'athlete/{self.athlete_id}/wellness', {'oldest': oldest, 'newest': today})
+        log.info(f'Got {len(data)} wellness entries')
+        return data
+
+    def get_power_curves(self, period='90d'):
+        """Fetch power curves from Intervals.icu"""
+        log.info(f'Fetching power curves ({period}) from Intervals.icu')
+        try:
+            # Curves parameter: 90d = past 90 days, 1y = past year, all = all time
+            data = self._get(f'athlete/{self.athlete_id}/power-curves', {'curves': period})
+            if data:
+                log.info(f'Got power curves: {len(data)} curves')
+            return data
+        except Exception as e:
+            log.error(f'Could not fetch power curves: {e}')
+            return None
+
+    def get_pace_curves(self, period='90d'):
+        """Fetch pace curves from Intervals.icu"""
+        log.info(f'Fetching pace curves ({period}) from Intervals.icu')
+        try:
+            # Curves parameter: 90d = past 90 days, 1y = past year, all = all time
+            data = self._get(f'athlete/{self.athlete_id}/pace-curves', {'curves': period})
+            if data:
+                log.info(f'Got pace curves: {len(data)} curves')
+            return data
+        except Exception as e:
+            log.error(f'Could not fetch pace curves: {e}')
+            return None
+
+
+class StravaClient:
+    def __init__(self, client_id, client_secret, refresh_token):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.refresh_token = refresh_token
+        self.access_token = None
+        self.session = requests.Session()
+
+    def authenticate(self):
+        log.info('Authenticating with Strava...')
+        r = requests.post('https://www.strava.com/oauth/token', data={
+            'client_id':     self.client_id,
+            'client_secret': self.client_secret,
+            'refresh_token': self.refresh_token,
+            'grant_type':    'refresh_token'
+        })
+        r.raise_for_status()
+        self.access_token = r.json()['access_token']
+        self.session.headers['Authorization'] = f'Bearer {self.access_token}'
+        log.info('Strava authentication successful')
+
+    def _get(self, endpoint, params=None):
+        url = f'https://www.strava.com/api/v3/{endpoint}'
+        for attempt in range(3):
+            try:
+                time.sleep(0.3)
+                r = self.session.get(url, params=params or {})
+                if r.status_code == 429:
+                    log.warning('Strava rate limited, waiting 60s...')
+                    time.sleep(60)
+                    continue
+                r.raise_for_status()
+                return r.json()
+            except Exception as e:
+                if attempt == 2:
+                    log.error(f'Strava request failed: {e}')
+                    return None
+                time.sleep(5 * (attempt + 1))
+
+    def get_activities(self, after_timestamp):
+        log.info('Fetching Strava activities...')
+        all_acts = []
+        page = 1
+        while True:
+            data = self._get('athlete/activities', {'after': after_timestamp, 'per_page': 100, 'page': page})
+            if not data:
+                break
+            all_acts.extend(data)
+            if len(data) < 100:
+                break
+            page += 1
+        log.info(f'Got {len(all_acts)} activities from Strava')
+        return all_acts
+
+    def get_activity_segments(self, activity_id):
+        data = self._get(f'activities/{activity_id}', {'include_all_efforts': True})
+        return data.get('segment_efforts', []) if data else []
+
+
+class Concept2Client:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.session = requests.Session()
+        self.access_token = None
+        self.token_expiry = None
+
+    def authenticate(self):
+        log.info('Authenticating with Concept2...')
+        try:
+            r = requests.post('https://log.concept2.com/api/auth/token', data={
+                'username': self.username,
+                'password': self.password,
+                'grant_type': 'password'
+            })
+            r.raise_for_status()
+            data = r.json()
+            self.access_token = data.get('access_token')
+            expires_in = data.get('expires_in', 3600)
+            self.token_expiry = datetime.now() + timedelta(seconds=expires_in)
+            self.session.headers['Authorization'] = f'Bearer {self.access_token}'
+            log.info('Concept2 authentication successful')
+            return True
+        except Exception as e:
+            log.error(f'Concept2 authentication failed: {e}')
+            return False
+
+    def _get(self, endpoint, params=None):
+        if not self.access_token or datetime.now() >= self.token_expiry:
+            if not self.authenticate():
+                return None
+        
+        url = f'https://log.concept2.com/api/{endpoint}'
+        try:
+            time.sleep(0.5)
+            r = self.session.get(url, params=params or {})
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            log.error(f'Concept2 request failed: {e}')
+            return None
+
+    def get_workouts(self, start_date):
+        log.info('Fetching Concept2 workouts...')
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        data = self._get('users/me/results', {'from': start_date, 'to': end_date})
+        
+        if data and 'data' in data:
+            workouts = data['data']
+            log.info(f'Got {len(workouts)} workouts from Concept2')
+            return workouts
+        else:
+            log.warning('No Concept2 workout data returned')
+            return []
+
+
+def process_intervals_activity(a):
+    raw_if = a.get('icu_intensity')
+    if_val = round(raw_if / 100, 2) if raw_if else None
+    return {
+        'id':          str(a.get('id', '')),
+        'strava_id':   str(a.get('strava_id', '')) if a.get('strava_id') else None,
+        'source':      a.get('source', 'INTERVALS'),
+        'name':        a.get('name') or 'Activity',
+        'type':        a.get('type') or 'Unknown',
+        'date':        (a.get('start_date_local') or '')[:10],
+        'duration':    a.get('moving_time') or 0,
+        'distance':    a.get('distance') or 0,
+        'elevation':   a.get('total_elevation_gain') or 0,
+        'avg_power':   a.get('icu_average_watts'),
+        'norm_power':  a.get('icu_weighted_avg_watts'),
+        'avg_hr':      a.get('average_heartrate'),
+        'max_hr':      a.get('max_heartrate'),
+        'avg_speed':   a.get('average_speed'),
+        'avg_cadence': a.get('average_cadence'),
+        'calories':    a.get('calories'),
+        'tss':         round(a.get('icu_training_load') or 0),
+        'if_val':      if_val,
+        'ftp':         a.get('icu_ftp'),
+        'w_prime':     a.get('icu_w_prime'),
+        'weight':      a.get('icu_weight'),
+        'device':      a.get('device_name') or '',
+        'is_garmin':   'garmin' in (a.get('device_name') or '').lower()
     }
 
-    const year = new Date().getFullYear().toString();
-    const runs = activities.filter(a => a.type === 'Run' || a.type === 'VirtualRun');
-    const ytdRuns = runs.filter(a => a.date.startsWith(year));
-    const recent = runs.filter(a => {
-      const cutoff = new Date(Date.now() - 14 * 864e5).toISOString().split('T')[0];
-      return a.date >= cutoff;
-    });
 
-    // YTD stats
-    const ytdDist = ytdRuns.reduce((s,a) => s+(a.distance||0),0)/1000;
-    const ytdElev = ytdRuns.reduce((s,a) => s+(a.elevation||0),0);
-    document.getElementById('ru-distance').textContent  = ytdDist.toFixed(0);
-    document.getElementById('ru-runs').textContent      = ytdRuns.length;
-    document.getElementById('ru-elevation').textContent = Math.round(ytdElev).toLocaleString();
+def process_strava_activity(a):
+    type_map = {
+        'Ride':'Ride','VirtualRide':'VirtualRide','Run':'Run','VirtualRun':'VirtualRun',
+        'Rowing':'Rowing','Kayaking':'Kayaking','WeightTraining':'WeightTraining',
+        'Workout':'Workout','Yoga':'Yoga','Walk':'Walk','Hike':'Hike','Swim':'Swim',
+        'Crossfit':'Crossfit','Elliptical':'Cardio','StairStepper':'Cardio'
+    }
+    act_type = type_map.get(a.get('sport_type') or a.get('type',''), a.get('sport_type','Other'))
+    return {
+        'id':          f"strava_{a.get('id','')}",
+        'strava_id':   str(a.get('id','')),
+        'source':      'STRAVA',
+        'name':        a.get('name') or 'Activity',
+        'type':        act_type,
+        'date':        (a.get('start_date_local') or '')[:10],
+        'duration':    a.get('moving_time') or 0,
+        'distance':    a.get('distance') or 0,
+        'elevation':   a.get('total_elevation_gain') or 0,
+        'avg_power':   a.get('average_watts'),
+        'norm_power':  a.get('weighted_average_watts'),
+        'avg_hr':      a.get('average_heartrate'),
+        'max_hr':      a.get('max_heartrate'),
+        'avg_speed':   a.get('average_speed'),
+        'avg_cadence': a.get('average_cadence'),
+        'calories':    a.get('calories'),
+        'tss':         0,
+        'if_val':      None,
+        'ftp':         None,
+        'w_prime':     None,
+        'weight':      None,
+        'device':      a.get('device_name') or '',
+        'is_garmin':   False
+    }
 
-    // This week
-    const weekCutoff = new Date(Date.now() - 7*864e5).toISOString().split('T')[0];
-    const weekRuns = runs.filter(a => a.date >= weekCutoff);
-    const weekDist = weekRuns.reduce((s,a) => s+(a.distance||0),0)/1000;
-    const weekHrs  = weekRuns.reduce((s,a) => s+(a.duration||0),0)/3600;
+
+def process_concept2_activity(w):
+    try:
+        # Enhanced time handling for Concept2's centisecond format
+        duration_raw = w.get('time', 0)
+        if duration_raw == 0:
+            print(f"⚠️ Concept2 workout missing time: {w.get('id')}")
+            return None
+            
+        # Concept2 time is in centiseconds (1/100 second)
+        duration_seconds = duration_raw / 100
+        distance = w.get('distance', 0)
+        
+        # Enhanced heart rate processing
+        hr_data = w.get('heart_rate', {})
+        avg_hr = None
+        max_hr = None
+        
+        if isinstance(hr_data, dict):
+            avg_hr = hr_data.get('average')
+            max_hr = hr_data.get('max')
+        elif isinstance(hr_data, (int, float)):
+            avg_hr = hr_data
+            
+        # Calculate average pace (seconds per 500m)
+        avg_pace = (duration_seconds / distance * 500) if distance > 0 else None
+        
+        # Enhanced workout naming
+        workout_date = w.get('date', '')[:10] if w.get('date') else 'Unknown'
+        if distance > 0:
+            workout_name = f"Concept2 Rowing - {distance}m"
+        elif duration_seconds > 0:
+            minutes = int(duration_seconds // 60)
+            seconds = int(duration_seconds % 60)
+            workout_name = f"Concept2 Rowing - {minutes}:{seconds:02d}"
+        else:
+            workout_name = "Concept2 Rowing"
+            
+        activity = {
+            'id':          f"concept2_{w.get('id', '')}",
+            'strava_id':   None,
+            'source':      'CONCEPT2',  # This is key!
+            'name':        workout_name,
+            'type':        'Rowing',    # This is key!
+            'date':        workout_date,
+            'duration':    duration_seconds,
+            'distance':    distance,
+            'elevation':   0,
+            'avg_power':   None,
+            'norm_power':  None,
+            'avg_hr':      avg_hr,
+            'max_hr':      max_hr,
+            'avg_speed':   distance / duration_seconds if duration_seconds > 0 else None,
+            'avg_cadence': w.get('stroke_rate'),  # Stroke rate in strokes per minute
+            'calories':    w.get('calories'),
+            'tss':         0,
+            'if_val':      None,
+            'ftp':         None,
+            'w_prime':     None,
+            'weight':      None,
+            'device':      'Concept2 RowErg',
+            'is_garmin':   False
+        }
+        
+        print(f"✅ Processed Concept2: {workout_name} on {workout_date}")
+        return activity
+        
+    except Exception as e:
+        print(f"❌ Error processing Concept2 workout {w.get('id', 'unknown')}: {e}")
+        print(f"Raw workout data: {w}")
+        return None
+
+
+def merge_activities(intervals_raw, strava_acts, concept2_acts):
+    processed = []
+    strava_ids_covered = set()
+    skipped = 0
+
+    for a in intervals_raw:
+        if a.get('_note') or not a.get('type'):
+            if a.get('strava_id'):
+                strava_ids_covered.add(str(a.get('strava_id')))
+            skipped += 1
+            continue
+        act = process_intervals_activity(a)
+        if act['strava_id']:
+            strava_ids_covered.add(act['strava_id'])
+        processed.append(act)
+
+    log.info(f'Intervals: {len(processed)} real activities, {skipped} stubs')
+
+    added_strava = 0
+    for a in strava_acts:
+        if str(a.get('id','')) not in strava_ids_covered:
+            processed.append(process_strava_activity(a))
+            added_strava += 1
+
+    log.info(f'Strava: added {added_strava} additional activities')
+
+    added_concept2 = 0
+    for w in concept2_acts:
+        processed.append(process_concept2_activity(w))
+        added_concept2 += 1
+
+    log.info(f'Concept2: added {added_concept2} rowing workouts')
+
+    return sorted(processed, key=lambda x: x['date'], reverse=True)
+
+
+def build_segments(strava, activities):
+    segments = {'cycling': [], 'running': []}
+    cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+    recent = [a for a in activities if a.get('strava_id') and a['date'] >= cutoff][:10]
+    seen = set()
+
+    for act in recent:
+        efforts = strava.get_activity_segments(act['strava_id'])
+        for e in efforts:
+            seg = e.get('segment', {})
+            sid = seg.get('id')
+            if sid in seen:
+                continue
+            seen.add(sid)
+            entry = {
+                'id': sid, 'name': seg.get('name',''),
+                'distance': seg.get('distance',0),
+                'time': e.get('elapsed_time',0),
+                'pr': e.get('pr_rank') == 1,
+                'rank': e.get('pr_rank'),
+                'date': act['date']
+            }
+            if act['type'] in ('Ride','VirtualRide'):
+                entry['avg_power'] = e.get('average_watts')
+                segments['cycling'].append(entry)
+            else:
+                entry['avg_hr'] = e.get('average_heartrate')
+                segments['running'].append(entry)
+
+    log.info(f'Segments: {len(segments["cycling"])} cycling, {len(segments["running"])} running')
+    return segments
+
+
+def process_wellness(raw):
+    processed = []
+    for w in raw:
+        processed.append({
+            'date':       w.get('id') or '',
+            'ctl':        w.get('ctl'),
+            'atl':        w.get('atl'),
+            'tsb':        w.get('tsb'),
+            'tss':        w.get('trainingLoad') or 0,
+            'hrv':        w.get('hrv'),
+            'resting_hr': w.get('restingHR'),
+            'sleep':      round(w['sleepSecs'] / 3600, 1) if w.get('sleepSecs') else None,
+            'weight':     w.get('weight'),
+            'fatigue':    w.get('fatigue'),
+            'mood':       w.get('mood')
+        })
+    return sorted(processed, key=lambda x: x['date'])
+
+
+def deduplicate(items, key='id'):
+    seen = set()
+    result = []
+    for item in items:
+        k = str(item.get(key, ''))
+        if k not in seen:
+            seen.add(k)
+            result.append(item)
+    return result
+
+
+def aggregate_weekly_tss(activities):
+    weeks = {}
+    for a in activities:
+        if not a['date']:
+            continue
+        d = datetime.strptime(a['date'], '%Y-%m-%d')
+        iso = d.isocalendar()
+        key = f'{iso[0]}-W{iso[1]:02d}'
+        if key not in weeks:
+            weeks[key] = {'week': f'W{iso[1]}', 'year': iso[0], 'ride': 0, 'run': 0, 'row': 0, 'other': 0}
+        tss = a['tss'] or 0
+        t = a['type']
+        if t in ('Ride','VirtualRide'):   weeks[key]['ride'] += tss
+        elif t in ('Run','VirtualRun'):   weeks[key]['run'] += tss
+        elif t in ('Rowing','Kayaking'):  weeks[key]['row'] += tss
+        else:                              weeks[key]['other'] += tss
+    return sorted(weeks.values(), key=lambda x: (x['year'], x['week']))
+
+
+def calc_ytd(activities):
+    year = str(datetime.now().year)
+    ytd     = [a for a in activities if a['date'].startswith(year)]
+    cycling = [a for a in ytd if a['type'] in ('Ride','VirtualRide')]
+    running = [a for a in ytd if a['type'] in ('Run','VirtualRun')]
+    rowing  = [a for a in ytd if a['type'] in ('Rowing',)]
+    def s(arr):
+        return {
+            'distance': round(sum(a['distance'] or 0 for a in arr)/1000),
+            'hours':    round(sum(a['duration'] or 0 for a in arr)/3600, 1),
+            'tss':      sum(a['tss'] or 0 for a in arr),
+            'count':    len(arr)
+        }
+    return {'total': s(ytd), 'cycling': s(cycling), 'running': s(running), 'rowing': s(rowing)}
+
+
+def build_heatmap(activities, days=365):
+    act_by_date = {}
+    for a in activities:
+        if not a['date']:
+            continue
+        act_by_date[a['date']] = act_by_date.get(a['date'], 0) + (a['tss'] or 0)
+    cells = []
+    end = datetime.now()
+    for i in range(days - 1, -1, -1):
+        d = end - timedelta(days=i)
+        ds = d.strftime('%Y-%m-%d')
+        tss = act_by_date.get(ds, 0)
+        level = 0
+        if tss > 0:   level = 1
+        if tss > 40:  level = 2
+        if tss > 80:  level = 3
+        if tss > 120: level = 4
+        if tss > 180: level = 5
+        cells.append({'date': ds, 'level': level, 'tss': tss})
+    return cells
+
+
+def calculate_pb(activities, target_distance, tolerance=0.15):
+    """
+    Calculate personal best time for a target distance.
     
-    document.getElementById('week-runs').textContent = weekRuns.length;
-    document.getElementById('week-stats').textContent = `runs · ${weekDist.toFixed(1)} km`;
-    document.getElementById('week-hours').textContent = `${weekHrs.toFixed(1)} hrs running`;
-
-    // 5K and 10K bests - use Intervals pace curve if available
-    let best5k = null;
-    let best10k = null;
+    Args:
+        activities: List of activity dictionaries
+        target_distance: Target distance in meters (e.g., 5000 for 5K)
+        tolerance: Distance tolerance as percentage (default 15%)
     
-    if (paceCurveData && Array.isArray(paceCurveData) && paceCurveData.length > 0) {
-      // Pace curve is an array of objects with format: { secs, distM, label, ... }
-      console.log('Processing Intervals pace curve, entries:', paceCurveData.length);
-      console.log('Sample entries:', paceCurveData.slice(0, 3));
-      
-      // Look for 5000m (5K) - find closest match
-      const entry5k = paceCurveData.find(e => e.distM === 5000) || 
-                      paceCurveData.find(e => Math.abs(e.distM - 5000) < 100);
-      if (entry5k && entry5k.secs) {
-        best5k = entry5k.secs;
-        console.log('Using Intervals 5K best:', best5k, 'seconds (', entry5k.distM, 'm)');
-      }
-      
-      // Look for 10000m (10K) - find closest match  
-      const entry10k = paceCurveData.find(e => e.distM === 10000) ||
-                       paceCurveData.find(e => Math.abs(e.distM - 10000) < 100);
-      if (entry10k && entry10k.secs) {
-        best10k = entry10k.secs;
-        console.log('Using Intervals 10K best:', best10k, 'seconds (', entry10k.distM, 'm)');
-      }
+    Returns:
+        Best time in seconds, or None if no qualifying activities found
+    """
+    runs = [a for a in activities if a['type'] in ('Run', 'VirtualRun')]
+    margin = target_distance * tolerance
+    
+    candidates = [
+        a for a in runs 
+        if a.get('distance') and 
+        abs(a['distance'] - target_distance) < margin and
+        a.get('avg_speed') and
+        a['avg_speed'] > 0
+    ]
+    
+    if not candidates:
+        return None
+    
+    best_time = None
+    for a in candidates:
+        # Estimate time based on average speed
+        estimated_time = target_distance / a['avg_speed']
+        if best_time is None or estimated_time < best_time:
+            best_time = estimated_time
+    
+    log.info(f'PB for {target_distance}m: {best_time:.1f}s from {len(candidates)} candidates')
+    return round(best_time, 1) if best_time else None
+
+
+def calculate_pb(activities, target_distance, tolerance=0.15):
+    """
+    Calculate personal best time for a target distance.
+    
+    Args:
+        activities: List of activity dictionaries
+        target_distance: Target distance in meters (e.g., 5000 for 5K)
+        tolerance: Distance tolerance as percentage (default 15%)
+    
+    Returns:
+        Best time in seconds, or None if no qualifying activities found
+    """
+    runs = [a for a in activities if a['type'] in ('Run', 'VirtualRun')]
+    margin = target_distance * tolerance
+    
+    candidates = [
+        a for a in runs 
+        if a.get('distance') and 
+        abs(a['distance'] - target_distance) < margin and
+        a.get('avg_speed') and
+        a['avg_speed'] > 0
+    ]
+    
+    if not candidates:
+        return None
+    
+    best_time = None
+    for a in candidates:
+        # Estimate time based on average speed
+        estimated_time = target_distance / a['avg_speed']
+        if best_time is None or estimated_time < best_time:
+            best_time = estimated_time
+    
+    log.info(f'PB for {target_distance}m: {best_time:.1f}s from {len(candidates)} candidates')
+    return round(best_time, 1) if best_time else None
+
+
+def calculate_running_bests_90d(activities):
+    """Calculate 90-day running bests for standard distances"""
+    from datetime import datetime, timedelta
+    
+    cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+    recent = [a for a in activities if a['date'] >= cutoff and a['type'] in ('Run', 'VirtualRun')]
+    
+    distances = {
+        '400': 400,
+        '800': 800,
+        '1000': 1000,
+        '1500': 1500,
+        '1609': 1609,  # mile
+        '3000': 3000,
+        '5000': 5000,
+        '8000': 8000,  # 5 mile
+        '10000': 10000,
+        '16093': 16093,  # 10 mile
+        '21097': 21097,  # half marathon
+        '42195': 42195   # marathon
     }
     
-    // Fallback: calculate from activities if Intervals data not available
-    if (!best5k || !best10k) {
-      console.log('Falling back to calculating bests from activities');
-      const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
-      const recent90 = runs.filter(a => a.date >= d90);
-      console.log('90-day runs found:', recent90.length);
-      
-      if (!best5k) best5k = best90(recent90, 5000);
-      if (!best10k) best10k = best90(recent90, 10000);
-      console.log('Calculated - Best 5K:', best5k, 'Best 10K:', best10k);
+    bests = {}
+    for key, dist in distances.items():
+        margin = dist * 0.15
+        candidates = [
+            a for a in recent
+            if a.get('distance') and abs(a['distance'] - dist) < margin and
+            a.get('duration') and a.get('distance') > 0
+        ]
+        
+        if candidates:
+            # Find best by scaling duration to exact distance
+            best = min(candidates, key=lambda a: (a['duration'] / a['distance']) * dist)
+            scaled_time = (best['duration'] / best['distance']) * dist
+            bests[key] = {
+                'secs': round(scaled_time, 1),
+                'date': best['date'],
+                'name': best['name'],
+                'distM': dist
+            }
+            log.info(f'  {key}m: {scaled_time:.1f}s from {best["date"]}')
+    
+    return bests
+
+
+def calculate_power_bests_90d(activities):
+    """Calculate 90-day power bests for standard durations"""
+    from datetime import datetime, timedelta
+    
+    cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+    recent = [a for a in activities if a['date'] >= cutoff and a['type'] in ('Ride', 'VirtualRide') and a.get('avg_power')]
+    
+    # Standard power durations in seconds
+    durations = {
+        '5': 5,
+        '10': 10,
+        '30': 30,
+        '60': 60,
+        '300': 300,      # 5min
+        '600': 600,      # 10min
+        '1200': 1200,    # 20min
+        '3600': 3600     # 1hr
     }
     
-    if (best5k) {
-      document.getElementById('best-5k-time').textContent = fmtTime(best5k);
-      document.getElementById('best-5k-pace').textContent = fmtPaceKm(best5k, 5);
-    } else {
-      console.warn('No 5K data available');
-    }
-    if (best10k) {
-      document.getElementById('best-10k-time').textContent = fmtTime(best10k);
-      document.getElementById('best-10k-pace').textContent = fmtPaceKm(best10k, 10);
-    } else {
-      console.warn('No 10K data available');
-    }
+    bests = {}
+    for key, duration in durations.items():
+        # For now, use avg_power from activities of similar length
+        # This is a simplification - ideally we'd analyze power streams
+        candidates = [
+            a for a in recent
+            if a.get('duration') and abs(a['duration'] - duration) < duration * 0.3 and
+            a.get('avg_power')
+        ]
+        
+        if candidates:
+            best = max(candidates, key=lambda a: a['avg_power'])
+            bests[key] = {
+                'watts': round(best['avg_power']),
+                'date': best['date'],
+                'name': best['name'],
+                'durationSecs': duration
+            }
+            log.info(f'  {key}s: {best["avg_power"]:.0f}W from {best["date"]}')
+    
+    return bests
 
-    // Load all-time PBs from athlete data
-    if (athlete) {
-      if (athlete.pb_5k) {
-        document.getElementById('pb-5k').textContent = `PB: ${fmtTime(athlete.pb_5k)}`;
-      }
-      if (athlete.pb_10k) {
-        document.getElementById('pb-10k').textContent = `PB: ${fmtTime(athlete.pb_10k)}`;
-      }
-    }
 
-    // Pace curve (90d bests)
-    const paceBests = DATA.paceBests ? DATA.paceBests(runs) : [];
-    if (paceBests.length) buildPaceBestsChart('paceCurveChart', paceBests);
+def save_json(data, filename):
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    path = OUTPUT_DIR / filename
+    with open(path, 'w') as f:
+        json.dump(data, f, separators=(',', ':'))
+    log.info(f'Saved {path} ({len(json.dumps(data))//1024}kb)')
 
-    // Pace trend (rolling avg from actual runs)
-    const trendRuns = runs.slice(0, 30).reverse();
-    if (trendRuns.length) {
-      const dates = trendRuns.map(a => a.date);
-      const paces = trendRuns.map(a => a.avg_speed ? Math.round(1000/a.avg_speed) : null);
-      buildPaceTrendChart('paceTrendChart', dates, paces);
-    }
 
-    // Activity cards
-    const meta2 = document.getElementById('ru-week-meta');
-    if (meta2) meta2.textContent = recent.length + ' runs · ' + (recent.reduce((s,a)=>s+(a.distance||0),0)/1000).toFixed(1) + ' km';
-    const container = document.getElementById('ru-activity-cards');
-    if (container) {
-      container.innerHTML = recent.length ? recent.map(a => {
-        const paceSecKm = a.avg_speed ? Math.round(1000/a.avg_speed) : null;
-        return '<div class="activity-card">' +
-          '<div class="activity-card-type type-run"><span class="type-dot dot-run"></span>Running</div>' +
-          '<div class="activity-card-name">'+a.name+'</div>' +
-          '<div class="activity-card-stats">' +
-            '<div class="activity-stat"><span class="activity-stat-value">'+formatDuration(a.duration)+'</span><span class="activity-stat-label">Duration</span></div>' +
-            '<div class="activity-stat"><span class="activity-stat-value">'+(a.distance?(a.distance/1000).toFixed(1):'—')+'</span><span class="activity-stat-label">km</span></div>' +
-            '<div class="activity-stat"><span class="activity-stat-value">'+(paceSecKm?formatPace(paceSecKm):'—')+'</span><span class="activity-stat-label">Pace/km</span></div>' +
-            '<div class="activity-stat"><span class="activity-stat-value">'+(a.avg_hr||'—')+'</span><span class="activity-stat-label">Avg HR</span></div>' +
-          '</div>' +
-          '<div class="activity-card-footer"><span>'+a.date+'</span><span class="tss-val">TSS '+a.tss+(a.if_val?' · IF '+a.if_val.toFixed(2):'')+'</span></div>' +
-          '</div>';
-      }).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px">No runs in last 14 days</div>';
-    }
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--oldest', default=HISTORY_START)
+    args = parser.parse_args()
 
-    document.getElementById('loading-state')?.classList.add('hidden');
-    document.getElementById('dashboard-content')?.classList.remove('hidden');
+    if not API_KEY:
+        raise ValueError('INTERVALS_API_KEY environment variable not set')
 
-  } catch(err) {
-    document.getElementById('loading-state')?.classList.add('hidden');
-    document.getElementById('error-state')?.classList.remove('hidden');
-    document.getElementById('error-msg') && (document.getElementById('error-msg').textContent = err.message);
-    console.error('Running page error:', err);
-  }
-});
+    client = IntervalsClient(ATHLETE_ID, API_KEY)
+    athlete = client.get_athlete()
+    raw_intervals = deduplicate(client.get_activities(args.oldest))
 
-function best90(runs, distTarget) {
-  // Find best time for activities close to target distance
-  const margin = distTarget * 0.15;
-  const candidates = runs.filter(a => a.distance && Math.abs(a.distance - distTarget) < margin && a.duration);
-  
-  console.log(`Looking for ${distTarget}m runs (±${margin}m tolerance)`);
-  console.log('Candidates found:', candidates.map(a => ({
-    name: a.name,
-    date: a.date,
-    distance: a.distance,
-    duration: a.duration,
-    pace: a.avg_speed ? (1000/a.avg_speed).toFixed(0) + ' sec/km' : 'N/A'
-  })));
-  
-  if (!candidates.length) return null;
-  
-  // Use actual duration, scaled to exact target distance
-  return candidates.reduce((best, a) => {
-    if (!a.duration || !a.distance) return best;
-    // Scale the actual duration to the target distance
-    const scaledTime = (a.duration / a.distance) * distTarget;
-    console.log(`  ${a.name}: ${a.distance}m in ${a.duration}s → scaled to ${distTarget}m = ${scaledTime.toFixed(1)}s (${Math.floor(scaledTime/60)}:${Math.round(scaledTime%60).toString().padStart(2,'0')})`);
-    return (!best || scaledTime < best) ? scaledTime : best;
-  }, null);
-}
+    strava_acts = []
+    strava = None
+    if STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET and STRAVA_REFRESH_TOKEN:
+        try:
+            strava = StravaClient(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, STRAVA_REFRESH_TOKEN)
+            strava.authenticate()
+            oldest_ts = int(datetime.strptime(args.oldest, '%Y-%m-%d').timestamp())
+            strava_acts = strava.get_activities(oldest_ts)
+        except Exception as e:
+            log.error(f'Strava fetch failed: {e}')
+    else:
+        log.warning('Strava credentials not configured')
 
-function fmtTime(secs) {
-  const m = Math.floor(secs/60), s = Math.round(secs%60);
-  return m + ':' + String(s).padStart(2,'0');
-}
+    concept2_acts = []
+    if CONCEPT2_USERNAME and CONCEPT2_PASSWORD:
+        try:
+            concept2 = Concept2Client(CONCEPT2_USERNAME, CONCEPT2_PASSWORD)
+            if concept2.authenticate():
+                concept2_acts = concept2.get_workouts(args.oldest)
+        except Exception as e:
+            log.error(f'Concept2 fetch failed: {e}')
+    else:
+        log.warning('Concept2 credentials not configured')
 
-function fmtPaceKm(totalSecs, km) {
-  const secPer = totalSecs / km;
-  return Math.floor(secPer/60) + ':' + String(Math.floor(secPer%60)).padStart(2,'0') + '/km';
-}
+    activities = merge_activities(raw_intervals, strava_acts, concept2_acts)
+    save_json(activities, 'activities.json')
 
-function formatDuration(seconds) {
-  if (!seconds) return '—';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}:${String(s).padStart(2, '0')}`;
-  return `${s}s`;
-}
+    wellness = process_wellness(client.get_wellness(args.oldest))
+    save_json(wellness, 'wellness.json')
 
-function formatPace(secPerKm) {
-  const min = Math.floor(secPerKm / 60);
-  const sec = Math.floor(secPerKm % 60);
-  return `${min}:${String(sec).padStart(2, '0')}`;
-}
-</script>
-</body>
-</html>
+    # Fetch 90-day power curves from Intervals.icu
+    log.info('=== Fetching 90-day Power Curves ===')
+    power_curves_90d = client.get_power_curves('90d')
+    if power_curves_90d:
+        save_json(power_curves_90d, 'power_curves_90d.json')
+        log.info(f'✓ Saved 90-day power curves')
+    else:
+        log.warning('✗ Power curves not available')
+        save_json([], 'power_curves_90d.json')
+
+    # Fetch 90-day pace curves from Intervals.icu
+    log.info('=== Fetching 90-day Pace Curves ===')
+    pace_curves_90d = client.get_pace_curves('90d')
+    if pace_curves_90d:
+        save_json(pace_curves_90d, 'pace_curves_90d.json')
+        log.info(f'✓ Saved 90-day pace curves')
+    else:
+        log.warning('✗ Pace curves not available')
+        save_json([], 'pace_curves_90d.json')
+
+
+    weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
+    ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
+    w_prime = next((a['w_prime'] for a in activities if a.get('w_prime')), None)
+    if weight is None:
+        weight = next((w['weight'] for w in reversed(wellness) if w.get('weight')), None)
+
+    # Calculate all-time PBs for running distances
+    log.info('Calculating running PBs...')
+    pb_5k = calculate_pb(activities, 5000)
+    pb_10k = calculate_pb(activities, 10000)
+    pb_half_marathon = calculate_pb(activities, 21097.5)
+    pb_marathon = calculate_pb(activities, 42195)
+
+    save_json({
+        'id': ATHLETE_ID, 
+        'name': athlete.get('name',''), 
+        'weight': weight, 
+        'ftp': ftp, 
+        'w_prime': w_prime,
+        'pb_5k': pb_5k,
+        'pb_10k': pb_10k,
+        'pb_half_marathon': pb_half_marathon,
+        'pb_marathon': pb_marathon
+    }, 'athlete.json')
+    
+    save_json(aggregate_weekly_tss(activities), 'weekly_tss.json')
+    save_json(calc_ytd(activities), 'ytd.json')
+    save_json(build_heatmap(activities, 365), 'heatmap_1y.json')
+
+    if strava:
+        try:
+            save_json(build_segments(strava, activities), 'segments.json')
+        except Exception as e:
+            log.error(f'Segment fetch failed: {e}')
+            save_json({'cycling':[], 'running':[]}, 'segments.json')
+    else:
+        save_json({'cycling':[], 'running':[]}, 'segments.json')
+
+    save_json({
+        'last_updated': datetime.now().isoformat(),
+        'activity_count': len(activities),
+        'oldest_date': args.oldest,
+        'weight': weight, 'ftp': ftp, 'w_prime': w_prime
+    }, 'meta.json')
+
+    log.info(f'Done. {len(activities)} total activities')
+
+
+if __name__ == '__main__':
+    main()
