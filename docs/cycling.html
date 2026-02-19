@@ -380,4 +380,91 @@ function buildPowerCurveChartLine(canvasId, data, compare, cp, p5, p20) {
         label: 'Power',
         data: values,
         borderColor: 'rgb(108, 99, 255)',
-        backgroundColor: 'rgba(108, 99,
+        backgroundColor: 'rgba(108, 99, 255, 0.1)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: 'rgb(108, 99, 255)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10, 10, 15, 0.95)',
+          titleColor: '#e8e8f0',
+          bodyColor: '#e8e8f0',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + 'W';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { 
+            color: '#6b6b7e', 
+            font: { size: 11 },
+            autoSkip: false,
+            maxRotation: 45,
+            minRotation: 45,
+            callback: function(value, index) {
+              // Only show specific labels at key durations
+              const keyIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+              const label = this.getLabelForValue(value);
+              
+              // Show labels for: 1s, 5s, 10s, 15s, 30s, 1min, 2min, 3min, 5min, 6min, 8min, 10min, 12min, 15min, 20min, 25min, 30min, 40min, 50min, 60min, 90min, 120min
+              const showLabels = ['1s', '5s', '10s', '15s', '30s', '1min', '2min', '3min', '5min', '6min', '8min', '10min', '12min', '15min', '20min', '25min', '30min', '40min', '50min', '60min', '90min', '120min'];
+              
+              return showLabels.includes(label) ? label : '';
+            }
+          }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { 
+            color: '#6b6b7e',
+            font: { size: 11 },
+            callback: function(value) {
+              return value + 'W';
+            },
+            stepSize: 50  // Force increments of 50W
+          },
+          beginAtZero: false
+        }
+      }
+    }
+  });
+}
+
+function formatDuration(seconds) {
+  if (!seconds) return '—';
+
+  if (seconds >= 3600)
+    return `${Math.floor(seconds/3600)}h ${Math.floor((seconds%3600)/60)}m`;
+
+  return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
+}
+
+function formatDurationLabel(seconds) {
+  if (seconds < 60) return seconds + 's';
+  if (seconds < 3600) return Math.round(seconds / 60) + 'min';
+  return Math.round(seconds / 3600) + 'h';
+}
+</script>
+</body>
+</html>
