@@ -65,33 +65,6 @@
         <div class="metric-sub" id="week-details">—</div>
       </div>
     </section>
-    
-    <!-- DATA SYNC STATUS -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Data Sources</h2>
-        <span class="section-meta" id="sync-status">Multiple sources detected</span>
-      </div>
-      <div id="sync-info" style="font-family:var(--font-mono);font-size:12px;padding:15px;background:var(--bg-secondary);border-radius:8px;margin-bottom:20px;">
-        <div id="sync-details">Loading data sources...</div>
-      </div>
-      
-      <!-- ERGDATA SETUP INSTRUCTIONS -->
-      <div id="ergdata-setup" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:15px;margin-bottom:20px;">
-        <h3 style="margin:0 0 10px 0;color:var(--text-primary);">📱 Add ErgData for Better Erg Tracking</h3>
-        <div style="font-size:14px;color:var(--text-secondary);line-height:1.4;">
-          <p><strong>To sync Concept2 erg workouts:</strong></p>
-          <ol style="margin:10px 0;padding-left:20px;">
-            <li>Download the <strong>ErgData</strong> app (free from Concept2)</li>
-            <li>Connect your PM5 monitor via Bluetooth</li>
-            <li>Complete a workout with ErgData connected</li>
-            <li>In ErgData, go to Settings → Connect accounts → Strava</li>
-            <li>Your erg workouts will automatically sync here</li>
-          </ol>
-          <p style="margin:10px 0 0 0;font-style:italic;">Currently showing rowing activities from Strava and other sources.</p>
-        </div>
-      </div>
-    </section>
 
     <section class="section">
       <div class="section-header">
@@ -192,37 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
     
-    // Update sync status display
-    const syncStatus = document.getElementById('sync-status');
-    const syncDetails = document.getElementById('sync-details');
-    
-    let statusHtml = '';
-    
-    if (ergDataActivities.length > 0) {
-      const latestErg = ergDataActivities.sort((a,b) => b.date.localeCompare(a.date))[0];
-      statusHtml += `<div style="color:var(--green);">✅ ErgData: ${ergDataActivities.length} workouts (Latest: ${latestErg.date})</div>`;
-      syncStatus.textContent = '✅ ErgData Connected';
-      syncStatus.style.color = 'var(--green)';
-    } else {
-      statusHtml += `<div style="color:var(--yellow);">⚠️ ErgData: Not connected</div>`;
-      syncStatus.textContent = `✅ ${Object.keys(sourceBreakdown).length} Sources`;
-      syncStatus.style.color = 'var(--blue)';
-    }
-    
-    if (stravaRowingActivities.length > 0) {
-      const latestStrava = stravaRowingActivities.sort((a,b) => b.date.localeCompare(a.date))[0];
-      statusHtml += `<div style="color:var(--green);">✅ Strava: ${stravaRowingActivities.length} rowing workouts (Latest: ${latestStrava.date})</div>`;
-    }
-    
-    // Show breakdown by source
-    statusHtml += '<div style="margin-top:10px;"><strong>Data Sources:</strong></div>';
-    Object.entries(sourceBreakdown).forEach(([source, count]) => {
-      statusHtml += `<div>📊 ${source}: ${count} rowing activities</div>`;
-    });
-    
-    statusHtml += `<div style="margin-top:10px;color:var(--text-muted);">📅 Last updated: ${new Date().toLocaleString()}</div>`;
-    
-    syncDetails.innerHTML = statusHtml;
+    // Sync status display removed - debug section deleted from HTML
 
     const weekCutoff = new Date(Date.now() - 7*864e5).toISOString().split('T')[0];
     const weekRows = rows.filter(a => a.date >= weekCutoff);
