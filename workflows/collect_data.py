@@ -64,42 +64,30 @@ class IntervalsClient:
         log.info(f'Got {len(data)} wellness entries')
         return data
 
-    def get_power_curve(self):
-        """Fetch power curve data (cycling bests) from Intervals.icu"""
-        log.info('Fetching power curve from Intervals.icu')
+    def get_power_curves(self, period='90d'):
+        """Fetch power curves from Intervals.icu"""
+        log.info(f'Fetching power curves ({period}) from Intervals.icu')
         try:
-            # Get current power curve which contains bests for various durations
-            endpoint = f'athlete/{self.athlete_id}/power-curve'
-            log.info(f'Calling endpoint: {BASE_URL}/{endpoint}')
-            data = self._get(endpoint)
-            log.info(f'Power curve response type: {type(data)}')
+            # Curves parameter: 90d = past 90 days, 1y = past year, all = all time
+            data = self._get(f'athlete/{self.athlete_id}/power-curves', {'curves': period})
             if data:
-                log.info(f'Power curve data: {str(data)[:200]}...')
-                log.info(f'Got power curve data with {len(data) if isinstance(data, list) else "non-list"} points')
-            else:
-                log.warning('Power curve returned None or empty')
+                log.info(f'Got power curves: {len(data)} curves')
             return data
         except Exception as e:
-            log.error(f'Could not fetch power curve: {e}', exc_info=True)
+            log.error(f'Could not fetch power curves: {e}')
             return None
 
-    def get_pace_curve(self):
-        """Fetch pace curve data (running bests) from Intervals.icu"""
-        log.info('Fetching pace curve from Intervals.icu')
+    def get_pace_curves(self, period='90d'):
+        """Fetch pace curves from Intervals.icu"""
+        log.info(f'Fetching pace curves ({period}) from Intervals.icu')
         try:
-            # Get current pace curve which contains bests for various distances
-            endpoint = f'athlete/{self.athlete_id}/pace-curve'
-            log.info(f'Calling endpoint: {BASE_URL}/{endpoint}')
-            data = self._get(endpoint)
-            log.info(f'Pace curve response type: {type(data)}')
+            # Curves parameter: 90d = past 90 days, 1y = past year, all = all time
+            data = self._get(f'athlete/{self.athlete_id}/pace-curves', {'curves': period})
             if data:
-                log.info(f'Pace curve data: {str(data)[:200]}...')
-                log.info(f'Got pace curve data with {len(data) if isinstance(data, list) else "non-list"} points')
-            else:
-                log.warning('Pace curve returned None or empty')
+                log.info(f'Got pace curves: {len(data)} curves')
             return data
         except Exception as e:
-            log.error(f'Could not fetch pace curve: {e}', exc_info=True)
+            log.error(f'Could not fetch pace curves: {e}')
             return None
 
 
@@ -549,6 +537,131 @@ def calculate_pb(activities, target_distance, tolerance=0.15):
     return round(best_time, 1) if best_time else None
 
 
+def calculate_pb(activities, target_distance, tolerance=0.15):
+    """
+    Calculate personal best time for a target distance.
+    
+    Args:
+        activities: List of activity dictionaries
+        target_distance: Target distance in meters (e.g., 5000 for 5K)
+        tolerance: Distance tolerance as percentage (default 15%)
+    
+    Returns:
+        Best time in seconds, or None if no qualifying activities found
+    """
+    runs = [a for a in activities if a['type'] in ('Run', 'VirtualRun')]
+    margin = target_distance * tolerance
+    
+    candidates = [
+        a for a in runs 
+        if a.get('distance') and 
+        abs(a['distance'] - target_distance) < margin and
+        a.get('avg_speed') and
+        a['avg_speed'] > 0
+    ]
+    
+    if not candidates:
+        return None
+    
+    best_time = None
+    for a in candidates:
+        # Estimate time based on average speed
+        estimated_time = target_distance / a['avg_speed']
+        if best_time is None or estimated_time < best_time:
+            best_time = estimated_time
+    
+    log.info(f'PB for {target_distance}m: {best_time:.1f}s from {len(candidates)} candidates')
+    return round(best_time, 1) if best_time else None
+
+
+def calculate_running_bests_90d(activities):
+    """Calculate 90-day running bests for standard distances"""
+    from datetime import datetime, timedelta
+    
+    cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+    recent = [a for a in activities if a['date'] >= cutoff and a['type'] in ('Run', 'VirtualRun')]
+    
+    distances = {
+        '400': 400,
+        '800': 800,
+        '1000': 1000,
+        '1500': 1500,
+        '1609': 1609,  # mile
+        '3000': 3000,
+        '5000': 5000,
+        '8000': 8000,  # 5 mile
+        '10000': 10000,
+        '16093': 16093,  # 10 mile
+        '21097': 21097,  # half marathon
+        '42195': 42195   # marathon
+    }
+    
+    bests = {}
+    for key, dist in distances.items():
+        margin = dist * 0.15
+        candidates = [
+            a for a in recent
+            if a.get('distance') and abs(a['distance'] - dist) < margin and
+            a.get('duration') and a.get('distance') > 0
+        ]
+        
+        if candidates:
+            # Find best by scaling duration to exact distance
+            best = min(candidates, key=lambda a: (a['duration'] / a['distance']) * dist)
+            scaled_time = (best['duration'] / best['distance']) * dist
+            bests[key] = {
+                'secs': round(scaled_time, 1),
+                'date': best['date'],
+                'name': best['name'],
+                'distM': dist
+            }
+            log.info(f'  {key}m: {scaled_time:.1f}s from {best["date"]}')
+    
+    return bests
+
+
+def calculate_power_bests_90d(activities):
+    """Calculate 90-day power bests for standard durations"""
+    from datetime import datetime, timedelta
+    
+    cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+    recent = [a for a in activities if a['date'] >= cutoff and a['type'] in ('Ride', 'VirtualRide') and a.get('avg_power')]
+    
+    # Standard power durations in seconds
+    durations = {
+        '5': 5,
+        '10': 10,
+        '30': 30,
+        '60': 60,
+        '300': 300,      # 5min
+        '600': 600,      # 10min
+        '1200': 1200,    # 20min
+        '3600': 3600     # 1hr
+    }
+    
+    bests = {}
+    for key, duration in durations.items():
+        # For now, use avg_power from activities of similar length
+        # This is a simplification - ideally we'd analyze power streams
+        candidates = [
+            a for a in recent
+            if a.get('duration') and abs(a['duration'] - duration) < duration * 0.3 and
+            a.get('avg_power')
+        ]
+        
+        if candidates:
+            best = max(candidates, key=lambda a: a['avg_power'])
+            bests[key] = {
+                'watts': round(best['avg_power']),
+                'date': best['date'],
+                'name': best['name'],
+                'durationSecs': duration
+            }
+            log.info(f'  {key}s: {best["avg_power"]:.0f}W from {best["date"]}')
+    
+    return bests
+
+
 def save_json(data, filename):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     path = OUTPUT_DIR / filename
@@ -599,25 +712,26 @@ def main():
     wellness = process_wellness(client.get_wellness(args.oldest))
     save_json(wellness, 'wellness.json')
 
-    # Fetch power curve (cycling bests) from Intervals.icu
-    log.info('=== Fetching Power Curve ===')
-    power_curve = client.get_power_curve()
-    if power_curve and len(power_curve) > 0:
-        save_json(power_curve, 'power_curve.json')
-        log.info(f'✓ Saved power curve with {len(power_curve)} entries')
+    # Fetch 90-day power curves from Intervals.icu
+    log.info('=== Fetching 90-day Power Curves ===')
+    power_curves_90d = client.get_power_curves('90d')
+    if power_curves_90d:
+        save_json(power_curves_90d, 'power_curves_90d.json')
+        log.info(f'✓ Saved 90-day power curves')
     else:
-        log.warning('✗ Power curve not available or empty')
-        save_json([], 'power_curve.json')
+        log.warning('✗ Power curves not available')
+        save_json([], 'power_curves_90d.json')
 
-    # Fetch pace curve (running bests) from Intervals.icu
-    log.info('=== Fetching Pace Curve ===')
-    pace_curve = client.get_pace_curve()
-    if pace_curve and len(pace_curve) > 0:
-        save_json(pace_curve, 'pace_curve.json')
-        log.info(f'✓ Saved pace curve with {len(pace_curve)} entries')
+    # Fetch 90-day pace curves from Intervals.icu
+    log.info('=== Fetching 90-day Pace Curves ===')
+    pace_curves_90d = client.get_pace_curves('90d')
+    if pace_curves_90d:
+        save_json(pace_curves_90d, 'pace_curves_90d.json')
+        log.info(f'✓ Saved 90-day pace curves')
     else:
-        log.warning('✗ Pace curve not available or empty')
-        save_json([], 'pace_curve.json')
+        log.warning('✗ Pace curves not available')
+        save_json([], 'pace_curves_90d.json')
+
 
     weight  = next((a['weight']  for a in activities if a.get('weight')),  None)
     ftp     = next((a['ftp']     for a in activities if a.get('ftp')),     None)
