@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Pace curve (90d bests)
-    const paceBests = DATA.paceBests(runs);
+    const paceBests = DATA.paceBests ? DATA.paceBests(runs) : [];
     if (paceBests.length) buildPaceBestsChart('paceCurveChart', paceBests);
 
     // Pace trend (rolling avg from actual runs)
@@ -244,6 +244,22 @@ function fmtTime(secs) {
 function fmtPaceKm(totalSecs, km) {
   const secPer = totalSecs / km;
   return Math.floor(secPer/60) + ':' + String(Math.floor(secPer%60)).padStart(2,'0') + '/km';
+}
+
+function formatDuration(seconds) {
+  if (!seconds) return '—';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}:${String(s).padStart(2, '0')}`;
+  return `${s}s`;
+}
+
+function formatPace(secPerKm) {
+  const min = Math.floor(secPerKm / 60);
+  const sec = Math.floor(secPerKm % 60);
+  return `${min}:${String(sec).padStart(2, '0')}`;
 }
 </script>
 </body>
