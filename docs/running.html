@@ -62,15 +62,15 @@
     <section class="metrics-row" style="grid-template-columns: repeat(4,1fr)">
       <div class="metric-card form">
         <div class="metric-label">90-DAY BEST</div>
-        <div class="metric-value" style="color:var(--green)">20:45</div>
-        <div class="metric-delta neutral">4:09/km</div>
+        <div class="metric-value" style="color:var(--green)" id="best-5k-time">—</div>
+        <div class="metric-delta neutral" id="best-5k-pace">—</div>
         <div class="metric-bar"><div class="metric-bar-fill" style="width:72%;background:var(--green)"></div></div>
         <div class="metric-sub">5K best</div>
       </div>
       <div class="metric-card fitness">
         <div class="metric-label">90-DAY BEST</div>
-        <div class="metric-value" style="color:var(--accent)">43:00</div>
-        <div class="metric-delta neutral">4:18/km</div>
+        <div class="metric-value" style="color:var(--accent)" id="best-10k-time">—</div>
+        <div class="metric-delta neutral" id="best-10k-pace">—</div>
         <div class="metric-bar"><div class="metric-bar-fill" style="width:65%"></div></div>
         <div class="metric-sub">10K best</div>
       </div>
@@ -83,10 +83,10 @@
       </div>
       <div class="metric-card sleep">
         <div class="metric-label">THIS WEEK</div>
-        <div class="metric-value" style="color:var(--yellow)">2</div>
-        <div class="metric-delta neutral">runs · 16.9 km</div>
+        <div class="metric-value" style="color:var(--yellow)" id="week-runs">—</div>
+        <div class="metric-delta neutral" id="week-stats">—</div>
         <div class="metric-bar"><div class="metric-bar-fill" style="width:38%;background:var(--yellow)"></div></div>
-        <div class="metric-sub">1.4 hrs running</div>
+        <div class="metric-sub" id="week-hours">—</div>
       </div>
     </section>
 
@@ -158,12 +158,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const weekRuns = runs.filter(a => a.date >= weekCutoff);
     const weekDist = weekRuns.reduce((s,a) => s+(a.distance||0),0)/1000;
     const weekHrs  = weekRuns.reduce((s,a) => s+(a.duration||0),0)/3600;
-    const weekEl = document.querySelector('.metric-card.sleep .metric-value');
-    const weekDelta = document.querySelector('.metric-card.sleep .metric-delta');
-    const weekSub = document.querySelector('.metric-card.sleep .metric-sub');
-    if (weekEl) weekEl.textContent = weekRuns.length;
-    if (weekDelta) weekDelta.textContent = `runs · ${weekDist.toFixed(1)} km`;
-    if (weekSub) weekSub.textContent = `${weekHrs.toFixed(1)} hrs running`;
+    
+    document.getElementById('week-runs').textContent = weekRuns.length;
+    document.getElementById('week-stats').textContent = `runs · ${weekDist.toFixed(1)} km`;
+    document.getElementById('week-hours').textContent = `${weekHrs.toFixed(1)} hrs running`;
 
     // 5K and 10K bests from last 90 days
     const d90 = new Date(Date.now() - 90*864e5).toISOString().split('T')[0];
@@ -171,12 +169,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const best5k = best90(recent90, 5000);
     const best10k = best90(recent90, 10000);
     if (best5k) {
-      document.querySelector('.metric-card.form .metric-value').textContent = fmtTime(best5k);
-      document.querySelector('.metric-card.form .metric-delta').textContent = fmtPaceKm(best5k, 5);
+      document.getElementById('best-5k-time').textContent = fmtTime(best5k);
+      document.getElementById('best-5k-pace').textContent = fmtPaceKm(best5k, 5);
     }
     if (best10k) {
-      document.querySelector('.metric-card.fitness .metric-value').textContent = fmtTime(best10k);
-      document.querySelector('.metric-card.fitness .metric-delta').textContent = fmtPaceKm(best10k, 10);
+      document.getElementById('best-10k-time').textContent = fmtTime(best10k);
+      document.getElementById('best-10k-pace').textContent = fmtPaceKm(best10k, 10);
     }
 
     // Pace curve (90d bests)
