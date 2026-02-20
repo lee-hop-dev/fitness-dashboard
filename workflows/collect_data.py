@@ -82,11 +82,15 @@ class IntervalsClient:
             return None
 
     def get_pace_curves(self, period='90d'):
-        """Fetch pace curves from Intervals.icu"""
-        log.info(f'Fetching pace curves ({period}) from Intervals.icu')
+        """Fetch pace curves from Intervals.icu for Running only"""
+        log.info(f'Fetching pace curves ({period}) for Running from Intervals.icu')
         try:
-            # Curves parameter expects array: ?curves=90d (requests handles array formatting)
-            data = self._get(f'athlete/{self.athlete_id}/pace-curves', {'curves': [period]})
+            # Pace curves requires 'type' parameter to filter by sport
+            params = {
+                'curves': [period],
+                'type': 'Run'  # Only fetch running pace curves
+            }
+            data = self._get(f'athlete/{self.athlete_id}/pace-curves', params)
             if data:
                 log.info(f'Got pace curves: {len(data.get("list", []))} curves')
             return data
@@ -214,6 +218,16 @@ class Concept2Client:
 def process_intervals_activity(a):
     raw_if = a.get('icu_intensity')
     if_val = round(raw_if / 100, 2) if raw_if else None
+    
+    tss_value = round(a.get('icu_training_load') or 0)
+    
+    # Log warning if TSS is 0 for activities that should have TSS
+    if tss_value == 0 and a.get('moving_time', 0) > 600:  # Activities > 10 minutes
+        activity_name = a.get('name', 'Unnamed')
+        activity_type = a.get('type', 'Unknown')
+        source = a.get('source', 'UNKNOWN')
+        log.warning(f"⚠️  Missing TSS: {activity_type} - {activity_name} (source: {source})")
+    
     return {
         'id':          str(a.get('id', '')),
         'strava_id':   str(a.get('strava_id', '')) if a.get('strava_id') else None,
@@ -231,7 +245,7 @@ def process_intervals_activity(a):
         'avg_speed':   a.get('average_speed'),
         'avg_cadence': a.get('average_cadence'),
         'calories':    a.get('calories'),
-        'tss':         round(a.get('icu_training_load') or 0),
+        'tss':         tss_value,
         'if_val':      if_val,
         'ftp':         a.get('icu_ftp'),
         'w_prime':     a.get('icu_w_prime'),
