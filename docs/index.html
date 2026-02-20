@@ -855,7 +855,7 @@ function renderActivityCards(activities) {
         </div>
         <div class="activity-card-footer">
           <span>${a.date}</span>
-          <span class="tss-val">TSS ${a.tss}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
+          <span class="tss-val">TSS ${a.tss||a.icu_training_load||0}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
         </div>
       </a>`;
   }).join('');
@@ -888,7 +888,7 @@ function renderCalendar(activities) {
     for (let d=0; d<7; d++) {
       const ds = cursor.toISOString().split('T')[0];
       const acts = actByDate[ds]||[];
-      weekTSS  += acts.reduce((s,a)=>s+(a.tss||0),0);
+      weekTSS  += acts.reduce((s,a)=>s+(a.tss||a.icu_training_load||0),0);
       weekDist += acts.reduce((s,a)=>s+(a.distance||0),0);
       days.push({ ds, dayNum:cursor.getDate(), acts, isToday:ds===today.toISOString().split('T')[0], inRange:cursor<=today });
       cursor.setDate(cursor.getDate()+1);
@@ -931,7 +931,7 @@ function renderCalendar(activities) {
         <div class="cal-date-num">${day.dayNum}</div>
         ${act?`<div class="cal-activity-mini">
           <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
-          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss ? act.tss + 'tss' : 'no TSS'}</div>
+          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${(act.tss || act.icu_training_load || 0) + 'tss'}</div>
         </div>`:''}
       </div>`;
     });
