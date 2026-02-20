@@ -745,44 +745,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('Using fallback power bests');
     }
     
-    // Parse pace curves from Intervals (FIXED: now starts at 400m)
-    if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
-      const curve = paceCurves90d.list[0];
-      const distances = curve.distance || [];
-      const times = curve.values || [];
-      
-      paceBestsData = distances.map((distM, idx) => {
-        // Format standard running distances
-        let label;
-        if (distM === 100) label = '100m';
-        else if (distM === 200) label = '200m';
-        else if (distM === 400) label = '400m';
-        else if (distM === 800) label = '800m';
-        else if (distM === 1000) label = '1km';
-        else if (distM === 1500) label = '1500m';
-        else if (distM === 1609) label = '1 mile';
-        else if (distM === 3000) label = '3km';
-        else if (distM === 5000) label = '5km';
-        else if (distM === 8000) label = '5 mile';
-        else if (distM === 10000) label = '10km';
-        else if (distM === 16093) label = '10 mile';
-        else if (distM === 21097) label = 'Half';
-        else if (distM === 42195) label = 'Marathon';
-        else if (distM < 1000) label = Math.round(distM) + 'm';
-        else label = (distM / 1000).toFixed(1) + 'km';
-        
-        return {
-          label: label,
-          totalSec: times[idx],
-          distM: distM
-        };
-      }).filter(d => d.distM >= 400); // FIXED: Start at 400m instead of 100m
-      console.log('Using Intervals pace bests:', paceBestsData.length, 'points');
-    } else {
-      // Fallback to DATA.paceBests if Intervals data not available
-      paceBestsData = DATA.paceBests(activities).filter(d => d.distM >= 400);
-      console.log('Using fallback pace bests');
-    }
+    // Parse pace curves - use fallback which filters to running only
+    // The Intervals pace_curves_90d.json includes rowing, so we use the local filter
+    const runningActivities = activities.filter(a => 
+      a.type === 'Run' || a.type === 'VirtualRun' || a.type === 'TrailRun'
+    );
+    paceBestsData = DATA.paceBests(runningActivities).filter(d => d.distM >= 400);
+    console.log('Using running-only pace bests:', paceBestsData.length, 'points');
     
     // Build charts with line instead of scatter
     if (powerBestsData.length) buildPowerCurveLineChart('powerBestsChart', powerBestsData);
@@ -855,19 +824,27 @@ function renderActivityCards(activities) {
         </div>
         <div class="activity-card-footer">
           <span>${a.date}</span>
-          <span class="tss-val">TSS ${a.tss||a.icu_training_load||0}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
+          <span class="tss-val">TSS ${a.tss||a.icu_training_load||a.training_load||0}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
         </div>
       </a>`;
   }).join('');
 }
 
-// FIXED: Calendar now color-coded by activity type
 function renderCalendar(activities) {
   const wrap = document.getElementById('calendar-wrap');
   const today = new Date();
   const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const actByDate = {};
   activities.forEach(a => { if(!actByDate[a.date]) actByDate[a.date]=[]; actByDate[a.date].push(a); });
+
+  // Debug: Log first few activities to check TSS field
+  console.log('First 3 activities for TSS check:', activities.slice(0, 3).map(a => ({
+    name: a.name,
+    type: a.type,
+    tss: a.tss,
+    icu_training_load: a.icu_training_load,
+    training_load: a.training_load
+  })));
 
   // Start from beginning of current week (Monday), go back 4 more weeks = 5 weeks total
   const start = new Date(today);
@@ -888,7 +865,7 @@ function renderCalendar(activities) {
     for (let d=0; d<7; d++) {
       const ds = cursor.toISOString().split('T')[0];
       const acts = actByDate[ds]||[];
-      weekTSS  += acts.reduce((s,a)=>s+(a.tss||a.icu_training_load||0),0);
+      weekTSS  += acts.reduce((s,a)=>s+(a.tss||a.icu_training_load||a.training_load||0),0);
       weekDist += acts.reduce((s,a)=>s+(a.distance||0),0);
       days.push({ ds, dayNum:cursor.getDate(), acts, isToday:ds===today.toISOString().split('T')[0], inRange:cursor<=today });
       cursor.setDate(cursor.getDate()+1);
@@ -931,7 +908,7 @@ function renderCalendar(activities) {
         <div class="cal-date-num">${day.dayNum}</div>
         ${act?`<div class="cal-activity-mini">
           <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
-          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${(act.tss || act.icu_training_load || 0) + 'tss'}</div>
+          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${(act.tss || act.icu_training_load || act.training_load || 0) + 'tss'}</div>
         </div>`:''}
       </div>`;
     });
