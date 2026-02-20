@@ -164,10 +164,10 @@ function buildTSSChart(canvasId, data) {
     data: {
       labels: recent.map(d => d.week),
       datasets: [
-        { label:'Ride',  data: recent.map(d => d.ride),  backgroundColor:'rgba(0,229,255,0.75)',  borderRadius:2, borderSkipped:false },
-        { label:'Run',   data: recent.map(d => d.run),   backgroundColor:'rgba(0,255,135,0.75)',  borderRadius:2, borderSkipped:false },
-        { label:'Row',   data: recent.map(d => d.row),   backgroundColor:'rgba(168,85,247,0.75)', borderRadius:2, borderSkipped:false },
-        { label:'Other', data: recent.map(d => d.other), backgroundColor:'rgba(255,107,43,0.6)',  borderRadius:2, borderSkipped:false }
+        { label:'Ride',   data: recent.map(d => d.ride || 0),  backgroundColor:'rgba(0,229,255,0.75)',  borderRadius:2, borderSkipped:false },
+        { label:'Run',    data: recent.map(d => d.run || 0),   backgroundColor:'rgba(0,255,135,0.75)',  borderRadius:2, borderSkipped:false },
+        { label:'Row',    data: recent.map(d => d.row || 0),   backgroundColor:'rgba(168,85,247,0.75)', borderRadius:2, borderSkipped:false },
+        { label:'Cardio', data: recent.map(d => d.other || 0), backgroundColor:'rgba(236,72,153,0.75)', borderRadius:2, borderSkipped:false }
       ]
     },
     options: {
