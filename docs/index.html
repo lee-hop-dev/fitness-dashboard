@@ -151,6 +151,7 @@
               <span class="legend-item ride">Ride</span>
               <span class="legend-item run">Run</span>
               <span class="legend-item row-l">Row</span>
+              <span class="legend-item cardio-l">Cardio</span>
             </div>
           </div>
           <div class="chart-wrap tall"><canvas id="tssChart"></canvas></div>
@@ -573,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const powerResponse = await fetch('data/power_curves_90d.json');
       if (powerResponse.ok) {
-        powerCurves90d = await response.json();
+        powerCurves90d = await powerResponse.json();
         console.log('Loaded 90-day power curves');
       }
     } catch(e) {
@@ -625,18 +626,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('weight-value').textContent =
       weight ? weight.toFixed(1) : '—';
 
-    // W'bal and FTP from athlete data (FROM INTERVALS)
+    // W'bal and FTP from wellness data (FIXED: now dynamic from wellness)
+    // Get the most recent FTP from wellness data (icu_ftp field)
+    let currentFTP = null;
+    for (let i = wellness.length - 1; i >= 0; i--) {
+      if (wellness[i].icu_ftp) {
+        currentFTP = wellness[i].icu_ftp;
+        break;
+      }
+    }
+    
+    // Fallback to athlete data if no FTP in wellness
+    if (!currentFTP && athlete?.ftp) {
+      currentFTP = athlete.ftp;
+    }
+    
+    if (currentFTP) {
+      const ftpEl = document.getElementById('ftp-value');
+      if (ftpEl) ftpEl.textContent = currentFTP;
+    }
+
     if (athlete?.w_prime) {
       const wbalEl = document.getElementById('wbal-value');
       const wbalBar = document.getElementById('wbal-bar');
       if (wbalEl) wbalEl.textContent = Math.round(athlete.w_prime / 1000);
       if (wbalBar) wbalBar.style.width =
         Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
-    }
-
-    if (athlete?.ftp) {
-      const ftpEl = document.getElementById('ftp-value');
-      if (ftpEl) ftpEl.textContent = athlete.ftp;
     }
 
     const setBar = (id, val, max) => {
@@ -693,7 +708,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pbs = DATA.pbMarkers(activities, wellness);
     setupFitnessToggle('fitnessChart', fitnessTrend, pbs);
 
-    // ---- TSS CHART ----
+    // ---- TSS CHART (FIXED: now includes cardio/strength) ----
     buildTSSChart('tssChart', weeklyTSS);
 
     // ---- ACTIVITY CARDS ----
@@ -707,10 +722,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       sleep: wellness.map(w => w.sleep)
     });
 
-    // ---- CALENDAR ----
+    // ---- CALENDAR (FIXED: now color-coded by activity type) ----
     renderCalendar(activities);
 
-    // ---- HEATMAP ----
+    // ---- HEATMAP (FIXED: alignment corrected) ----
     renderHeatmap(heatmap1y);
     document.querySelectorAll('[data-heatmap-toggle]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -741,7 +756,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('Using fallback power bests');
     }
     
-    // Parse pace curves from Intervals
+    // Parse pace curves from Intervals (FIXED: now starts at 400m)
     if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
       const curve = paceCurves90d.list[0];
       const distances = curve.distance || [];
@@ -772,11 +787,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           totalSec: times[idx],
           distM: distM
         };
-      }).filter(d => d.distM >= 100); // Start at 100m
+      }).filter(d => d.distM >= 400); // FIXED: Start at 400m instead of 100m
       console.log('Using Intervals pace bests:', paceBestsData.length, 'points');
     } else {
       // Fallback to DATA.paceBests if Intervals data not available
-      paceBestsData = DATA.paceBests(activities);
+      paceBestsData = DATA.paceBests(activities).filter(d => d.distM >= 400);
       console.log('Using fallback pace bests');
     }
     
@@ -856,6 +871,7 @@ function renderActivityCards(activities) {
   }).join('');
 }
 
+// FIXED: Calendar now color-coded by activity type
 function renderCalendar(activities) {
   const wrap = document.getElementById('calendar-wrap');
   const today = new Date();
@@ -892,7 +908,28 @@ function renderCalendar(activities) {
     days.forEach(day => {
       const act=day.acts[0];
       const info=act?getTypeInfo(act.type):null;
-      html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}">
+      
+      // FIXED: Add subtle background color based on activity type
+      let bgStyle = '';
+      if (act && info) {
+        // Map activity types to subtle background colors
+        const typeColors = {
+          'Ride': 'rgba(108, 99, 255, 0.08)',
+          'VirtualRide': 'rgba(108, 99, 255, 0.08)',
+          'Run': 'rgba(34, 197, 94, 0.08)',
+          'VirtualRun': 'rgba(34, 197, 94, 0.08)',
+          'Rowing': 'rgba(251, 146, 60, 0.08)',
+          'Cardio': 'rgba(236, 72, 153, 0.08)',
+          'WeightTraining': 'rgba(168, 85, 247, 0.08)',
+          'Workout': 'rgba(168, 85, 247, 0.08)',
+          'Walk': 'rgba(156, 163, 175, 0.08)',
+          'Hike': 'rgba(156, 163, 175, 0.08)'
+        };
+        const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
+        bgStyle = `style="background: ${bgColor};"`;
+      }
+      
+      html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}" ${bgStyle}>
         <div class="cal-date-num">${day.dayNum}</div>
         ${act?`<div class="cal-activity-mini">
           <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
@@ -909,20 +946,97 @@ function renderCalendar(activities) {
   wrap.innerHTML = html;
 }
 
+// FIXED: Heatmap alignment corrected
 function renderHeatmap(cells) {
   const inner = document.getElementById('heatmap-inner');
   if (!inner) return;
-  const months=[]; let lastM=-1;
-  cells.forEach((c,i)=>{ const m=new Date(c.date).getMonth(); if(m!==lastM){months.push({label:new Date(c.date).toLocaleString('default',{month:'short'}),index:i});lastM=m;} });
-  const colW=16;
-  let mHtml=`<div class="heatmap-months" style="padding-left:28px">`;
-  months.forEach((m,i)=>{ const next=months[i+1]?.index||cells.length; const cols=Math.ceil((next-m.index)/7); mHtml+=`<div class="heatmap-month-label" style="width:${cols*colW}px">${m.label}</div>`; });
-  mHtml+='</div>';
-  const gHtml=`<div style="display:flex;gap:0">
-    <div class="heatmap-days-labels">${['','Mon','','Wed','','Fri',''].map(d=>`<div class="heatmap-day-label">${d}</div>`).join('')}</div>
-    <div class="heatmap-grid">${cells.map(c=>`<div class="heatmap-cell" data-level="${c.level}" title="${c.date}${c.tss?' · '+c.tss+' TSS':''}"></div>`).join('')}</div>
-  </div>`;
-  inner.innerHTML = mHtml+gHtml;
+  
+  // Calculate week structure properly
+  const weeks = [];
+  let currentWeek = [];
+  
+  // Find the starting day of week for first cell
+  const firstDate = new Date(cells[0].date);
+  const startDayOfWeek = firstDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  // Adjust to Monday-based week (0 = Monday, 6 = Sunday)
+  const mondayBasedStart = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+  
+  // Add empty cells for days before the first date in its week
+  for (let i = 0; i < mondayBasedStart; i++) {
+    currentWeek.push({ empty: true });
+  }
+  
+  // Process all cells
+  cells.forEach((cell, i) => {
+    currentWeek.push(cell);
+    
+    // Check if we've completed a week (7 days)
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  });
+  
+  // If there are remaining cells, pad the last week
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) {
+      currentWeek.push({ empty: true });
+    }
+    weeks.push(currentWeek);
+  }
+  
+  // Build month headers
+  const months = [];
+  let lastMonth = -1;
+  let weekIndex = 0;
+  
+  weeks.forEach((week) => {
+    const firstRealCell = week.find(c => !c.empty);
+    if (firstRealCell) {
+      const date = new Date(firstRealCell.date);
+      const month = date.getMonth();
+      if (month !== lastMonth) {
+        months.push({
+          label: date.toLocaleString('default', { month: 'short' }),
+          weekIndex: weekIndex
+        });
+        lastMonth = month;
+      }
+    }
+    weekIndex++;
+  });
+  
+  const colW = 16;
+  let mHtml = `<div class="heatmap-months" style="padding-left:28px; display:flex;">`;
+  months.forEach((m, i) => {
+    const nextWeekIndex = months[i + 1]?.weekIndex || weeks.length;
+    const weekSpan = nextWeekIndex - m.weekIndex;
+    mHtml += `<div class="heatmap-month-label" style="width:${weekSpan * colW}px">${m.label}</div>`;
+  });
+  mHtml += '</div>';
+  
+  // Build grid by columns (weeks)
+  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+  let gHtml = `<div style="display:flex;gap:0">
+    <div class="heatmap-days-labels">${dayLabels.map(d => `<div class="heatmap-day-label">${d}</div>`).join('')}</div>
+    <div class="heatmap-grid" style="display:flex;gap:3px;">`;
+  
+  // Render each week as a column
+  weeks.forEach(week => {
+    gHtml += '<div style="display:flex;flex-direction:column;gap:3px;">';
+    week.forEach(cell => {
+      if (cell.empty) {
+        gHtml += `<div class="heatmap-cell" data-level="0" style="opacity:0"></div>`;
+      } else {
+        gHtml += `<div class="heatmap-cell" data-level="${cell.level}" title="${cell.date}${cell.tss ? ' · ' + cell.tss + ' TSS' : ''}"></div>`;
+      }
+    });
+    gHtml += '</div>';
+  });
+  
+  gHtml += '</div></div>';
+  inner.innerHTML = mHtml + gHtml;
 }
 
 function renderBestsTables(powerBests, paceBests) {
