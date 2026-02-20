@@ -245,6 +245,14 @@
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
 <script>
+// Helper function to normalize activity types
+// WeightTraining, Workout, and Crossfit should be displayed as "Cardio"
+function normalizeActivityType(type) {
+  const cardioTypes = ['WeightTraining', 'Workout', 'Crossfit', 'Elliptical', 'StairStepper', 
+                        'RockClimbing', 'HighIntensityIntervalTraining', 'Cardio'];
+  return cardioTypes.includes(type) ? 'Cardio' : type;
+}
+
 // Helper function to build power curve line chart (same as cycling.html)
 function buildPowerCurveLineChart(canvasId, data) {
   const ctx = document.getElementById(canvasId);
@@ -626,32 +634,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('weight-value').textContent =
       weight ? weight.toFixed(1) : '—';
 
-    // W'bal and FTP from wellness data (FIXED: now dynamic from wellness)
-    // Get the most recent FTP from wellness data (icu_ftp field)
-    let currentFTP = null;
-    for (let i = wellness.length - 1; i >= 0; i--) {
-      if (wellness[i].icu_ftp) {
-        currentFTP = wellness[i].icu_ftp;
-        break;
-      }
-    }
-    
-    // Fallback to athlete data if no FTP in wellness
-    if (!currentFTP && athlete?.ftp) {
-      currentFTP = athlete.ftp;
-    }
-    
-    if (currentFTP) {
-      const ftpEl = document.getElementById('ftp-value');
-      if (ftpEl) ftpEl.textContent = currentFTP;
-    }
-
+    // W'bal from athlete data
     if (athlete?.w_prime) {
       const wbalEl = document.getElementById('wbal-value');
       const wbalBar = document.getElementById('wbal-bar');
       if (wbalEl) wbalEl.textContent = Math.round(athlete.w_prime / 1000);
       if (wbalBar) wbalBar.style.width =
         Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
+    }
+
+    // FIXED: FTP from athlete data (cycling-specific)
+    // This is the athlete's current cycling FTP from Intervals.icu
+    if (athlete?.ftp) {
+      const ftpEl = document.getElementById('ftp-value');
+      if (ftpEl) ftpEl.textContent = athlete.ftp;
     }
 
     const setBar = (id, val, max) => {
@@ -845,7 +841,8 @@ function renderActivityCards(activities) {
   }
 
   container.innerHTML = activities.map(a => {
-    const info = getTypeInfo(a.type);
+    const normalizedType = normalizeActivityType(a.type);
+    const info = getTypeInfo(normalizedType);
     const isPower = !!a.avg_power;
     const isPace  = !!a.avg_speed && !a.avg_power;
     const paceSecKm = a.avg_speed ? Math.round(1000/a.avg_speed) : null;
@@ -907,11 +904,12 @@ function renderCalendar(activities) {
     html += `<div class="calendar-row"><div class="cal-week-num">W${wkNum}</div>`;
     days.forEach(day => {
       const act=day.acts[0];
-      const info=act?getTypeInfo(act.type):null;
+      const normalizedType = act ? normalizeActivityType(act.type) : null;
+      const info=normalizedType?getTypeInfo(normalizedType):null;
       
       // FIXED: Add subtle background color based on activity type
       let bgStyle = '';
-      if (act && info) {
+      if (act && normalizedType) {
         // Map activity types to subtle background colors
         const typeColors = {
           'Ride': 'rgba(108, 99, 255, 0.08)',
@@ -919,13 +917,11 @@ function renderCalendar(activities) {
           'Run': 'rgba(34, 197, 94, 0.08)',
           'VirtualRun': 'rgba(34, 197, 94, 0.08)',
           'Rowing': 'rgba(251, 146, 60, 0.08)',
-          'Cardio': 'rgba(236, 72, 153, 0.08)',
-          'WeightTraining': 'rgba(168, 85, 247, 0.08)',
-          'Workout': 'rgba(168, 85, 247, 0.08)',
+          'Cardio': 'rgba(236, 72, 153, 0.08)',  // This will catch WeightTraining, Workout, Crossfit, etc.
           'Walk': 'rgba(156, 163, 175, 0.08)',
           'Hike': 'rgba(156, 163, 175, 0.08)'
         };
-        const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
+        const bgColor = typeColors[normalizedType] || 'rgba(100, 100, 120, 0.05)';
         bgStyle = `style="background: ${bgColor};"`;
       }
       
