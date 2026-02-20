@@ -905,24 +905,6 @@ function renderCalendar(activities) {
   const actByDate = {};
   activities.forEach(a => { if(!actByDate[a.date]) actByDate[a.date]=[]; actByDate[a.date].push(a); });
 
-  // Debug: Log activities to find TSS field
-  console.log('=== TSS FIELD SEARCH ===');
-  const sampleAct = activities.find(a => a.name && a.name.includes('Harriers')) || activities[0];
-  if (sampleAct) {
-    console.log('Sample activity (looking for Harriers):', sampleAct.name);
-    const relevantFields = Object.keys(sampleAct).filter(k => 
-      k.toLowerCase().includes('load') || 
-      k.toLowerCase().includes('tss') || 
-      k.toLowerCase().includes('training')
-    );
-    console.log('Fields found:', relevantFields);
-    relevantFields.forEach(field => {
-      console.log(`  ${field} = ${sampleAct[field]}`);
-    });
-    console.log('getTSS() returns:', getTSS(sampleAct));
-  }
-  console.log('=== END TSS FIELD SEARCH ===');
-
   // Start from beginning of current week (Monday), go back 4 more weeks = 5 weeks total
   const start = new Date(today);
   const dow = start.getDay();
