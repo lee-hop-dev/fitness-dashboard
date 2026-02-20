@@ -757,10 +757,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Parse pace curves from Intervals (FIXED: now starts at 400m, running only)
+    // Check if pace curves have type information to filter by
+    console.log('Pace curves data:', paceCurves90d);
+    
     if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
-      // Note: If pace_curves_90d.json includes rowing, this needs to be fixed in Python collector
-      // For now, we'll use all the data but note this in comments
-      const curve = paceCurves90d.list[0];
+      // Filter to running activities only if type information is available
+      const runningCurves = paceCurves90d.list.filter(curve => {
+        // Check if curve has type info - if not, we'll use it anyway
+        if (!curve.type) return true;
+        return curve.type === 'Run' || curve.type === 'VirtualRun' || curve.type === 'TrailRun';
+      });
+      
+      console.log('Filtered to running curves:', runningCurves.length, 'of', paceCurves90d.list.length);
+      
+      if (runningCurves.length === 0) {
+        console.log('No running curves found, using first curve (may include rowing)');
+        runningCurves.push(paceCurves90d.list[0]);
+      }
+      
+      const curve = runningCurves[0];
       const distances = curve.distance || [];
       const times = curve.values || [];
       
@@ -895,13 +910,16 @@ function renderCalendar(activities) {
   const sampleAct = activities.find(a => a.name && a.name.includes('Harriers')) || activities[0];
   if (sampleAct) {
     console.log('Sample activity (looking for Harriers):', sampleAct.name);
-    console.log('All fields with "load" or "tss" or "training":', 
-      Object.keys(sampleAct).filter(k => 
-        k.toLowerCase().includes('load') || 
-        k.toLowerCase().includes('tss') || 
-        k.toLowerCase().includes('training')
-      ).map(k => `${k}: ${sampleAct[k]}`)
+    const relevantFields = Object.keys(sampleAct).filter(k => 
+      k.toLowerCase().includes('load') || 
+      k.toLowerCase().includes('tss') || 
+      k.toLowerCase().includes('training')
     );
+    console.log('Fields found:', relevantFields);
+    relevantFields.forEach(field => {
+      console.log(`  ${field} = ${sampleAct[field]}`);
+    });
+    console.log('getTSS() returns:', getTSS(sampleAct));
   }
   console.log('=== END TSS FIELD SEARCH ===');
 
