@@ -122,7 +122,7 @@
           <div class="metric-value metric-accent" id="wbal-value">—</div>
           <div class="metric-delta neutral">kJ anaerobic reserve</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="wbal-bar" style="width:0%"></div></div>
-          <div class="metric-sub">FTP: <span id="ftp-value">—</span> W</div>
+          <div class="metric-sub">Anaerobic Work Capacity</div>
         </div>
       </section>
 
@@ -643,13 +643,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
     }
 
-    // FIXED: FTP from athlete data (cycling-specific)
-    // This is the athlete's current cycling FTP from Intervals.icu
-    if (athlete?.ftp) {
-      const ftpEl = document.getElementById('ftp-value');
-      if (ftpEl) ftpEl.textContent = athlete.ftp;
-    }
-
     const setBar = (id, val, max) => {
       const el = document.getElementById(id);
       if (el && val) el.style.width =
@@ -704,7 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pbs = DATA.pbMarkers(activities, wellness);
     setupFitnessToggle('fitnessChart', fitnessTrend, pbs);
 
-    // ---- TSS CHART (FIXED: now includes cardio/strength) ----
+    // ---- TSS CHART ----
     buildTSSChart('tssChart', weeklyTSS);
 
     // ---- ACTIVITY CARDS ----
@@ -908,8 +901,9 @@ function renderCalendar(activities) {
       const info=normalizedType?getTypeInfo(normalizedType):null;
       
       // FIXED: Add subtle background color based on activity type
+      // For cardio activities, use different shades based on original type
       let bgStyle = '';
-      if (act && normalizedType) {
+      if (act) {
         // Map activity types to subtle background colors
         const typeColors = {
           'Ride': 'rgba(108, 99, 255, 0.08)',
@@ -917,11 +911,19 @@ function renderCalendar(activities) {
           'Run': 'rgba(34, 197, 94, 0.08)',
           'VirtualRun': 'rgba(34, 197, 94, 0.08)',
           'Rowing': 'rgba(251, 146, 60, 0.08)',
-          'Cardio': 'rgba(236, 72, 153, 0.08)',  // This will catch WeightTraining, Workout, Crossfit, etc.
+          // Different shades for different cardio types
+          'WeightTraining': 'rgba(168, 85, 247, 0.08)',   // Purple
+          'Workout': 'rgba(236, 72, 153, 0.08)',          // Pink
+          'Crossfit': 'rgba(234, 88, 12, 0.08)',          // Orange-red
+          'Elliptical': 'rgba(236, 72, 153, 0.10)',       // Slightly stronger pink
+          'StairStepper': 'rgba(168, 85, 247, 0.10)',     // Slightly stronger purple
+          'RockClimbing': 'rgba(234, 88, 12, 0.10)',      // Slightly stronger orange
+          'HighIntensityIntervalTraining': 'rgba(236, 72, 153, 0.12)', // Even stronger pink
+          'Cardio': 'rgba(236, 72, 153, 0.08)',           // Default pink
           'Walk': 'rgba(156, 163, 175, 0.08)',
           'Hike': 'rgba(156, 163, 175, 0.08)'
         };
-        const bgColor = typeColors[normalizedType] || 'rgba(100, 100, 120, 0.05)';
+        const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
         bgStyle = `style="background: ${bgColor};"`;
       }
       
@@ -929,7 +931,7 @@ function renderCalendar(activities) {
         <div class="cal-date-num">${day.dayNum}</div>
         ${act?`<div class="cal-activity-mini">
           <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
-          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss}tss</div>
+          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${act.tss ? act.tss + 'tss' : 'no TSS'}</div>
         </div>`:''}
       </div>`;
     });
