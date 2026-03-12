@@ -98,6 +98,29 @@ class IntervalsClient:
             log.error(f'Could not fetch pace curves: {e}')
             return None
 
+    def get_events(self, oldest=None, newest=None):
+        """Fetch all upcoming events from athlete's calendar (workouts, notes, races, etc.)"""
+        today = datetime.now().strftime('%Y-%m-%d')
+        if not oldest:
+            oldest = today
+        if not newest:
+            # Default to 14 days ahead to show upcoming week's activities
+            newest = (datetime.now() + timedelta(days=14)).strftime('%Y-%m-%d')
+        
+        log.info(f'Fetching calendar events from {oldest} to {newest}')
+        params = {
+            'oldest': oldest,
+            'newest': newest
+        }
+        
+        try:
+            data = self._get(f'athlete/{self.athlete_id}/events', params)
+            log.info(f'Got {len(data)} calendar events')
+            return data
+        except Exception as e:
+            log.error(f'Could not fetch calendar events: {e}')
+            return []
+
 
 class StravaClient:
     def __init__(self, client_id, client_secret, refresh_token):
@@ -878,6 +901,16 @@ def main():
     else:
         log.warning('✗ Pace curves not available')
         save_json([], 'pace_curves_90d.json')
+
+    # Fetch upcoming events (next 14 days) from calendar
+    log.info('=== Fetching Upcoming Calendar Events ===')
+    upcoming_events = client.get_events()
+    if upcoming_events:
+        save_json(upcoming_events, 'upcoming_events.json')
+        log.info(f'✓ Saved {len(upcoming_events)} upcoming events')
+    else:
+        log.warning('✗ No upcoming events found')
+        save_json([], 'upcoming_events.json')
 
 
     weight  = next((a['weight']  for a in activities if a.get('weight')),  None)

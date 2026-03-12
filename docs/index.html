@@ -911,90 +911,117 @@ function renderCalendar(activities) {
   const actByDate = {};
   activities.forEach(a => { if(!actByDate[a.date]) actByDate[a.date]=[]; actByDate[a.date].push(a); });
 
-  // Start from beginning of current week (Monday), show current week at top
-  const start = new Date(today);
-  const dow = start.getDay();
-  start.setDate(start.getDate() - (dow===0?6:dow-1)); // back to Monday of current week
-
-  let html = `<div class="calendar-month-header">
-    <div class="cal-day-header"></div>
-    ${dayNames.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}
-    <div class="cal-day-header" style="text-align:right;font-size:9px">TSS</div>
-  </div>`;
-
-  // Build 5 weeks: current week + 4 previous weeks
-  const weeksData = [];
-  const cursor = new Date(start);
-  cursor.setDate(cursor.getDate() - 28); // Go back 4 weeks
-  
-  for (let w=0; w<5; w++) {
-    let weekTSS=0, weekDist=0;
-    const days=[];
-    for (let d=0; d<7; d++) {
-      const ds = cursor.toISOString().split('T')[0];
-      const acts = actByDate[ds]||[];
-      weekTSS  += acts.reduce((s,a)=>s+getTSS(a),0);
-      weekDist += acts.reduce((s,a)=>s+(a.distance||0),0);
-      days.push({ ds, dayNum:cursor.getDate(), acts, isToday:ds===today.toISOString().split('T')[0], inRange:cursor<=today });
-      cursor.setDate(cursor.getDate()+1);
-    }
-    const wkNum = getISOWeekNum(new Date(days[0].ds));
-    weeksData.push({ wkNum, days, weekTSS, weekDist });
-  }
-  
-  // Reverse the array so current week is first
-  weeksData.reverse();
-  
-  // Render weeks
-  weeksData.forEach(weekData => {
-    html += `<div class="calendar-row"><div class="cal-week-num">W${weekData.wkNum}</div>`;
-    weekData.days.forEach(day => {
-      const act=day.acts[0];
-      const normalizedType = act ? normalizeActivityType(act.type) : null;
-      const info=normalizedType?getTypeInfo(normalizedType):null;
-      
-      // FIXED: Add subtle background color based on activity type
-      // For cardio activities, use different shades based on original type
-      let bgStyle = '';
-      if (act) {
-        // Map activity types to subtle background colors
-        const typeColors = {
-          'Ride': 'rgba(108, 99, 255, 0.08)',
-          'VirtualRide': 'rgba(108, 99, 255, 0.08)',
-          'Run': 'rgba(34, 197, 94, 0.08)',
-          'VirtualRun': 'rgba(34, 197, 94, 0.08)',
-          'Rowing': 'rgba(251, 146, 60, 0.08)',
-          // Different shades for different cardio types
-          'WeightTraining': 'rgba(255, 112, 67, 0.08)',   // Burnt orange
-          'Workout': 'rgba(236, 72, 153, 0.08)',          // Pink
-          'Crossfit': 'rgba(234, 88, 12, 0.08)',          // Orange-red
-          'Elliptical': 'rgba(236, 72, 153, 0.10)',       // Slightly stronger pink
-          'StairStepper': 'rgba(255, 112, 67, 0.10)',     // Burnt orange
-          'RockClimbing': 'rgba(234, 88, 12, 0.10)',      // Slightly stronger orange
-          'HighIntensityIntervalTraining': 'rgba(236, 72, 153, 0.12)', // Even stronger pink
-          'Cardio': 'rgba(236, 72, 153, 0.08)',           // Default pink
-          'Walk': 'rgba(156, 163, 175, 0.08)',
-          'Hike': 'rgba(156, 163, 175, 0.08)'
-        };
-        const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
-        bgStyle = `style="background: ${bgColor};"`;
-      }
-      
-      html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}" ${bgStyle}>
-        <div class="cal-date-num">${day.dayNum}</div>
-        ${act?`<div class="cal-activity-mini">
-          <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
-          <div class="cal-mini-stats">${formatDuration(act.duration)} · ${Math.round(getTSS(act))}tss</div>
-        </div>`:''}
-      </div>`;
+  // Load upcoming events from Intervals.icu
+  const eventsByDate = {};
+  fetch('data/upcoming_events.json')
+    .then(r => r.json())
+    .then(events => {
+      events.forEach(e => {
+        const date = e.start_date_local ? e.start_date_local.split('T')[0] : null;
+        if (date) {
+          if (!eventsByDate[date]) eventsByDate[date] = [];
+          eventsByDate[date].push(e);
+        }
+      });
+      renderCalendarWithEvents(actByDate, eventsByDate);
+    })
+    .catch(err => {
+      console.log('No upcoming events data, rendering calendar without planned activities');
+      renderCalendarWithEvents(actByDate, {});
     });
-    html += `<div class="cal-week-total">
-      <span class="cal-week-tss">${weekData.weekTSS}</span>
-      <span class="cal-week-label">TSS</span>
-      <span class="cal-week-dist">${(weekData.weekDist/1000).toFixed(0)}km</span>
-    </div></div>`;
-  });
-  wrap.innerHTML = html;
+
+  function renderCalendarWithEvents(actByDate, eventsByDate) {
+    // Start from beginning of current week (Monday), show current week at top
+    const start = new Date(today);
+    const dow = start.getDay();
+    start.setDate(start.getDate() - (dow===0?6:dow-1)); // back to Monday of current week
+
+    let html = `<div class="calendar-month-header">
+      <div class="cal-day-header"></div>
+      ${dayNames.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}
+      <div class="cal-day-header" style="text-align:right;font-size:9px">TSS</div>
+    </div>`;
+
+    // Build 5 weeks: current week + 4 previous weeks
+    const weeksData = [];
+    const cursor = new Date(start);
+    cursor.setDate(cursor.getDate() - 28); // Go back 4 weeks
+    
+    for (let w=0; w<5; w++) {
+      let weekTSS=0, weekDist=0;
+      const days=[];
+      for (let d=0; d<7; d++) {
+        const ds = cursor.toISOString().split('T')[0];
+        const acts = actByDate[ds]||[];
+        const events = eventsByDate[ds]||[];
+        weekTSS  += acts.reduce((s,a)=>s+getTSS(a),0);
+        weekDist += acts.reduce((s,a)=>s+(a.distance||0),0);
+        days.push({ ds, dayNum:cursor.getDate(), acts, events, isToday:ds===today.toISOString().split('T')[0], inRange:cursor<=today });
+        cursor.setDate(cursor.getDate()+1);
+      }
+      const wkNum = getISOWeekNum(new Date(days[0].ds));
+      weeksData.push({ wkNum, days, weekTSS, weekDist });
+    }
+    
+    // Reverse the array so current week is first
+    weeksData.reverse();
+    
+    // Render weeks
+    weeksData.forEach(weekData => {
+      html += `<div class="calendar-row"><div class="cal-week-num">W${weekData.wkNum}</div>`;
+      weekData.days.forEach(day => {
+        const act=day.acts[0];
+        const event=day.events[0];
+        const normalizedType = act ? normalizeActivityType(act.type) : null;
+        const info=normalizedType?getTypeInfo(normalizedType):null;
+        
+        // Add subtle background color based on activity type
+        let bgStyle = '';
+        if (act) {
+          const typeColors = {
+            'Ride': 'rgba(108, 99, 255, 0.08)',
+            'VirtualRide': 'rgba(108, 99, 255, 0.08)',
+            'Run': 'rgba(34, 197, 94, 0.08)',
+            'VirtualRun': 'rgba(34, 197, 94, 0.08)',
+            'Rowing': 'rgba(251, 146, 60, 0.08)',
+            'WeightTraining': 'rgba(255, 112, 67, 0.08)',
+            'Workout': 'rgba(236, 72, 153, 0.08)',
+            'Crossfit': 'rgba(234, 88, 12, 0.08)',
+            'Elliptical': 'rgba(236, 72, 153, 0.10)',
+            'StairStepper': 'rgba(255, 112, 67, 0.10)',
+            'RockClimbing': 'rgba(234, 88, 12, 0.10)',
+            'HighIntensityIntervalTraining': 'rgba(236, 72, 153, 0.12)',
+            'Cardio': 'rgba(236, 72, 153, 0.08)',
+            'Walk': 'rgba(156, 163, 175, 0.08)',
+            'Hike': 'rgba(156, 163, 175, 0.08)'
+          };
+          const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
+          bgStyle = `style="background: ${bgColor};"`;
+        } else if (event && day.ds > today.toISOString().split('T')[0]) {
+          // Planned event styling for future days
+          bgStyle = `style="background: rgba(108, 99, 255, 0.04); border-left: 2px solid rgba(108, 99, 255, 0.3);"`;
+        }
+        
+        html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}" ${bgStyle}>
+          <div class="cal-date-num">${day.dayNum}</div>
+          ${act?`<div class="cal-activity-mini">
+            <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
+            <div class="cal-mini-stats">${formatDuration(act.duration)} · ${getTSS(act) ? Math.round(getTSS(act)) + 'tss' : 'no TSS'}</div>
+          </div>`:''}
+          ${!act && event && day.ds > today.toISOString().split('T')[0] ?`<div class="cal-activity-mini cal-planned">
+            <div class="cal-mini-name planned">${event.name ? event.name.substring(0,16) : 'Planned'}</div>
+            <div class="cal-mini-stats planned">${event.moving_time ? formatDuration(event.moving_time) : ''} ${event.category || ''}</div>
+          </div>`:''}
+        </div>`;
+      });
+      html += `<div class="cal-week-total">
+        <span class="cal-week-tss">${Math.round(weekData.weekTSS)}</span>
+        <span class="cal-week-label">TSS</span>
+        <span class="cal-week-dist">${(weekData.weekDist/1000).toFixed(0)}km</span>
+      </div></div>`;
+    });
+    wrap.innerHTML = html;
+  }
 }
 
 // FIXED: Heatmap alignment corrected

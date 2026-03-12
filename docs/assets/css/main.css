@@ -722,6 +722,22 @@ body {
   font-family: var(--font-mono);
 }
 
+/* Planned event styling */
+.cal-planned {
+  opacity: 0.7;
+}
+
+.cal-mini-name.planned {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.cal-mini-stats.planned {
+  font-style: italic;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
 .cal-week-total {
   background: var(--bg-hover);
   border: 1px solid var(--border);
