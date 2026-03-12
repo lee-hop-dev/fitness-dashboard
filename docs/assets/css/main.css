@@ -1054,3 +1054,197 @@ body {
   border-top: 1px solid var(--border);
   margin-top: 32px;
 }
+
+/* ============================================
+   SEGMENT DISPLAY STYLES
+   Achievement-focused segment tracking
+   ============================================ */
+
+.segment-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.segment-header h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.segment-date {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.segment-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.segment-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.segment-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Achievement card highlights */
+.segment-card.achievement-gold {
+  border-left: 4px solid #FFD700;
+  background: linear-gradient(to right, rgba(255,215,0,0.05), var(--bg-secondary));
+}
+
+.segment-card.achievement-silver {
+  border-left: 4px solid #C0C0C0;
+  background: linear-gradient(to right, rgba(192,192,192,0.05), var(--bg-secondary));
+}
+
+.segment-card.achievement-bronze {
+  border-left: 4px solid #CD7F32;
+  background: linear-gradient(to right, rgba(205,127,50,0.05), var(--bg-secondary));
+}
+
+.segment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.segment-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.segment-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.achievement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-gold {
+  background: #FFD700;
+  color: #000;
+}
+
+.badge-silver {
+  background: #C0C0C0;
+  color: #000;
+}
+
+.badge-bronze {
+  background: #CD7F32;
+  color: #fff;
+}
+
+.climb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+}
+
+.kom-badge {
+  display: inline-flex;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #FC4C02;
+  color: white;
+}
+
+.segment-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.segment-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pr-comparison {
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pr-comparison.pr-faster {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.pr-comparison.pr-slower {
+  background: rgba(249, 115, 22, 0.1);
+  color: #ea580c;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.pr-icon {
+  font-size: 1.25rem;
+}
+
+.effort-count {
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}

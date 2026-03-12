@@ -122,11 +122,9 @@
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">Strava Segments</h2>
-          <span class="section-meta">Coming soon — Strava connector in Phase 3</span>
+          <span class="section-meta">PR & top-3 performances from your last ride</span>
         </div>
-        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:32px;text-align:center;color:var(--text-muted);font-family:var(--font-mono);font-size:12px">
-          Strava segment data will appear here once the Strava connector is configured
-        </div>
+        <div class="segment-list" id="cy-segments"></div>
       </section>
 
     </div>
@@ -138,6 +136,7 @@
 
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
+<script src="assets/js/segments.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -552,6 +551,9 @@ function formatDurationLabel(seconds) {
   if (seconds < 3600) return Math.round(seconds / 60) + 'min';
   return Math.round(seconds / 3600) + 'h';
 }
+
+// Load and render segments
+renderSegments('cycling');
 </script>
 </body>
 </html>
