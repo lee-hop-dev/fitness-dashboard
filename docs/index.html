@@ -306,7 +306,7 @@ function buildPowerCurveLineChart(canvasId, data) {
           if (index === idx10s) return '#f97316';
           if (index === idx1min) return '#22c55e';
           if (index === idx5min) return '#6c63ff';
-          if (index === idx20min) return '#a855f7';
+          if (index === idx20min) return '#ff7043';
           return 'rgb(108, 99, 255)';
         },
         pointHoverRadius: 6,
@@ -387,14 +387,14 @@ function buildPowerCurveLineChart(canvasId, data) {
               type: 'line',
               xMin: idx20min,
               xMax: idx20min,
-              borderColor: '#a855f7',
+              borderColor: '#ff7043',
               borderWidth: 1,
               borderDash: [5, 5],
               label: {
                 display: true,
                 content: '20min: ' + values[idx20min] + 'W',
                 position: 'start',
-                backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                backgroundColor: 'rgba(255, 112, 67, 0.8)',
                 color: '#fff',
                 font: { size: 10 }
               }
@@ -954,7 +954,7 @@ function renderCalendar(activities) {
           'VirtualRun': 'rgba(34, 197, 94, 0.08)',
           'Rowing': 'rgba(251, 146, 60, 0.08)',
           // Different shades for different cardio types
-          'WeightTraining': 'rgba(168, 85, 247, 0.08)',   // Purple
+          'WeightTraining': 'rgba(255, 112, 67, 0.08)',   // Burnt orange
           'Workout': 'rgba(236, 72, 153, 0.08)',          // Pink
           'Crossfit': 'rgba(234, 88, 12, 0.08)',          // Orange-red
           'Elliptical': 'rgba(236, 72, 153, 0.10)',       // Slightly stronger pink
