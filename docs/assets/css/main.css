@@ -1407,3 +1407,16 @@ body {
 [data-theme="light"] .brand-text {
   color: #202020 !important;
 }
+
+/* Activity card type colors */
+.cycling { color: var(--accent); }
+.running { color: var(--green); }
+.rowing { color: var(--purple); }
+.cardio { color: var(--orange); }
+.other { color: var(--text-muted); }
+
+.dot-cycling { background: var(--accent); }
+.dot-running { background: var(--green); }
+.dot-rowing { background: var(--purple); }
+.dot-cardio { background: var(--orange); }
+.dot-other { background: var(--text-muted); }
