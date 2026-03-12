@@ -412,27 +412,34 @@ def build_segments(strava, activities):
     # Get activities with Strava IDs only
     strava_activities = [a for a in activities if a.get('strava_id')]
     
-    # Find last cycling activity
+    # Find last cycling activity (try multiple if needed)
     last_cycling = None
-    for act in strava_activities:
-        if act['type'] in cycling_types:
-            last_cycling = act
-            break
+    cycling_candidates = [a for a in strava_activities if a['type'] in cycling_types]
     
-    # Find last running activity  
+    # Find last running activity (try multiple if needed)
     last_running = None
-    for act in strava_activities:
-        if act['type'] in running_types:
-            last_running = act
+    running_candidates = [a for a in strava_activities if a['type'] in running_types]
+    
+    log.info(f"Found {len(cycling_candidates)} cycling candidates, {len(running_candidates)} running candidates")
+    
+    # Process cycling segments - try up to 5 recent activities
+    cycling_efforts = []
+    for act in cycling_candidates[:5]:
+        efforts = strava.get_activity_segments(act['strava_id'])
+        if efforts:  # Found segments in this activity
+            last_cycling = act
+            cycling_efforts = efforts
+            log.info(f"Found {len(efforts)} cycling segments in {act['name']} ({act['date']})")
             break
+        else:
+            log.info(f"No segments in {act['name']} ({act['date']}), trying next activity")
     
-    log.info(f"Last cycling activity: {last_cycling['date'] if last_cycling else 'None'}")
-    log.info(f"Last running activity: {last_running['date'] if last_running else 'None'}")
+    if not cycling_efforts and cycling_candidates:
+        log.info(f"No segments found in any of the last {min(5, len(cycling_candidates))} cycling activities")
     
-    # Process cycling segments
-    if last_cycling:
-        efforts = strava.get_activity_segments(last_cycling['strava_id'])
-        log.info(f"Found {len(efforts)} cycling segments in {last_cycling['name']}")
+    # Process cycling segment data
+    if last_cycling and cycling_efforts:
+        for e in cycling_efforts:
         
         for e in efforts:
             # Only include PR or top-3 performances
@@ -484,10 +491,24 @@ def build_segments(strava, activities):
             
             segments['cycling'].append(entry)
     
-    # Process running segments
-    if last_running:
-        efforts = strava.get_activity_segments(last_running['strava_id'])
-        log.info(f"Found {len(efforts)} running segments in {last_running['name']}")
+    # Process running segments - try up to 5 recent activities
+    running_efforts = []
+    for act in running_candidates[:5]:
+        efforts = strava.get_activity_segments(act['strava_id'])
+        if efforts:  # Found segments in this activity
+            last_running = act
+            running_efforts = efforts
+            log.info(f"Found {len(efforts)} running segments in {act['name']} ({act['date']})")
+            break
+        else:
+            log.info(f"No segments in {act['name']} ({act['date']}), trying next activity")
+    
+    if not running_efforts and running_candidates:
+        log.info(f"No segments found in any of the last {min(5, len(running_candidates))} running activities")
+    
+    # Process running segment data
+    if last_running and running_efforts:
+        for e in running_efforts:
         
         for e in efforts:
             # Only include PR or top-3 performances
