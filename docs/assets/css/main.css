@@ -47,67 +47,67 @@
   --transition:    0.16s ease;
 }
 
-/* Light mode - Steel & Red Theme */
+/* Light mode - Professional Steel Grey Data Theme */
 [data-theme="light"] {
-  --bg-base:       #d4d8dd;
-  --bg-surface:    #dfe2e6;
-  --bg-elevated:   #e8ebef;
-  --bg-hover:      #cfd3d8;
-  --bg-active:     #c4c8cd;
-  --border:        rgba(71, 85, 105, 0.15);
-  --border-bright: rgba(71, 85, 105, 0.25);
+  --bg-base:       #E8E8E8;
+  --bg-surface:    #F1F1F1;
+  --bg-elevated:   #FAFAFA;
+  --bg-hover:      #E0E0E0;
+  --bg-active:     #D5D5D5;
+  --border:        rgba(180, 184, 197, 0.4);
+  --border-bright: rgba(180, 184, 197, 0.6);
 
-  --accent:        #dc2626;
-  --accent-dim:    rgba(220, 38, 38, 0.1);
-  --accent-glow:   0 0 24px rgba(220, 38, 38, 0.2);
-  --accent-border: rgba(220, 38, 38, 0.3);
+  --accent:        #007BFF;
+  --accent-dim:    rgba(0, 123, 255, 0.1);
+  --accent-glow:   0 0 24px rgba(0, 123, 255, 0.2);
+  --accent-border: rgba(0, 123, 255, 0.3);
 
-  --green:         #059669;
-  --green-dim:     rgba(5, 150, 105, 0.1);
-  --orange:        #ea580c;
-  --orange-dim:    rgba(234, 88, 12, 0.1);
-  --purple:        #9333ea;
-  --purple-dim:    rgba(147, 51, 234, 0.1);
-  --yellow:        #ca8a04;
-  --yellow-dim:    rgba(202, 138, 4, 0.1);
-  --red:           #dc2626;
+  --green:         #28a745;
+  --green-dim:     rgba(40, 167, 69, 0.1);
+  --orange:        #EA6A47;
+  --orange-dim:    rgba(234, 106, 71, 0.1);
+  --purple:        #8B5FBF;
+  --purple-dim:    rgba(139, 95, 191, 0.1);
+  --yellow:        #F0AD4E;
+  --yellow-dim:    rgba(240, 173, 78, 0.1);
+  --red:           #DC3545;
 
-  --gold:          #ca8a04;
+  --gold:          #F0AD4E;
   --silver:        #94a3b8;
-  --bronze:        #d97706;
+  --bronze:        #CD7F32;
 
-  --text-primary:  #1e293b;
-  --text-secondary:#475569;
-  --text-muted:    #64748b;
-  --text-faint:    #94a3b8;
+  --text-primary:  #202020;
+  --text-secondary:#505050;
+  --text-muted:    #7E909A;
+  --text-faint:    #ADB5BD;
 }
 
-/* Light mode - Subtle red cards */
+/* Light mode - Clean white cards on steel background */
 [data-theme="light"] .stat-card,
 [data-theme="light"] .metric-card,
 [data-theme="light"] .chart-container,
 [data-theme="light"] .activity-card,
 [data-theme="light"] .segment-card,
 [data-theme="light"] .power-curve-card {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #FFFFFF;
+  border: 1px solid #B4B8C5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-/* Achievement badges keep their colors */
+/* Achievement badges - data visualization colors */
 [data-theme="light"] .segment-card.achievement-gold {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-left: 4px solid #ca8a04;
+  background: #FFFFFF;
+  border-left: 4px solid #F0AD4E;
 }
 
 [data-theme="light"] .segment-card.achievement-silver {
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-  border-left: 4px solid #64748b;
+  background: #FFFFFF;
+  border-left: 4px solid #94a3b8;
 }
 
 [data-theme="light"] .segment-card.achievement-bronze {
-  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-  border-left: 4px solid #d97706;
+  background: #FFFFFF;
+  border-left: 4px solid #CD7F32;
 }
 
 /* Light mode card hover states */
@@ -116,20 +116,20 @@
 [data-theme="light"] .activity-card:hover,
 [data-theme="light"] .segment-card:hover,
 [data-theme="light"] .power-curve-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: #007BFF;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.12);
 }
 
-/* Light mode sidebar - steel gray */
+/* Light mode sidebar - steel grey */
 [data-theme="light"] .sidebar {
-  background: linear-gradient(180deg, #cbd5e1 0%, #b0b8c3 100%);
-  border-right: 1px solid rgba(71, 85, 105, 0.3);
+  background: #D8D8D8;
+  border-right: 1px solid #B4B8C5;
 }
 
-/* Light mode page header - gray */
+/* Light mode page header - light steel */
 [data-theme="light"] .page-header {
-  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-  border-bottom: 1px solid rgba(71, 85, 105, 0.2);
+  background: #F1F1F1;
+  border-bottom: 1px solid #B4B8C5;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
