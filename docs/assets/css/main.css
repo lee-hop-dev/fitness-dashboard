@@ -1376,3 +1376,34 @@ body {
   font-size: 14px;
   line-height: 1;
 }
+
+/* Light mode - Force all text to be dark/readable */
+[data-theme="light"] * {
+  color: #202020;
+}
+
+[data-theme="light"] .text-primary,
+[data-theme="light"] .page-title,
+[data-theme="light"] .stat-value,
+[data-theme="light"] .metric-value,
+[data-theme="light"] h1, 
+[data-theme="light"] h2, 
+[data-theme="light"] h3,
+[data-theme="light"] .nav-item a {
+  color: #202020 !important;
+}
+
+[data-theme="light"] .text-secondary,
+[data-theme="light"] .stat-label,
+[data-theme="light"] .page-subtitle {
+  color: #505050 !important;
+}
+
+[data-theme="light"] .text-muted,
+[data-theme="light"] .sync-text {
+  color: #7E909A !important;
+}
+
+[data-theme="light"] .brand-text {
+  color: #202020 !important;
+}
