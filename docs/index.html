@@ -172,6 +172,14 @@
         <div class="activity-cards" id="activity-cards"></div>
       </section>
 
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Upcoming Events</h2>
+          <span class="section-meta" id="upcoming-summary">—</span>
+        </div>
+        <div class="activity-cards upcoming-cards" id="upcoming-cards"></div>
+      </section>
+
       <section class="charts-row full">
         <div class="chart-card">
           <div class="chart-header">
@@ -720,6 +728,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ---- ACTIVITY CARDS ----
     const last7 = DATA.recentActivities(activities, 7);
     renderActivityCards(last7);
+    
+    // ---- UPCOMING EVENTS CARDS ----
+    renderUpcomingCards();
 
     // ---- HRV + SLEEP ----
     setupHRVSleepToggle('hrvSleepChart', {
@@ -902,6 +913,87 @@ function renderActivityCards(activities) {
         </div>
       </a>`;
   }).join('');
+}
+
+function renderUpcomingCards() {
+  const container = document.getElementById('upcoming-cards');
+  
+  fetch('data/upcoming_events.json')
+    .then(r => r.json())
+    .then(events => {
+      if (!events || events.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:11px;padding:15px">No upcoming events scheduled</div>';
+        document.getElementById('upcoming-summary').textContent = '0 events';
+        return;
+      }
+      
+      // Filter to future events only and sort by date
+      const today = new Date().toISOString().split('T')[0];
+      const futureEvents = events
+        .filter(e => e.start_date_local && e.start_date_local.split('T')[0] >= today)
+        .sort((a, b) => a.start_date_local.localeCompare(b.start_date_local))
+        .slice(0, 10); // Show max 10 upcoming events
+      
+      if (futureEvents.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:11px;padding:15px">No upcoming events scheduled</div>';
+        document.getElementById('upcoming-summary').textContent = '0 events';
+        return;
+      }
+      
+      // Update summary
+      document.getElementById('upcoming-summary').textContent = `${futureEvents.length} event${futureEvents.length !== 1 ? 's' : ''} scheduled`;
+      
+      // Render cards
+      container.innerHTML = futureEvents.map(e => {
+        const eventDate = e.start_date_local.split('T')[0];
+        const eventType = e.type || 'Workout';
+        const normalizedType = normalizeActivityType(eventType);
+        const info = getTypeInfo(normalizedType);
+        
+        // Extract available metrics
+        const load = e.icu_training_load ? Math.round(e.icu_training_load) : null;
+        const duration = e.moving_time || null;
+        const intensityFactor = e.icu_intensity || null;
+        const category = e.category || '';
+        
+        // Build stats grid - show what's available
+        let statsHtml = '';
+        if (duration) {
+          statsHtml += `<div class="activity-stat"><span class="activity-stat-value">${formatDuration(duration)}</span><span class="activity-stat-label">Duration</span></div>`;
+        }
+        if (load) {
+          statsHtml += `<div class="activity-stat"><span class="activity-stat-value">${load}</span><span class="activity-stat-label">Load (TSS)</span></div>`;
+        }
+        if (intensityFactor) {
+          statsHtml += `<div class="activity-stat"><span class="activity-stat-value">${intensityFactor.toFixed(2)}</span><span class="activity-stat-label">IF</span></div>`;
+        }
+        
+        // If no metrics available, show placeholder
+        if (!statsHtml) {
+          statsHtml = '<div class="activity-stat"><span class="activity-stat-value">—</span><span class="activity-stat-label">Details TBD</span></div>';
+        }
+        
+        return `
+          <div class="activity-card">
+            <div class="activity-card-type ${info.colorClass}">
+              <span class="type-dot ${info.dotClass}"></span>${info.label}
+            </div>
+            <div class="activity-card-name">${e.name || 'Planned Activity'}</div>
+            <div class="activity-card-stats">
+              ${statsHtml}
+            </div>
+            <div class="activity-card-footer">
+              <span>${eventDate}</span>
+              <span class="tss-val">${category || 'WORKOUT'}</span>
+            </div>
+          </div>`;
+      }).join('');
+    })
+    .catch(err => {
+      console.log('No upcoming events data:', err);
+      container.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:11px;padding:15px">No upcoming events data available</div>';
+      document.getElementById('upcoming-summary').textContent = '—';
+    });
 }
 
 function renderCalendar(activities) {

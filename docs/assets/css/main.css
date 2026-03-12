@@ -582,6 +582,62 @@ body {
 
 .activity-card-footer .tss-val { color: var(--text-secondary); }
 
+/* Upcoming event cards - half height */
+.upcoming-cards .activity-card {
+  padding: 8px 12px;
+  min-height: auto;
+}
+
+.upcoming-cards .activity-card-type {
+  font-size: 9px;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+.upcoming-cards .type-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.upcoming-cards .activity-card-name {
+  font-size: 11px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.upcoming-cards .activity-card-stats {
+  gap: 5px;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+}
+
+.upcoming-cards .activity-stat-value {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.upcoming-cards .activity-stat-label {
+  font-size: 8px;
+  letter-spacing: 0.6px;
+}
+
+.upcoming-cards .activity-card-footer {
+  margin-top: 6px;
+  padding-top: 6px;
+  font-size: 9px;
+}
+
+/* Upcoming cards visual distinction */
+.upcoming-cards .activity-card {
+  border-left: 3px solid transparent;
+  border-left-color: rgba(108, 99, 255, 0.4);
+  opacity: 0.95;
+}
+
+.upcoming-cards .activity-card:hover {
+  opacity: 1;
+  border-left-color: var(--accent);
+}
+
 /* Type color system */
 .type-ride    { color: var(--accent); }
 .type-run     { color: var(--green); }
