@@ -998,8 +998,8 @@ function renderCalendar(activities) {
           const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
           bgStyle = `style="background: ${bgColor};"`;
         } else if (event && day.ds > today.toISOString().split('T')[0]) {
-          // Planned event styling for future days
-          bgStyle = `style="background: rgba(108, 99, 255, 0.04); border-left: 2px solid rgba(108, 99, 255, 0.3);"`;
+          // Planned event styling for future days - increased visibility
+          bgStyle = `style="background: rgba(108, 99, 255, 0.12); border-left: 3px solid rgba(108, 99, 255, 0.6);"`;
         }
         
         html += `<div class="cal-day-cell ${!day.inRange?'empty':''} ${day.acts.length?'has-activity':''} ${day.isToday?'today':''}" ${bgStyle}>

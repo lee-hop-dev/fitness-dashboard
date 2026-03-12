@@ -724,18 +724,21 @@ body {
 
 /* Planned event styling */
 .cal-planned {
-  opacity: 0.7;
+  opacity: 1;  /* Full opacity for better readability */
 }
 
 .cal-mini-name.planned {
   font-style: italic;
   color: var(--accent);
+  font-weight: 600;  /* Slightly bolder for better visibility */
+  opacity: 0.95;  /* Nearly full opacity */
 }
 
 .cal-mini-stats.planned {
   font-style: italic;
-  color: var(--text-muted);
-  opacity: 0.8;
+  color: var(--text-secondary);  /* Use secondary text color instead of muted */
+  opacity: 0.9;  /* Increased from 0.8 for better readability */
+  font-weight: 500;  /* Slightly bolder */
 }
 
 .cal-week-total {
