@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <link rel="stylesheet" href="assets/css/main.css">
+<script src="assets/js/theme-toggle.js"></script>
 </head>
 <body>
 <div class="app">
@@ -38,6 +39,11 @@
         <span class="page-subtitle">Outdoor · Indoor · Zwift</span>
       </div>
       <div class="header-right">
+        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+          <div class="theme-toggle-slider">
+            <span class="theme-toggle-icon">☀️</span>
+          </div>
+        </div>
         <div class="year-totals">
           <div class="year-stat"><span class="year-stat-value" id="cy-distance">—</span><span class="year-stat-label">km YTD</span></div>
           <div class="year-stat"><span class="year-stat-value" id="cy-hours">—</span><span class="year-stat-label">hrs YTD</span></div>
