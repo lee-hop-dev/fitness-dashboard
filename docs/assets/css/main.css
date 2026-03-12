@@ -49,13 +49,13 @@
 
 /* Light mode */
 [data-theme="light"] {
-  --bg-base:       #f8f9fa;
-  --bg-surface:    #ffffff;
-  --bg-elevated:   #ffffff;
-  --bg-hover:      #f1f3f5;
-  --bg-active:     #e9ecef;
+  --bg-base:       #f0f2f5;
+  --bg-surface:    #fafbfc;
+  --bg-elevated:   #e8eaed;
+  --bg-hover:      #dfe1e5;
+  --bg-active:     #d3d6db;
   --border:        rgba(0,0,0,0.08);
-  --border-bright: rgba(0,0,0,0.15);
+  --border-bright: rgba(0,0,0,0.12);
 
   --accent:        #0891b2;
   --accent-dim:    rgba(8,145,178,0.1);
@@ -80,6 +80,24 @@
   --text-secondary:#475569;
   --text-muted:    #94a3b8;
   --text-faint:    #cbd5e1;
+}
+
+/* Light mode card backgrounds */
+[data-theme="light"] .stat-card,
+[data-theme="light"] .metric-card,
+[data-theme="light"] .activity-card,
+[data-theme="light"] .power-curve-card,
+[data-theme="light"] .segment-card,
+[data-theme="light"] .chart-container {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .stat-card:hover,
+[data-theme="light"] .metric-card:hover,
+[data-theme="light"] .activity-card:hover,
+[data-theme="light"] .segment-card:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
