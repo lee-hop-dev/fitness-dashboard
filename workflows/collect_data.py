@@ -399,35 +399,147 @@ def merge_activities(intervals_raw, strava_acts, concept2_acts):
 
 
 def build_segments(strava, activities):
+    """
+    Build segment data from the MOST RECENT activity for each sport.
+    Only includes segments where you achieved a PR or top-3 personal performance.
+    """
     segments = {'cycling': [], 'running': []}
-    cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
-    recent = [a for a in activities if a.get('strava_id') and a['date'] >= cutoff][:10]
-    seen = set()
-
-    for act in recent:
-        efforts = strava.get_activity_segments(act['strava_id'])
+    
+    # Find the most recent activity for each sport type
+    cycling_types = ('Ride', 'VirtualRide')
+    running_types = ('Run', 'VirtualRun')
+    
+    # Get activities with Strava IDs only
+    strava_activities = [a for a in activities if a.get('strava_id')]
+    
+    # Find last cycling activity
+    last_cycling = None
+    for act in reversed(strava_activities):
+        if act['type'] in cycling_types:
+            last_cycling = act
+            break
+    
+    # Find last running activity  
+    last_running = None
+    for act in reversed(strava_activities):
+        if act['type'] in running_types:
+            last_running = act
+            break
+    
+    log.info(f"Last cycling activity: {last_cycling['date'] if last_cycling else 'None'}")
+    log.info(f"Last running activity: {last_running['date'] if last_running else 'None'}")
+    
+    # Process cycling segments
+    if last_cycling:
+        efforts = strava.get_activity_segments(last_cycling['strava_id'])
+        log.info(f"Found {len(efforts)} cycling segments in {last_cycling['name']}")
+        
         for e in efforts:
-            seg = e.get('segment', {})
-            sid = seg.get('id')
-            if sid in seen:
+            # Only include PR or top-3 performances
+            pr_rank = e.get('pr_rank')
+            if pr_rank is None or pr_rank > 3:
                 continue
-            seen.add(sid)
+            
+            seg = e.get('segment', {})
+            athlete_stats = e.get('athlete_segment_stats', {})
+            
+            # Calculate achievement level (gold/silver/bronze)
+            achievement = None
+            if pr_rank == 1:
+                achievement = 'gold'
+            elif pr_rank == 2:
+                achievement = 'silver'
+            elif pr_rank == 3:
+                achievement = 'bronze'
+            
             entry = {
-                'id': sid, 'name': seg.get('name',''),
-                'distance': seg.get('distance',0),
-                'time': e.get('elapsed_time',0),
-                'pr': e.get('pr_rank') == 1,
-                'rank': e.get('pr_rank'),
-                'date': act['date']
+                'id': seg.get('id'),
+                'name': seg.get('name', ''),
+                'distance': seg.get('distance', 0),
+                'avg_grade': seg.get('average_grade', 0),
+                'max_grade': seg.get('maximum_grade', 0),
+                'climb_category': seg.get('climb_category', 0),
+                'elevation_gain': seg.get('elevation_high', 0) - seg.get('elevation_low', 0),
+                
+                'time': e.get('elapsed_time', 0),
+                'moving_time': e.get('moving_time', 0),
+                'date': last_cycling['date'],
+                'activity_name': last_cycling['name'],
+                
+                'pr_rank': pr_rank,
+                'kom_rank': e.get('kom_rank'),
+                
+                'pr_time': athlete_stats.get('pr_elapsed_time'),
+                'pr_date': athlete_stats.get('pr_date'),
+                'effort_count': athlete_stats.get('effort_count'),
+                
+                'avg_power': e.get('average_watts'),
+                'avg_hr': e.get('average_heartrate'),
+                'max_hr': e.get('max_heartrate'),
+                'avg_cadence': e.get('average_cadence'),
+                
+                'achievement': achievement,
+                'is_pr': pr_rank == 1
             }
-            if act['type'] in ('Ride','VirtualRide'):
-                entry['avg_power'] = e.get('average_watts')
-                segments['cycling'].append(entry)
-            else:
-                entry['avg_hr'] = e.get('average_heartrate')
-                segments['running'].append(entry)
-
+            
+            segments['cycling'].append(entry)
+    
+    # Process running segments
+    if last_running:
+        efforts = strava.get_activity_segments(last_running['strava_id'])
+        log.info(f"Found {len(efforts)} running segments in {last_running['name']}")
+        
+        for e in efforts:
+            # Only include PR or top-3 performances
+            pr_rank = e.get('pr_rank')
+            if pr_rank is None or pr_rank > 3:
+                continue
+            
+            seg = e.get('segment', {})
+            athlete_stats = e.get('athlete_segment_stats', {})
+            
+            achievement = None
+            if pr_rank == 1:
+                achievement = 'gold'
+            elif pr_rank == 2:
+                achievement = 'silver'
+            elif pr_rank == 3:
+                achievement = 'bronze'
+            
+            entry = {
+                'id': seg.get('id'),
+                'name': seg.get('name', ''),
+                'distance': seg.get('distance', 0),
+                'avg_grade': seg.get('average_grade', 0),
+                'max_grade': seg.get('maximum_grade', 0),
+                'climb_category': seg.get('climb_category', 0),
+                'elevation_gain': seg.get('elevation_high', 0) - seg.get('elevation_low', 0),
+                
+                'time': e.get('elapsed_time', 0),
+                'moving_time': e.get('moving_time', 0),
+                'date': last_running['date'],
+                'activity_name': last_running['name'],
+                
+                'pr_rank': pr_rank,
+                'kom_rank': e.get('kom_rank'),
+                
+                'pr_time': athlete_stats.get('pr_elapsed_time'),
+                'pr_date': athlete_stats.get('pr_date'),
+                'effort_count': athlete_stats.get('effort_count'),
+                
+                'avg_hr': e.get('average_heartrate'),
+                'max_hr': e.get('max_heartrate'),
+                'avg_cadence': e.get('average_cadence'),
+                
+                'achievement': achievement,
+                'is_pr': pr_rank == 1
+            }
+            
+            segments['running'].append(entry)
+    
     log.info(f'Segments: {len(segments["cycling"])} cycling, {len(segments["running"])} running')
+    log.info(f'PRs: {sum(1 for s in segments["cycling"] if s["is_pr"])} cycling, {sum(1 for s in segments["running"] if s["is_pr"])} running')
+    
     return segments
 
 

@@ -132,7 +132,7 @@
     <section class="section">
       <div class="section-header">
         <h2>Strava Segments</h2>
-        <span class="section-meta">Personal bests & rankings</span>
+        <span class="section-meta">PR & top-3 performances from your last run</span>
       </div>
       <div class="segment-list" id="ru-segments"></div>
     </section>
@@ -144,6 +144,7 @@
 
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
+<script src="assets/js/segments.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -335,6 +336,9 @@ function formatPace(secPerKm) {
   const sec = Math.floor(secPerKm % 60);
   return `${min}:${String(sec).padStart(2, '0')}`;
 }
+
+// Load and render segments
+renderSegments('running');
 </script>
 </body>
 </html>
