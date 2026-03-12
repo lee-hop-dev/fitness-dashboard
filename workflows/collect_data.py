@@ -440,8 +440,6 @@ def build_segments(strava, activities):
     # Process cycling segment data
     if last_cycling and cycling_efforts:
         for e in cycling_efforts:
-        
-        for e in efforts:
             # Only include PR or top-3 performances
             pr_rank = e.get('pr_rank')
             if pr_rank is None or pr_rank > 3:
@@ -509,8 +507,6 @@ def build_segments(strava, activities):
     # Process running segment data
     if last_running and running_efforts:
         for e in running_efforts:
-        
-        for e in efforts:
             # Only include PR or top-3 performances
             pr_rank = e.get('pr_rank')
             if pr_rank is None or pr_rank > 3:
