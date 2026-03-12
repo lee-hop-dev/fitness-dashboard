@@ -414,14 +414,14 @@ def build_segments(strava, activities):
     
     # Find last cycling activity
     last_cycling = None
-    for act in reversed(strava_activities):
+    for act in strava_activities:
         if act['type'] in cycling_types:
             last_cycling = act
             break
     
     # Find last running activity  
     last_running = None
-    for act in reversed(strava_activities):
+    for act in strava_activities:
         if act['type'] in running_types:
             last_running = act
             break
