@@ -911,11 +911,10 @@ function renderCalendar(activities) {
   const actByDate = {};
   activities.forEach(a => { if(!actByDate[a.date]) actByDate[a.date]=[]; actByDate[a.date].push(a); });
 
-  // Start from beginning of current week (Monday), go back 4 more weeks = 5 weeks total
+  // Start from beginning of current week (Monday), show current week at top
   const start = new Date(today);
   const dow = start.getDay();
   start.setDate(start.getDate() - (dow===0?6:dow-1)); // back to Monday of current week
-  start.setDate(start.getDate() - 28); // then back 4 more weeks
 
   let html = `<div class="calendar-month-header">
     <div class="cal-day-header"></div>
@@ -923,7 +922,11 @@ function renderCalendar(activities) {
     <div class="cal-day-header" style="text-align:right;font-size:9px">TSS</div>
   </div>`;
 
+  // Build 5 weeks: current week + 4 previous weeks
+  const weeksData = [];
   const cursor = new Date(start);
+  cursor.setDate(cursor.getDate() - 28); // Go back 4 weeks
+  
   for (let w=0; w<5; w++) {
     let weekTSS=0, weekDist=0;
     const days=[];
@@ -936,8 +939,16 @@ function renderCalendar(activities) {
       cursor.setDate(cursor.getDate()+1);
     }
     const wkNum = getISOWeekNum(new Date(days[0].ds));
-    html += `<div class="calendar-row"><div class="cal-week-num">W${wkNum}</div>`;
-    days.forEach(day => {
+    weeksData.push({ wkNum, days, weekTSS, weekDist });
+  }
+  
+  // Reverse the array so current week is first
+  weeksData.reverse();
+  
+  // Render weeks
+  weeksData.forEach(weekData => {
+    html += `<div class="calendar-row"><div class="cal-week-num">W${weekData.wkNum}</div>`;
+    weekData.days.forEach(day => {
       const act=day.acts[0];
       const normalizedType = act ? normalizeActivityType(act.type) : null;
       const info=normalizedType?getTypeInfo(normalizedType):null;
@@ -978,11 +989,11 @@ function renderCalendar(activities) {
       </div>`;
     });
     html += `<div class="cal-week-total">
-      <span class="cal-week-tss">${weekTSS}</span>
+      <span class="cal-week-tss">${weekData.weekTSS}</span>
       <span class="cal-week-label">TSS</span>
-      <span class="cal-week-dist">${(weekDist/1000).toFixed(0)}km</span>
+      <span class="cal-week-dist">${(weekData.weekDist/1000).toFixed(0)}km</span>
     </div></div>`;
-  }
+  });
   wrap.innerHTML = html;
 }
 
