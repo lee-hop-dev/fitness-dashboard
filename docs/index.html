@@ -896,7 +896,7 @@ function renderActivityCards(activities) {
     const stat1val = isPower ? `${a.avg_power}W` : isPace ? formatPace(paceSecKm) : '—';
     const stat1lbl = isPower ? 'Avg Power' : isPace ? 'Pace/km' : 'Effort';
     return `
-      <a class="activity-card" href="${info.page}">
+      <a class="activity-card" href="https://intervals.icu/activities/${a.id}" target="_blank" rel="noopener">
         <div class="activity-card-type ${info.colorClass}">
           <span class="type-dot ${info.dotClass}"></span>${info.label}
         </div>
