@@ -875,6 +875,11 @@ function formatDistanceLabel(meters) {
   return (meters / 1000).toFixed(1) + 'km';
 }
 
+function getIntervalsActivityUrl(activityId) {
+  const athleteId = '5718022';
+  return `https://intervals.icu/activities/${athleteId}/${activityId}`;
+}
+
 function renderActivityCards(activities) {
   const container = document.getElementById('activity-cards');
   const totalDist = activities.reduce((s,a) => s+(a.distance||0),0)/1000;
@@ -896,7 +901,7 @@ function renderActivityCards(activities) {
     const stat1val = isPower ? `${a.avg_power}W` : isPace ? formatPace(paceSecKm) : '—';
     const stat1lbl = isPower ? 'Avg Power' : isPace ? 'Pace/km' : 'Effort';
     return `
-      <a class="activity-card" href="https://intervals.icu/activities/${a.id}" target="_blank" rel="noopener">
+      <a class="activity-card" href="${getIntervalsActivityUrl(a.id)}" target="_blank" rel="noopener noreferrer">
         <div class="activity-card-type ${info.colorClass}">
           <span class="type-dot ${info.dotClass}"></span>${info.label}
         </div>
@@ -1210,9 +1215,15 @@ function renderHeatmap(cells) {
 }
 
 function renderBestsTables(powerBests, paceBests) {
+  // Only show specific key power durations
+  // 1, 5, 15, 30, 60 seconds
+  // 3, 5, 8, 12, 20, 40, 60, 90 minutes
+  const keyDurations = [1, 5, 15, 30, 60, 180, 300, 480, 720, 1200, 2400, 3600, 5400];
+  const filteredPowerBests = powerBests.filter(b => keyDurations.includes(b.secs));
+  
   const pg = document.getElementById('power-bests-grid');
-  if (pg) pg.innerHTML = powerBests.length
-    ? powerBests.map(b=>`<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${b.value}W</span></div>`).join('')
+  if (pg) pg.innerHTML = filteredPowerBests.length
+    ? filteredPowerBests.map(b=>`<div class="best-row"><span class="best-duration">${b.label}</span><span class="best-value">${b.value}W</span></div>`).join('')
     : '<div style="color:var(--text-muted);font-size:11px;padding:10px;font-family:var(--font-mono)">No cycling data in last 90 days</div>';
 
   // Only show specific key running distances: 400m, 800m, 1km, 1 mile, 3km, 5km, 5 mile, 10km
