@@ -1075,7 +1075,7 @@ function renderCalendar(activities) {
       html += `<div class="calendar-row"><div class="cal-week-num">W${weekData.wkNum}</div>`;
       weekData.days.forEach(day => {
         const act=day.acts[0];
-        const event=day.events[0];
+        const events=day.events; // Get all events, not just first
         const normalizedType = act ? normalizeActivityType(act.type) : null;
         const info=normalizedType?getTypeInfo(normalizedType):null;
         
@@ -1101,8 +1101,8 @@ function renderCalendar(activities) {
           };
           const bgColor = typeColors[act.type] || 'rgba(100, 100, 120, 0.05)';
           bgStyle = `style="background: ${bgColor};"`;
-        } else if (event && day.ds > today.toISOString().split('T')[0]) {
-          // Planned event styling for future days - increased visibility
+        } else if (events.length > 0 && day.ds >= today.toISOString().split('T')[0]) {
+          // Planned event styling for today and future days - increased visibility
           bgStyle = `style="background: rgba(108, 99, 255, 0.12); border-left: 3px solid rgba(108, 99, 255, 0.6);"`;
         }
         
@@ -1112,10 +1112,10 @@ function renderCalendar(activities) {
             <div class="cal-mini-name ${info?.colorClass||''}">${act.name.substring(0,16)}</div>
             <div class="cal-mini-stats">${formatDuration(act.duration)} · ${getTSS(act) ? Math.round(getTSS(act)) + 'tss' : 'no TSS'}</div>
           </div>`:''}
-          ${!act && event && day.ds > today.toISOString().split('T')[0] ?`<div class="cal-activity-mini cal-planned">
+          ${!act && events.length > 0 && day.ds >= today.toISOString().split('T')[0] ? events.map(event => `<div class="cal-activity-mini cal-planned">
             <div class="cal-mini-name planned">${event.name ? event.name.substring(0,16) : 'Planned'}</div>
             <div class="cal-mini-stats planned">${event.moving_time ? formatDuration(event.moving_time) : ''} ${event.category || ''}</div>
-          </div>`:''}
+          </div>`).join('') : ''}
         </div>`;
       });
       html += `<div class="cal-week-total">
