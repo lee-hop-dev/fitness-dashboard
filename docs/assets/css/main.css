@@ -784,15 +784,17 @@ body {
 }
 
 .cal-mini-name.planned {
-  color: var(--text-secondary);  /* Match regular activity text color */
-  font-weight: 600;  /* Match regular activity font weight */
-  font-style: normal;  /* Remove italic for better readability */
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 600;  /* Slightly bolder for better visibility */
+  opacity: 0.95;  /* Nearly full opacity */
 }
 
 .cal-mini-stats.planned {
-  color: var(--text-muted);  /* Match regular activity stats color */
-  font-weight: normal;  /* Match regular activity stats weight */
-  font-style: normal;  /* Remove italic for better readability */
+  font-style: italic;
+  color: var(--text-secondary);  /* Use secondary text color instead of muted */
+  opacity: 0.9;  /* Increased from 0.8 for better readability */
+  font-weight: 500;  /* Slightly bolder */
 }
 
 .cal-week-total {
