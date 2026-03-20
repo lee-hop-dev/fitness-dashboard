@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             '<div class="activity-stat"><span class="activity-stat-value">'+(paceSecKm?formatPace(paceSecKm):'—')+'</span><span class="activity-stat-label">Pace/km</span></div>' +
             '<div class="activity-stat"><span class="activity-stat-value">'+(a.avg_hr||'—')+'</span><span class="activity-stat-label">Avg HR</span></div>' +
           '</div>' +
-          '<div class="activity-card-footer"><span>'+a.date+'</span><span class="tss-val">TSS '+a.tss+(a.if_val?' · IF '+a.if_val.toFixed(2):'')+'</span></div>' +
+          '<div class="activity-card-footer"><span>'+a.date+'</span><span class="tss-val">TSS '+a.tss+(a.if_val?' · IF '+a.if_val.toFixed(1):'')+'</span></div>' +
           '</div>';
       }).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;padding:20px">No runs in last 14 days</div>';
     }

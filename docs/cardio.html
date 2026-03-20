@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div class="activity-card-footer">
               <span>${a.date}</span>
-              ${a.tss ? `<span class="tss-val">TSS ${Math.round(a.tss)}${a.if_val ? ' · IF ' + a.if_val.toFixed(2) : ''}</span>` : ''}
+              ${a.tss ? `<span class="tss-val">TSS ${Math.round(a.tss)}${a.if_val ? ' · IF ' + a.if_val.toFixed(1) : ''}</span>` : ''}
             </div>
           </div>`;
         }).join('');

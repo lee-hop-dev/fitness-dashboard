@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <div class="activity-card-footer">
           <span>${a.date}</span>
-          <span class="tss-val">TSS ${a.tss}${a.if_val?' · IF '+a.if_val.toFixed(2):''}</span>
+          <span class="tss-val">TSS ${a.tss}${a.if_val?' · IF '+a.if_val.toFixed(1):''}</span>
         </div>
       </div>`).join('') || '<div style="color:var(--text-muted);font-size:12px;padding:20px;font-family:var(--font-mono)">No cycling activities in last 14 days</div>';
 
