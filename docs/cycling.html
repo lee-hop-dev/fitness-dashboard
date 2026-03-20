@@ -28,6 +28,10 @@
       <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
     </ul>
     <div class="sidebar-footer">
+      <div class="theme-toggle-nav" onclick="toggleTheme()" title="Toggle dark/light mode">
+        <span class="nav-icon theme-icon">☀️</span>
+        <span>Theme</span>
+      </div>
       <div class="sync-status"><span class="sync-dot"></span><span class="sync-text" id="last-sync">Loading...</span></div>
     </div>
   </nav>
@@ -39,11 +43,6 @@
         <span class="page-subtitle">Outdoor · Indoor · Zwift</span>
       </div>
       <div class="header-right">
-        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
-          <div class="theme-toggle-slider">
-            <span class="theme-toggle-icon">☀️</span>
-          </div>
-        </div>
         <div class="year-totals">
           <div class="year-stat"><span class="year-stat-value" id="cy-distance">—</span><span class="year-stat-label">km YTD</span></div>
           <div class="year-stat"><span class="year-stat-value" id="cy-hours">—</span><span class="year-stat-label">hrs YTD</span></div>

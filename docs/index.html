@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
-<link rel="stylesheet" href="assets/css/main.css?v=20260320-4">
+<link rel="stylesheet" href="assets/css/main.css?v=20260320-5">
 <script src="assets/js/theme-toggle.js"></script>
 </head>
 <body>
@@ -28,6 +28,10 @@
       <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
     </ul>
     <div class="sidebar-footer">
+      <div class="theme-toggle-nav" onclick="toggleTheme()" title="Toggle dark/light mode">
+        <span class="nav-icon theme-icon">☀️</span>
+        <span>Theme</span>
+      </div>
       <div class="sync-status">
         <span class="sync-dot"></span>
         <span class="sync-text" id="last-sync">Loading...</span>
@@ -43,11 +47,6 @@
         <span class="page-subtitle" id="page-subtitle">—</span>
       </div>
       <div class="header-right">
-        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
-          <div class="theme-toggle-slider">
-            <span class="theme-toggle-icon">☀️</span>
-          </div>
-        </div>
         <div>
           <div class="year-totals">
             <div class="year-stat"><span class="year-stat-value" id="ytd-distance">—</span><span class="year-stat-label">km YTD</span></div>

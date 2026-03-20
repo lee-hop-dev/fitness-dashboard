@@ -226,6 +226,33 @@ body {
   margin-top: 16px;
 }
 
+.theme-toggle-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  transition: all var(--transition);
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.theme-toggle-nav:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.theme-icon {
+  font-size: 15px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .sync-status { display: flex; align-items: center; gap: 8px; }
 
 .sync-dot {

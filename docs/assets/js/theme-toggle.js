@@ -20,7 +20,7 @@
   
   // Update toggle icon based on theme
   function updateToggleIcon(theme) {
-    const icon = document.querySelector('.theme-toggle-icon');
+    const icon = document.querySelector('.theme-icon');
     if (icon) {
       icon.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
