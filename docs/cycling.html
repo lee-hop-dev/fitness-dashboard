@@ -111,8 +111,8 @@
           <div class="chart-wrap tall"><canvas id="powerCurveChart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-header"><span class="chart-title">Fitness · 42 Days</span></div>
-          <div class="chart-wrap tall"><canvas id="cyFitnessChart"></canvas></div>
+          <div class="chart-header"><span class="chart-title">Weekly Volume · 12 Weeks</span></div>
+          <div class="chart-wrap tall"><canvas id="cyWeeklyVolumeChart"></canvas></div>
         </div>
       </section>
 
@@ -318,9 +318,167 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
     }
 
-    // Fitness chart
-    const fitnessTrend = wellness.filter(w => w.ctl != null).slice(-42);
-    if (fitnessTrend.length) buildFitnessChart('cyFitnessChart', fitnessTrend);
+    // Weekly Volume Chart - aggregate cycling activities by week
+    const weeklyData = [];
+    const weeksToShow = 12;
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    
+    // Calculate start of current week (Sunday)
+    const now = new Date();
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - now.getDay());
+    currentWeekStart.setHours(0, 0, 0, 0);
+    
+    // Build array of week start dates going back 12 weeks
+    for (let i = weeksToShow - 1; i >= 0; i--) {
+      const weekStart = new Date(currentWeekStart.getTime() - (i * msPerWeek));
+      const weekEnd = new Date(weekStart.getTime() + msPerWeek);
+      
+      const weekStartStr = weekStart.toISOString().split('T')[0];
+      const weekEndStr = weekEnd.toISOString().split('T')[0];
+      
+      // Filter rides for this week
+      const weekRides = allRides.filter(a => 
+        a.date >= weekStartStr && a.date < weekEndStr
+      );
+      
+      // Calculate totals
+      const totalKm = weekRides.reduce((sum, a) => sum + (a.distance || 0), 0) / 1000;
+      const totalHours = weekRides.reduce((sum, a) => sum + (a.duration || 0), 0) / 3600;
+      
+      // Format week label (e.g., "Jan 5")
+      const weekLabel = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      weeklyData.push({
+        label: weekLabel,
+        distance: totalKm,
+        time: totalHours,
+        rides: weekRides.length
+      });
+    }
+    
+    // Build the chart
+    if (weeklyData.length) {
+      const ctx = document.getElementById('cyWeeklyVolumeChart');
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: weeklyData.map(w => w.label),
+            datasets: [
+              {
+                label: 'Distance (km)',
+                data: weeklyData.map(w => w.distance),
+                backgroundColor: 'rgba(0, 229, 255, 0.3)',
+                borderColor: 'rgba(0, 229, 255, 0.8)',
+                borderWidth: 1,
+                yAxisID: 'yDistance'
+              },
+              {
+                label: 'Time (hrs)',
+                data: weeklyData.map(w => w.time),
+                type: 'line',
+                borderColor: 'rgba(255, 195, 0, 1)',
+                backgroundColor: 'rgba(255, 195, 0, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: 'rgba(255, 195, 0, 1)',
+                yAxisID: 'yTime',
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  font: { size: 11, family: 'DM Mono' },
+                  padding: 12,
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                titleColor: 'rgba(255, 255, 255, 0.9)',
+                bodyColor: 'rgba(255, 255, 255, 0.8)',
+                borderColor: 'rgba(0, 229, 255, 0.3)',
+                borderWidth: 1,
+                padding: 12,
+                displayColors: true,
+                callbacks: {
+                  title: (items) => {
+                    const idx = items[0].dataIndex;
+                    return `Week of ${weeklyData[idx].label} · ${weeklyData[idx].rides} rides`;
+                  },
+                  label: (context) => {
+                    const label = context.dataset.label || '';
+                    const value = context.parsed.y;
+                    if (label.includes('Distance')) {
+                      return ` ${label}: ${value.toFixed(1)} km`;
+                    } else {
+                      return ` ${label}: ${value.toFixed(1)} hrs`;
+                    }
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.04)'
+                },
+                ticks: {
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  font: { size: 10, family: 'DM Mono' }
+                }
+              },
+              yDistance: {
+                type: 'linear',
+                position: 'left',
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.04)'
+                },
+                ticks: {
+                  color: 'rgba(0, 229, 255, 0.8)',
+                  font: { size: 10, family: 'DM Mono' },
+                  callback: (value) => value.toFixed(0) + ' km'
+                },
+                title: {
+                  display: false
+                }
+              },
+              yTime: {
+                type: 'linear',
+                position: 'right',
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  color: 'rgba(255, 195, 0, 1)',
+                  font: { size: 10, family: 'DM Mono' },
+                  callback: (value) => value.toFixed(1) + ' hrs'
+                },
+                title: {
+                  display: false
+                }
+              }
+            }
+          }
+        });
+      }
+    }
 
     // Last 14 days cards
     const totalDist14 = rides14.reduce((s,a)=>s+(a.distance||0),0)/1000;
