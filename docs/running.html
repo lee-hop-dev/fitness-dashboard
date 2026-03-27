@@ -166,6 +166,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('90-day pace curves not available');
     }
 
+    // Load 90-day HR curves from Intervals.icu
+    let hrCurves90d = null;
+    try {
+      const response = await fetch('data/hr_curves_90d.json');
+      if (response.ok) {
+        hrCurves90d = await response.json();
+        console.log('Loaded 90-day HR curves from Intervals:', hrCurves90d);
+      }
+    } catch(e) {
+      console.log('90-day HR curves not available');
+    }
+
     const year = new Date().getFullYear().toString();
     const runs = activities.filter(a => a.type === 'Run' || a.type === 'VirtualRun');
     const ytdRuns = runs.filter(a => a.date.startsWith(year));
@@ -252,6 +264,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       const distances = curve.distance || [];
       const times = curve.values || [];
       
+      // Get HR curve data if available
+      let hrSecs = [];
+      let hrValues = [];
+      if (hrCurves90d && hrCurves90d.list && hrCurves90d.list.length > 0) {
+        const hrCurve = hrCurves90d.list[0]; // 90-day HR curve
+        hrSecs = hrCurve.secs || [];
+        hrValues = hrCurve.values || [];
+        console.log('HR curve available with', hrSecs.length, 'data points');
+      }
+      
       console.log('Building pace curve with', distances.length, 'data points');
       
       // Build array of pace data for chart
@@ -273,18 +295,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         42195: 'Marathon'
       };
       
+      // Helper function to find closest HR value for a given duration
+      const findHRForDuration = (durationSeconds) => {
+        if (hrSecs.length === 0) return 170; // Fallback if no HR data
+        
+        // Find the closest time in HR curves
+        let closestIdx = 0;
+        let minDiff = Math.abs(hrSecs[0] - durationSeconds);
+        
+        for (let i = 1; i < hrSecs.length; i++) {
+          const diff = Math.abs(hrSecs[i] - durationSeconds);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIdx = i;
+          }
+        }
+        
+        return hrValues[closestIdx] || 170;
+      };
+      
       for (const targetDist of targetDistances) {
         const idx = distances.findIndex(d => Math.abs(d - targetDist) < 50);
         if (idx >= 0 && times[idx]) {
           const timeSeconds = times[idx];
           const paceSecKm = Math.round((timeSeconds / distances[idx]) * 1000);
+          const hr = findHRForDuration(timeSeconds);
           
           paceCurveData.push({
             label: distanceLabels[targetDist],
             distM: distances[idx],
             totalSec: timeSeconds,
             paceSecKm: paceSecKm,
-            hr: 170 // Placeholder for HR estimate
+            hr: hr
           });
         }
       }
