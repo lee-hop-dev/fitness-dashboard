@@ -894,11 +894,30 @@ function renderActivityCards(activities) {
   container.innerHTML = activities.map(a => {
     const normalizedType = normalizeActivityType(a.type);
     const info = getTypeInfo(normalizedType);
-    const isPower = !!a.avg_power;
-    const isPace  = !!a.avg_speed && !a.avg_power;
+    
+    // Determine whether to show pace or power based on activity type
+    // Running: always show pace if available
+    // Cycling/Rowing: always show power if available
+    const isRunning = info.label === 'Running';
     const paceSecKm = a.avg_speed ? Math.round(1000/a.avg_speed) : null;
-    const stat1val = isPower ? `${a.avg_power}W` : isPace ? formatPace(paceSecKm) : '—';
-    const stat1lbl = isPower ? 'Avg Power' : isPace ? 'Pace/km' : 'Effort';
+    
+    let stat1val, stat1lbl;
+    if (isRunning && a.avg_speed) {
+      // Running activities show pace
+      stat1val = formatPace(paceSecKm);
+      stat1lbl = 'Pace/km';
+    } else if (a.avg_power) {
+      // Cycling/Rowing show power
+      stat1val = `${a.avg_power}W`;
+      stat1lbl = 'Avg Power';
+    } else if (a.avg_speed) {
+      // Other activities with speed but no power
+      stat1val = formatPace(paceSecKm);
+      stat1lbl = 'Pace/km';
+    } else {
+      stat1val = '—';
+      stat1lbl = 'Effort';
+    }
     return `
       <a class="activity-card" href="${getIntervalsActivityUrl(a.id)}" target="_blank" rel="noopener noreferrer">
         <div class="activity-card-type ${info.colorClass}">
