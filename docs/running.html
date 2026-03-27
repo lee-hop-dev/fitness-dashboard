@@ -119,8 +119,8 @@
         <div class="cp-chart-wrap"><canvas id="paceCurveChart"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-header"><h3>Pace Trend · 42 Days</h3></div>
-        <div class="chart-wrap"><canvas id="paceTrendChart"></canvas></div>
+        <div class="chart-header"><h3>Weekly Volume · 12 Weeks</h3></div>
+        <div class="chart-wrap"><canvas id="weeklyVolumeChart"></canvas></div>
       </div>
     </section>
 
@@ -246,16 +246,221 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Pace curve (90d bests)
-    const paceBests = DATA.paceBests ? DATA.paceBests(runs) : [];
-    if (paceBests.length) buildPaceBestsChart('paceCurveChart', paceBests);
+    // Pace curve - Use actual Intervals.icu 90-day pace curves if available
+    if (paceCurves90d && paceCurves90d.list && paceCurves90d.list.length > 0) {
+      const curve = paceCurves90d.list[0]; // 90-day curve
+      const distances = curve.distance || [];
+      const times = curve.values || [];
+      
+      console.log('Building pace curve with', distances.length, 'data points');
+      
+      // Build array of pace data for chart
+      const paceCurveData = [];
+      
+      // Select specific distances to display
+      const targetDistances = [400, 800, 1000, 1609, 3000, 5000, 8000, 10000, 16100, 21098, 42195];
+      const distanceLabels = {
+        400: '400m',
+        800: '800m',
+        1000: '1km',
+        1609: '1 mile',
+        3000: '3km',
+        5000: '5km',
+        8000: '8km',
+        10000: '10km',
+        16100: '10 mile',
+        21098: 'Half',
+        42195: 'Marathon'
+      };
+      
+      for (const targetDist of targetDistances) {
+        const idx = distances.findIndex(d => Math.abs(d - targetDist) < 50);
+        if (idx >= 0 && times[idx]) {
+          const timeSeconds = times[idx];
+          const paceSecKm = Math.round((timeSeconds / distances[idx]) * 1000);
+          
+          paceCurveData.push({
+            label: distanceLabels[targetDist],
+            distM: distances[idx],
+            totalSec: timeSeconds,
+            paceSecKm: paceSecKm,
+            hr: 170 // Placeholder for HR estimate
+          });
+        }
+      }
+      
+      console.log('Pace curve data points:', paceCurveData.length);
+      
+      if (paceCurveData.length > 0) {
+        buildPaceBestsChart('paceCurveChart', paceCurveData);
+      }
+    } else {
+      // Fallback to calculated data if Intervals.icu data not available
+      console.log('Using fallback calculated pace curve');
+      const paceBests = DATA.paceBests ? DATA.paceBests(runs) : [];
+      if (paceBests.length) buildPaceBestsChart('paceCurveChart', paceBests);
+    }
 
-    // Pace trend (rolling avg from actual runs)
-    const trendRuns = runs.slice(0, 30).reverse();
-    if (trendRuns.length) {
-      const dates = trendRuns.map(a => a.date);
-      const paces = trendRuns.map(a => a.avg_speed ? Math.round(1000/a.avg_speed) : null);
-      buildPaceTrendChart('paceTrendChart', dates, paces);
+    // Weekly Volume Chart - aggregate running activities by week
+    const weeklyData = [];
+    const weeksToShow = 12;
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    
+    // Calculate start of current week (Sunday)
+    const now = new Date();
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - now.getDay());
+    currentWeekStart.setHours(0, 0, 0, 0);
+    
+    // Build array of week start dates going back 12 weeks
+    for (let i = weeksToShow - 1; i >= 0; i--) {
+      const weekStart = new Date(currentWeekStart.getTime() - (i * msPerWeek));
+      const weekEnd = new Date(weekStart.getTime() + msPerWeek);
+      
+      const weekStartStr = weekStart.toISOString().split('T')[0];
+      const weekEndStr = weekEnd.toISOString().split('T')[0];
+      
+      // Filter runs for this week
+      const weekRuns = runs.filter(a => 
+        a.date >= weekStartStr && a.date < weekEndStr
+      );
+      
+      // Calculate totals
+      const totalKm = weekRuns.reduce((sum, a) => sum + (a.distance || 0), 0) / 1000;
+      const totalHours = weekRuns.reduce((sum, a) => sum + (a.duration || 0), 0) / 3600;
+      
+      // Format week label (e.g., "Jan 5")
+      const weekLabel = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      weeklyData.push({
+        label: weekLabel,
+        distance: totalKm,
+        time: totalHours,
+        runs: weekRuns.length
+      });
+    }
+    
+    // Build the weekly volume chart
+    if (weeklyData.length) {
+      const ctx = document.getElementById('weeklyVolumeChart');
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: weeklyData.map(w => w.label),
+            datasets: [
+              {
+                label: 'Distance (km)',
+                data: weeklyData.map(w => w.distance),
+                backgroundColor: 'rgba(46, 213, 115, 0.3)',
+                borderColor: 'rgba(46, 213, 115, 0.8)',
+                borderWidth: 1,
+                yAxisID: 'yDistance'
+              },
+              {
+                label: 'Time (hrs)',
+                data: weeklyData.map(w => w.time),
+                type: 'line',
+                borderColor: 'rgba(255, 195, 0, 1)',
+                backgroundColor: 'rgba(255, 195, 0, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: 'rgba(255, 195, 0, 1)',
+                yAxisID: 'yTime',
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  font: { size: 11, family: 'DM Mono' },
+                  padding: 12,
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                titleColor: 'rgba(255, 255, 255, 0.9)',
+                bodyColor: 'rgba(255, 255, 255, 0.8)',
+                borderColor: 'rgba(46, 213, 115, 0.3)',
+                borderWidth: 1,
+                padding: 12,
+                displayColors: true,
+                callbacks: {
+                  title: (items) => {
+                    const idx = items[0].dataIndex;
+                    return `Week of ${weeklyData[idx].label} · ${weeklyData[idx].runs} runs`;
+                  },
+                  label: (context) => {
+                    const label = context.dataset.label || '';
+                    const value = context.parsed.y;
+                    if (label.includes('Distance')) {
+                      return ` ${label}: ${value.toFixed(1)} km`;
+                    } else {
+                      return ` ${label}: ${value.toFixed(1)} hrs`;
+                    }
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.04)'
+                },
+                ticks: {
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  font: { size: 10, family: 'DM Mono' }
+                }
+              },
+              yDistance: {
+                type: 'linear',
+                position: 'left',
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.04)'
+                },
+                ticks: {
+                  color: 'rgba(46, 213, 115, 0.8)',
+                  font: { size: 10, family: 'DM Mono' },
+                  callback: (value) => value.toFixed(0) + ' km'
+                },
+                title: {
+                  display: false
+                }
+              },
+              yTime: {
+                type: 'linear',
+                position: 'right',
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  color: 'rgba(255, 195, 0, 1)',
+                  font: { size: 10, family: 'DM Mono' },
+                  callback: (value) => value.toFixed(1) + ' hrs'
+                },
+                title: {
+                  display: false
+                }
+              }
+            }
+          }
+        });
+      }
     }
 
     // Activity cards
