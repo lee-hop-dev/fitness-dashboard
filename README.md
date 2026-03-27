@@ -312,6 +312,8 @@ MIT License - See LICENSE file
 
 ## Contact
 
+**Lee Hopkins**  
+Email: lee.hopkins@gmail.com  
 Questions? Open an issue on GitHub.
 
 ---
