@@ -98,6 +98,23 @@ class IntervalsClient:
             log.error(f'Could not fetch pace curves: {e}')
             return None
 
+    def get_hr_curves(self, period='90d'):
+        """Fetch HR curves from Intervals.icu for Running only"""
+        log.info(f'Fetching HR curves ({period}) for Running from Intervals.icu')
+        try:
+            # HR curves requires 'type' parameter to filter by sport
+            params = {
+                'curves': [period],
+                'type': 'Run'  # Only fetch running HR curves
+            }
+            data = self._get(f'athlete/{self.athlete_id}/hr-curves', params)
+            if data:
+                log.info(f'Got HR curves: {len(data.get("list", []))} curves')
+            return data
+        except Exception as e:
+            log.error(f'Could not fetch HR curves: {e}')
+            return None
+
     def get_events(self, oldest=None, newest=None):
         """Fetch all upcoming events from athlete's calendar (workouts, notes, races, etc.)"""
         today = datetime.now().strftime('%Y-%m-%d')
@@ -901,6 +918,16 @@ def main():
     else:
         log.warning('✗ Pace curves not available')
         save_json([], 'pace_curves_90d.json')
+
+    # Fetch 90-day HR curves from Intervals.icu
+    log.info('=== Fetching 90-day HR Curves ===')
+    hr_curves_90d = client.get_hr_curves('90d')
+    if hr_curves_90d:
+        save_json(hr_curves_90d, 'hr_curves_90d.json')
+        log.info(f'✓ Saved 90-day HR curves')
+    else:
+        log.warning('✗ HR curves not available')
+        save_json([], 'hr_curves_90d.json')
 
     # Fetch upcoming events (next 14 days) from calendar
     log.info('=== Fetching Upcoming Calendar Events ===')
