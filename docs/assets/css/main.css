@@ -392,6 +392,31 @@ body {
 .metric-delta.negative { color: var(--red); }
 .metric-delta.neutral  { color: var(--text-muted); }
 
+.metric-sparkline { 
+  height: 24px; 
+  margin: 8px 0 10px 0; 
+  position: relative;
+}
+
+.metric-sparkline svg { 
+  display: block; 
+  width: 100%; 
+  height: 100%; 
+}
+
+.sparkline-line { 
+  fill: none; 
+  stroke-width: 1.5; 
+  opacity: 0.8; 
+}
+
+.metric-card.fitness .sparkline-line  { stroke: var(--accent); }
+.metric-card.fatigue .sparkline-line  { stroke: var(--orange); }
+.metric-card.form .sparkline-line     { stroke: var(--green); }
+.metric-card.hrv-card .sparkline-line { stroke: var(--purple); }
+.metric-card.sleep-card .sparkline-line { stroke: var(--yellow); }
+
+
 .metric-bar { height: 3px; background: var(--bg-hover); border-radius: 2px; margin-bottom: 9px; overflow: hidden; }
 .metric-bar-fill { height: 100%; border-radius: 2px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
 

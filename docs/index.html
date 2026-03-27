@@ -90,6 +90,7 @@
         <div class="metric-card fitness">
           <div class="metric-label">Fitness</div>
           <div class="metric-value metric-accent" id="ctl-value">—</div>
+          <div class="metric-sparkline" id="ctl-sparkline"></div>
           <div class="metric-delta" id="ctl-delta">—</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="ctl-bar" style="width:0%"></div></div>
           <div class="metric-sub">Chronic Training Load</div>
@@ -97,6 +98,7 @@
         <div class="metric-card fatigue">
           <div class="metric-label">Fatigue</div>
           <div class="metric-value metric-orange" id="atl-value">—</div>
+          <div class="metric-sparkline" id="atl-sparkline"></div>
           <div class="metric-delta" id="atl-delta">ATL</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="atl-bar" style="width:0%"></div></div>
           <div class="metric-sub">Acute Training Load</div>
@@ -104,6 +106,7 @@
         <div class="metric-card form">
           <div class="metric-label">Form</div>
           <div class="metric-value metric-green" id="tsb-value">—</div>
+          <div class="metric-sparkline" id="tsb-sparkline"></div>
           <div class="metric-delta" id="tsb-delta">—</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="tsb-bar" style="width:50%"></div></div>
           <div class="metric-sub">Training Stress Balance</div>
@@ -111,6 +114,7 @@
         <div class="metric-card hrv-card">
           <div class="metric-label">HRV</div>
           <div class="metric-value metric-purple" id="hrv-value">—</div>
+          <div class="metric-sparkline" id="hrv-sparkline"></div>
           <div class="metric-delta neutral">ms</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="hrv-bar" style="width:0%"></div></div>
           <div class="metric-sub">Resting HR: <span id="rhr-value">—</span> bpm</div>
@@ -118,6 +122,7 @@
         <div class="metric-card sleep-card">
           <div class="metric-label">Sleep</div>
           <div class="metric-value metric-yellow" id="sleep-value">—</div>
+          <div class="metric-sparkline" id="sleep-sparkline"></div>
           <div class="metric-delta neutral">hrs last night</div>
           <div class="metric-bar"><div class="metric-bar-fill" id="sleep-bar" style="width:0%"></div></div>
           <div class="metric-sub">Weight: <span id="weight-value">—</span> kg</div>
@@ -595,6 +600,44 @@ function buildPaceCurveLineChart(canvasId, data) {
   });
 }
 
+// ========== SPARKLINE GENERATION ==========
+function generateSparkline(containerId, data, color) {
+  const container = document.getElementById(containerId);
+  if (!container || !data || data.length === 0) return;
+  
+  // Filter out null values and get last 14 days
+  const values = data.slice(-14).filter(v => v !== null && v !== undefined && !isNaN(v));
+  if (values.length < 2) return; // Need at least 2 points for a line
+  
+  // Calculate min/max for scaling
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min;
+  
+  // Handle case where all values are the same
+  const actualRange = range === 0 ? 1 : range;
+  
+  // Generate SVG points (normalized to 0-24 height, inverted so higher values are at top)
+  const points = values.map((val, idx) => {
+    const x = (idx / (values.length - 1)) * 100;
+    const y = 24 - ((val - min) / actualRange) * 20; // 20 = 24 - 4 (leaving 2px padding top/bottom)
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(' ');
+  
+  // Create SVG
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 100 24');
+  svg.setAttribute('preserveAspectRatio', 'none');
+  
+  const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  polyline.setAttribute('class', 'sparkline-line');
+  polyline.setAttribute('points', points);
+  
+  svg.appendChild(polyline);
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { activities, wellness, weeklyTSS, ytd, heatmap1y, athlete, meta } = await DATA.loadAll();
@@ -704,6 +747,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       tsbEl.className =
         'metric-delta ' + (tsbSource >= 0 ? 'positive' : 'negative');
     }
+
+    // ---- GENERATE SPARKLINES (14-day trends) ----
+    generateSparkline('ctl-sparkline', wellness.map(w => w.ctl));
+    generateSparkline('atl-sparkline', wellness.map(w => w.atl));
+    
+    // For TSB, calculate it if not provided by Intervals
+    const tsbData = wellness.map(w => {
+      if (w.tsb != null) return w.tsb;
+      if (w.ctl != null && w.atl != null) return w.ctl - w.atl;
+      return null;
+    });
+    generateSparkline('tsb-sparkline', tsbData);
+    
+    generateSparkline('hrv-sparkline', wellness.map(w => w.hrv));
+    generateSparkline('sleep-sparkline', wellness.map(w => w.sleep));
+
 
     // ---- YTD (FROM INTERVALS DATA) ----
     document.getElementById('ytd-distance').textContent = ytd.total.distance.toLocaleString();
