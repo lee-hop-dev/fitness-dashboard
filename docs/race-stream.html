@@ -301,76 +301,189 @@
 </div>
 
 <script>
-  // Configuration - Replace with your YouTube channel details
+  // YouTube Configuration
   const YOUTUBE_CONFIG = {
-    channelId: 'YOUR_CHANNEL_ID', // Replace with your channel ID
-    apiKey: 'YOUR_API_KEY', // Optional: YouTube Data API v3 key for automated fetching
-    liveStreamId: null, // Will be auto-detected if API key is provided
-    recentVideos: [
-      // Manual fallback - replace with your recent race videos
-      // Format: { videoId, title, thumbnail, date, duration }
-    ]
+    channelHandle: '@lh_cymru', // Your YouTube channel handle
+    apiKey: '', // Will be set via query param or config
+    maxRecentVideos: 6
   };
 
-  // Check for live stream
+  // Parse ISO 8601 duration to readable format
+  function parseDuration(duration) {
+    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    const hours = parseInt(match[1] || 0);
+    const minutes = parseInt(match[2] || 0);
+    const seconds = parseInt(match[3] || 0);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // Format date
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-GB', options);
+  }
+
+  // Get API key from config or query param
+  function getApiKey() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiKeyFromUrl = urlParams.get('apiKey');
+    return apiKeyFromUrl || YOUTUBE_CONFIG.apiKey;
+  }
+
+  // Fetch channel ID from handle
+  async function getChannelId(apiKey) {
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=${YOUTUBE_CONFIG.channelHandle}&key=${apiKey}`
+      );
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        return {
+          channelId: data.items[0].id,
+          uploadsPlaylistId: data.items[0].contentDetails.relatedPlaylists.uploads
+        };
+      }
+      throw new Error('Channel not found');
+    } catch (error) {
+      console.error('Error fetching channel ID:', error);
+      return null;
+    }
+  }
+
+  // Fetch videos from uploads playlist
+  async function fetchRecentVideos(apiKey, uploadsPlaylistId) {
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=${YOUTUBE_CONFIG.maxRecentVideos}&key=${apiKey}`
+      );
+      const data = await response.json();
+      
+      if (!data.items || data.items.length === 0) {
+        return [];
+      }
+
+      // Get video IDs to fetch additional details
+      const videoIds = data.items.map(item => item.contentDetails.videoId).join(',');
+      
+      // Fetch video details including duration and live status
+      const detailsResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,liveStreamingDetails&id=${videoIds}&key=${apiKey}`
+      );
+      const detailsData = await detailsResponse.json();
+      
+      return detailsData.items.map(item => ({
+        videoId: item.id,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.maxres?.url || 
+                   item.snippet.thumbnails.high?.url || 
+                   item.snippet.thumbnails.medium?.url,
+        publishedAt: item.snippet.publishedAt,
+        duration: item.contentDetails.duration,
+        liveBroadcastContent: item.snippet.liveBroadcastContent,
+        isLive: item.snippet.liveBroadcastContent === 'live',
+        scheduledStartTime: item.liveStreamingDetails?.scheduledStartTime,
+        actualStartTime: item.liveStreamingDetails?.actualStartTime
+      }));
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+      return [];
+    }
+  }
+
+  // Check for live stream and update UI
   async function checkLiveStream() {
-    // This will check if there's a live stream active
-    // For now, using manual configuration
+    const apiKey = getApiKey();
     const liveStreamWrapper = document.getElementById('live-stream-wrapper');
     const noStreamMessage = document.getElementById('no-stream-message');
-    
-    // TODO: Implement YouTube API check for live streams
-    // For manual testing, you can set YOUTUBE_CONFIG.liveStreamId to test
-    
-    if (YOUTUBE_CONFIG.liveStreamId) {
-      const embedUrl = `https://www.youtube.com/embed/${YOUTUBE_CONFIG.liveStreamId}?autoplay=1`;
-      document.getElementById('live-stream-embed').src = embedUrl;
-      liveStreamWrapper.classList.remove('hidden');
-      noStreamMessage.classList.add('hidden');
-    } else {
+
+    if (!apiKey) {
+      console.warn('No API key provided. Add ?apiKey=YOUR_KEY to URL or configure YOUTUBE_CONFIG.apiKey');
       liveStreamWrapper.classList.add('hidden');
+      noStreamMessage.querySelector('h3').textContent = 'API Key Required';
+      noStreamMessage.querySelector('p').textContent = 'Add your YouTube API key to load live streams';
+      noStreamMessage.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const channelInfo = await getChannelId(apiKey);
+      if (!channelInfo) {
+        throw new Error('Could not fetch channel info');
+      }
+
+      const videos = await fetchRecentVideos(apiKey, channelInfo.uploadsPlaylistId);
+      
+      // Check if any video is currently live
+      const liveVideo = videos.find(video => video.isLive);
+      
+      if (liveVideo) {
+        const embedUrl = `https://www.youtube.com/embed/${liveVideo.videoId}?autoplay=1`;
+        document.getElementById('live-stream-embed').src = embedUrl;
+        liveStreamWrapper.classList.remove('hidden');
+        noStreamMessage.classList.add('hidden');
+      } else {
+        liveStreamWrapper.classList.add('hidden');
+        noStreamMessage.querySelector('h3').textContent = 'No Live Stream';
+        noStreamMessage.querySelector('p').textContent = 'Check back during race time for live coverage';
+        noStreamMessage.classList.remove('hidden');
+      }
+
+      // Load recent races (excluding live if present)
+      loadRecentRaces(videos.filter(v => !v.isLive));
+      
+    } catch (error) {
+      console.error('Error checking live stream:', error);
+      liveStreamWrapper.classList.add('hidden');
+      noStreamMessage.querySelector('h3').textContent = 'Error Loading Stream';
+      noStreamMessage.querySelector('p').textContent = error.message || 'Could not load YouTube data';
       noStreamMessage.classList.remove('hidden');
     }
   }
 
-  // Load recent races
-  function loadRecentRaces() {
+  // Load recent races into grid
+  function loadRecentRaces(videos) {
     const raceGrid = document.getElementById('race-grid');
     
-    // If we have manual video data
-    if (YOUTUBE_CONFIG.recentVideos && YOUTUBE_CONFIG.recentVideos.length > 0) {
-      raceGrid.innerHTML = YOUTUBE_CONFIG.recentVideos.map(video => `
-        <a href="https://www.youtube.com/watch?v=${video.videoId}" 
-           target="_blank" 
-           class="race-card">
-          <div class="race-thumbnail">
-            <img src="${video.thumbnail || `https://img.youtube.com/vi/${video.videoId}/maxresdefault.jpg`}" 
-                 alt="${video.title}">
-          </div>
-          <div class="race-info">
-            <h3 class="race-title">${video.title}</h3>
-            <div class="race-meta">
-              ${video.date ? `<span class="race-date">📅 ${video.date}</span>` : ''}
-              ${video.duration ? `<span class="race-duration">⏱ ${video.duration}</span>` : ''}
-            </div>
-          </div>
-        </a>
-      `).join('');
-    } else {
-      // TODO: Implement YouTube API fetch for recent videos
+    if (!videos || videos.length === 0) {
       raceGrid.innerHTML = `
         <div class="no-stream-message">
-          <h3>Configure Recent Races</h3>
-          <p>Add your YouTube channel ID to automatically fetch recent races</p>
+          <h3>No Recent Races</h3>
+          <p>Recent race videos will appear here</p>
         </div>
       `;
+      return;
     }
+
+    raceGrid.innerHTML = videos.map(video => `
+      <a href="https://www.youtube.com/watch?v=${video.videoId}" 
+         target="_blank" 
+         class="race-card">
+        <div class="race-thumbnail">
+          <img src="${video.thumbnail}" 
+               alt="${video.title}"
+               loading="lazy">
+        </div>
+        <div class="race-info">
+          <h3 class="race-title">${video.title}</h3>
+          <div class="race-meta">
+            <span class="race-date">📅 ${formatDate(video.publishedAt)}</span>
+            <span class="race-duration">⏱ ${parseDuration(video.duration)}</span>
+          </div>
+        </div>
+      </a>
+    `).join('');
   }
 
   // Initialize on page load
   document.addEventListener('DOMContentLoaded', () => {
     checkLiveStream();
-    loadRecentRaces();
     
     // Auto-check for live stream every 5 minutes
     setInterval(checkLiveStream, 5 * 60 * 1000);
