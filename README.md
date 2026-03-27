@@ -274,6 +274,7 @@ MIT License - See LICENSE file
 
 ## Roadmap
 
+### Current Dashboard
 - [x] Phase 1: Core infrastructure (Intervals + Concept2)
 - [ ] Phase 2: Strava segments + Zwift racing
 - [ ] Phase 3: YouTube integration
@@ -282,6 +283,32 @@ MIT License - See LICENSE file
 - [ ] Activity comparison tools
 - [ ] Goal tracking
 - [ ] Training plan integration
+
+### App Development (Shareable Multi-User Platform)
+- [ ] **Phase 4: Convert to Shareable App with AWS Backend**
+  - [ ] User onboarding/setup screen
+  - [ ] AWS architecture implementation:
+    - [ ] API Gateway for REST endpoints
+    - [ ] Lambda functions for data processing
+    - [ ] DynamoDB for user credentials and configuration
+    - [ ] S3 + CloudFront for static asset hosting
+  - [ ] API proxy layer to secure third-party API keys
+  - [ ] Multi-user credential management
+  - [ ] User authentication and authorization
+  - [ ] Per-user data isolation and privacy
+  - [ ] Migration path from static GitHub Pages to AWS-hosted app
+
+### AI Coaching Layer (Parallel Development)
+- [ ] **Phase 5: World-Class AI Coaching Integration**
+  - [ ] Separate repository: `ai-training-coach`
+  - [ ] Adaptive tone engine (celebratory for PRs, blunt for poor execution)
+  - [ ] Mandatory post-race debriefs
+  - [ ] Automatic PR detection and celebration
+  - [ ] Dual recommendation system for hard cycling sessions:
+    - Structured interval workout
+    - Equivalent Zwift race recommendation
+  - [ ] Integration with Intervals.icu training data
+  - [ ] Fork to `fitness-dashboard-enhanced` when ready for production merge
 
 ## Contact
 
