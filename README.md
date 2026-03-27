@@ -14,14 +14,21 @@ Automated fitness tracking dashboard pulling data from multiple sources (Interva
 - [ ] Data aggregation pipeline
 - [ ] GitHub Actions workflow
 
-**Phase 2: Enhanced Features** (Upcoming)
-- [ ] Strava segments connector
+**Phase 2: Enhanced Features** ✅ (Complete)
+- [x] Strava segments connector
+- [x] Dashboard pages (HTML/CSS/JS)
+- [x] YouTube integration with embedded player
 - [ ] ZwiftRacing.app connector
-- [ ] Dashboard pages (HTML/CSS/JS)
 
-**Phase 3: Nice-to-Have** (Future)
-- [ ] YouTube integration
-- [ ] Race video gallery
+**Phase 3: Dashboard Enhancements** (In Progress)
+- [x] Upcoming activities section (7-day window)
+- [x] Activity cards linking to Intervals.icu
+- [x] Power curve table (13 specific durations)
+- [x] Calendar reversed (current week at top)
+- [x] Dynamic activity loading across all pages
+- [x] Running pace charts (running-only data)
+- [x] Live Intervals.icu power/pace curves
+- [ ] Planned workouts in calendar cells
 
 ## Architecture
 
@@ -226,8 +233,9 @@ Configured in `config/config.yaml`:
 - Combined outdoor + Zwift rides
 - Activity trends and totals
 - Strava segments and PRs
-- Zwift race results
-- Embedded race videos
+- Power curves and peak power metrics
+- Embedded race videos via YouTube integration
+- Training video library with search functionality
 
 ### Running
 - Activity trends
@@ -276,10 +284,13 @@ MIT License - See LICENSE file
 
 ### Current Dashboard
 - [x] Phase 1: Core infrastructure (Intervals + Concept2)
-- [ ] Phase 2: Strava segments + Zwift racing
-- [ ] Phase 3: YouTube integration
-- [ ] Mobile-responsive design
-- [ ] Dark mode
+- [x] Phase 2: Strava segments integration
+- [x] Phase 3: YouTube integration with video player
+- [x] Dashboard pages with dynamic data loading
+- [x] Live Intervals.icu API integration for power/pace curves
+- [ ] Phase 4: ZwiftRacing.app integration
+- [ ] Planned workout visualization in calendar
+- [ ] Mobile-responsive design enhancements
 - [ ] Activity comparison tools
 - [ ] Goal tracking
 - [ ] Training plan integration

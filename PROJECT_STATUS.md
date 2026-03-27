@@ -1,4 +1,30 @@
-# Fitness Dashboard - Phase 1 Complete ✅
+# Fitness Dashboard - Phase 2 Complete ✅
+
+## Latest Completions (Phase 2 & 3)
+
+### Strava Integration ✅
+- Full API connector implementation
+- Segment tracking and performance analysis
+- Personal records and leaderboard data
+- Integration with cycling dashboard page
+
+### YouTube Integration ✅
+- Training video library with embedded player
+- Video search functionality
+- Race video gallery
+- Seamless integration with cycling page
+
+### Dashboard Enhancements ✅
+- Upcoming activities section (7-day window for workouts and events)
+- Activity cards with direct links to Intervals.icu activity pages
+- Power curve table filtered to 13 specific durations
+- Calendar view reversed (current week displayed at top)
+- Cardio page rewritten with dynamic activity loading
+- Rowing page with comprehensive activity type filtering
+- Running pace charts filtered to running-only data
+- Live Intervals.icu power/pace curve data across all pages
+
+---
 
 ## What's Been Built
 
@@ -94,19 +120,25 @@
    - [ ] Data aggregation pipeline (`workflows/collect_data.py`)
    - [ ] GitHub Actions workflow (`.github/workflows/daily-sync.yml`)
 
-### Phase 2 (After Phase 1 Works)
+### Phase 2 (Complete ✅)
 
-6. **Add Enhanced Features**
-   - [ ] Strava segments connector
-   - [ ] ZwiftRacing.app connector
-   - [ ] Build HTML dashboard pages
+6. **Enhanced Features - ALL COMPLETE**
+   - [x] Strava segments connector - Full implementation
+   - [x] Dashboard HTML pages - All sport pages built
+   - [x] YouTube integration - Video library and embedded player
+   - [ ] ZwiftRacing.app connector - Planned for Phase 4
 
-### Phase 3 (Polish)
+### Phase 3 (In Progress)
 
-7. **Nice-to-Have**
-   - [ ] YouTube integration
-   - [ ] Race video gallery
+7. **Dashboard Refinements**
+   - [x] Upcoming activities section
+   - [x] Activity detail linking
+   - [x] Power curve enhancements
+   - [x] Calendar improvements
+   - [x] Dynamic data loading
+   - [ ] Planned workout visualization in calendar cells
    - [ ] Mobile optimization
+   - [ ] Performance comparison tools
 
 ---
 
