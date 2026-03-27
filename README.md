@@ -15,9 +15,9 @@ Automated fitness tracking dashboard pulling data from multiple sources (Interva
 - [ ] GitHub Actions workflow
 
 **Phase 2: Enhanced Features** ✅ (Complete)
-- [x] Strava segments connector
+- [x] Strava segments connector - Full integration with performance analysis
 - [x] Dashboard pages (HTML/CSS/JS)
-- [x] YouTube integration with embedded player
+- [x] YouTube integration - Training video library with embedded player and search
 - [ ] ZwiftRacing.app connector
 
 **Phase 3: Dashboard Enhancements** (In Progress)
@@ -284,10 +284,16 @@ MIT License - See LICENSE file
 
 ### Current Dashboard
 - [x] Phase 1: Core infrastructure (Intervals + Concept2)
-- [x] Phase 2: Strava segments integration
-- [x] Phase 3: YouTube integration with video player
-- [x] Dashboard pages with dynamic data loading
+- [x] Phase 2: Strava segments integration - Full segment tracking and performance analysis
+- [x] Phase 3: YouTube integration - Training video library with embedded player and search functionality
+- [x] Dashboard pages with dynamic data loading across all sport pages
 - [x] Live Intervals.icu API integration for power/pace curves
+- [x] Upcoming activities section (7-day window with workouts and events)
+- [x] Activity cards with direct links to Intervals.icu activity pages
+- [x] Power curve table filtered to 13 specific durations
+- [x] Calendar reversed to show current week at top
+- [x] Rowing page with comprehensive activity type filtering
+- [x] Running pace charts filtered to running-only data
 - [ ] Phase 4: ZwiftRacing.app integration
 - [ ] Planned workout visualization in calendar
 - [ ] Mobile-responsive design enhancements
@@ -330,4 +336,4 @@ Questions? Open an issue on GitHub.
 ---
 
 **Current User**: Athlete ID 5718022  
-**Last Updated**: 2025-02-11
+**Last Updated**: 2025-03-27
