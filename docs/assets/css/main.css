@@ -331,10 +331,14 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 16px 18px;
-  transition: all var(--transition);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
   position: relative;
   overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0);
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
 }
 
 .metric-card::before {
@@ -353,14 +357,54 @@ body {
 .metric-card:hover {
   border-color: var(--border-bright);
   background: var(--bg-elevated);
-  transform: translateY(-1px);
+  transform: translateY(-3px) translateZ(0);
 }
 
-.metric-card.fitness:hover  { box-shadow: var(--accent-glow); }
-.metric-card.fatigue:hover  { box-shadow: 0 0 24px rgba(255,107,43,0.3); }
-.metric-card.form:hover     { box-shadow: 0 0 24px rgba(0,255,135,0.3); }
-.metric-card.hrv-card:hover { box-shadow: 0 0 24px rgba(168,85,247,0.3); }
-.metric-card.sleep-card:hover { box-shadow: 0 0 24px rgba(255,214,0,0.25); }
+.metric-card.fitness:hover  { box-shadow: 0 8px 32px rgba(0,229,255,0.25), var(--accent-glow); }
+.metric-card.fatigue:hover  { box-shadow: 0 8px 32px rgba(255,107,43,0.2); }
+.metric-card.form:hover     { box-shadow: 0 8px 32px rgba(0,255,135,0.2); }
+.metric-card.hrv-card:hover { box-shadow: 0 8px 32px rgba(168,85,247,0.2); }
+.metric-card.sleep-card:hover { box-shadow: 0 8px 32px rgba(255,214,0,0.18); }
+
+/* Skeleton loading states */
+.metric-card.loading {
+  pointer-events: none;
+}
+
+.metric-card.loading .metric-value,
+.metric-card.loading .metric-delta,
+.metric-card.loading .metric-sparkline,
+.metric-card.loading .metric-bar {
+  opacity: 0;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-elevated) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 34px;
+  width: 60%;
+  margin-bottom: 5px;
+}
+
+.skeleton-sparkline {
+  height: 24px;
+  margin: 8px 0 10px 0;
+}
+
+.skeleton-bar {
+  height: 3px;
+  margin-bottom: 9px;
+}
 
 .metric-label {
   font-size: 10px;
@@ -440,10 +484,57 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 20px;
-  transition: border-color var(--transition);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  transform: translateZ(0);
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
 }
 
-.chart-card:hover { border-color: var(--border-bright); }
+/* Staggered animation delays */
+.metric-card:nth-child(1) { animation-delay: 0ms; }
+.metric-card:nth-child(2) { animation-delay: 100ms; }
+.metric-card:nth-child(3) { animation-delay: 200ms; }
+.metric-card:nth-child(4) { animation-delay: 300ms; }
+.metric-card:nth-child(5) { animation-delay: 400ms; }
+
+.chart-card:nth-child(1) { animation-delay: 200ms; }
+.chart-card:nth-child(2) { animation-delay: 300ms; }
+.chart-card:nth-child(3) { animation-delay: 400ms; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
+.chart-card:hover { 
+  border-color: var(--border-bright);
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Skeleton for charts */
+.chart-card.loading {
+  pointer-events: none;
+}
+
+.chart-card.loading .chart-container {
+  opacity: 0;
+}
+
+.skeleton-chart {
+  height: 300px;
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-elevated) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
 
 .chart-header {
   display: flex;

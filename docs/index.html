@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
-<link rel="stylesheet" href="assets/css/main.css?v=20260320-5">
+<link rel="stylesheet" href="assets/css/main.css?v=20260331-1">
 <script src="assets/js/theme-toggle.js"></script>
 </head>
 <body>
@@ -263,6 +263,7 @@
 
 <script src="assets/js/charts.js"></script>
 <script src="assets/js/data-loader.js"></script>
+<script src="assets/js/animations.js"></script>
 <script>
 // Helper function to normalize activity types
 // WeightTraining, Workout, and Crossfit should be displayed as "Cardio"
@@ -678,8 +679,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ---- METRICS (ALL FROM INTERVALS DATA) ----
     const lw = DATA.latestWellness(wellness);
 
-    document.getElementById('ctl-value').textContent = lw.ctl?.toFixed(1) ?? '—';
-    document.getElementById('atl-value').textContent = lw.atl?.toFixed(1) ?? '—';
+    // Animate metric values instead of instant display
+    const ctlEl = document.getElementById('ctl-value');
+    const atlEl = document.getElementById('atl-value');
+    const tsbEl = document.getElementById('tsb-value');
+    const hrvEl = document.getElementById('hrv-value');
+    const sleepEl = document.getElementById('sleep-value');
+
+    if (lw.ctl != null && ctlEl) {
+      ctlEl.textContent = '0.0';
+      setTimeout(() => AnimationUtils.animateNumber(ctlEl, lw.ctl, 1200, 1), 100);
+    } else if (ctlEl) {
+      ctlEl.textContent = '—';
+    }
+
+    if (lw.atl != null && atlEl) {
+      atlEl.textContent = '0.0';
+      setTimeout(() => AnimationUtils.animateNumber(atlEl, lw.atl, 1200, 1), 200);
+    } else if (atlEl) {
+      atlEl.textContent = '—';
+    }
 
     // Prefer Intervals TSB, fallback to local calculation
     let tsbValue = null;
@@ -689,14 +708,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       tsbValue = lw.ctl - lw.atl;
     }
 
-    document.getElementById('tsb-value').textContent =
-      tsbValue != null
-        ? (tsbValue >= 0 ? '+' : '') + tsbValue.toFixed(1)
-        : '—';
+    if (tsbValue != null && tsbEl) {
+      tsbEl.textContent = tsbValue >= 0 ? '+0.0' : '-0.0';
+      setTimeout(() => {
+        AnimationUtils.animateNumber(tsbEl, Math.abs(tsbValue), 1200, 1);
+        // Add sign back after animation
+        setTimeout(() => {
+          tsbEl.textContent = (tsbValue >= 0 ? '+' : '') + tsbValue.toFixed(1);
+        }, 1200);
+      }, 300);
+    } else if (tsbEl) {
+      tsbEl.textContent = '—';
+    }
 
-    document.getElementById('hrv-value').textContent   = lw.hrv ?? '—';
-    document.getElementById('rhr-value').textContent   = lw.resting_hr ?? '—';
-    document.getElementById('sleep-value').textContent = lw.sleep ?? '—';
+    if (lw.hrv != null && hrvEl) {
+      hrvEl.textContent = '0';
+      setTimeout(() => AnimationUtils.animateNumber(hrvEl, lw.hrv, 1200, 0), 400);
+    } else if (hrvEl) {
+      hrvEl.textContent = '—';
+    }
+
+    if (lw.sleep != null && sleepEl) {
+      sleepEl.textContent = '0.0';
+      setTimeout(() => AnimationUtils.animateNumber(sleepEl, lw.sleep, 1200, 1), 500);
+    } else if (sleepEl) {
+      sleepEl.textContent = '—';
+    }
+
+    // Resting HR (no animation needed for this one)
+    document.getElementById('rhr-value').textContent = lw.resting_hr ?? '—';
 
     const weight = athlete?.weight ?? lw.weight;
     document.getElementById('weight-value').textContent =
@@ -711,16 +751,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         Math.min(100, (athlete.w_prime / 30000) * 100) + '%';
     }
 
-    const setBar = (id, val, max) => {
+    const setBar = (id, val, max, delay = 0) => {
       const el = document.getElementById(id);
-      if (el && val) el.style.width =
-        Math.min(100, (val / max) * 100) + '%';
+      if (el && val) {
+        el.style.width = '0%';
+        const targetWidth = Math.min(100, (val / max) * 100);
+        AnimationUtils.animateMetricBar(el, targetWidth, delay);
+      }
     };
 
-    setBar('ctl-bar', lw.ctl, 120);
-    setBar('atl-bar', lw.atl, 120);
-    setBar('hrv-bar', lw.hrv, 100);
-    setBar('sleep-bar', lw.sleep, 10);
+    setBar('ctl-bar', lw.ctl, 120, 600);
+    setBar('atl-bar', lw.atl, 120, 700);
+    setBar('hrv-bar', lw.hrv, 100, 900);
+    setBar('sleep-bar', lw.sleep, 10, 1000);
 
     // CTL delta (FROM INTERVALS DATA)
     const ctlDelta = document.getElementById('ctl-delta');
@@ -763,6 +806,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     generateSparkline('hrv-sparkline', wellness.map(w => w.hrv));
     generateSparkline('sleep-sparkline', wellness.map(w => w.sleep));
+
+    // Trigger sparkline animations after a short delay
+    setTimeout(() => {
+      AnimationUtils.initSparklineAnimations();
+    }, 800);
 
 
     // ---- YTD (FROM INTERVALS DATA) ----

@@ -7,6 +7,18 @@ Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.font.size = 11;
 
+// Enhanced default animations
+Chart.defaults.animation = {
+  duration: 1200,
+  easing: 'easeOutQuart',
+  delay: (context) => {
+    if (context.type === 'data' && context.mode === 'default') {
+      return context.dataIndex * 8;
+    }
+    return 0;
+  }
+};
+
 const C = {
   accent: '#00e5ff', green: '#00ff87', orange: '#ff6b2b',
   purple: '#a855f7', yellow: '#ffd600', red: '#ff3b5c',
@@ -77,7 +89,22 @@ function buildFitnessChart(canvasId, data, pbMarkers = []) {
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      animation: { duration: 600 },
+      animation: {
+        duration: 1200,
+        easing: 'easeOutQuart',
+        x: {
+          type: 'number',
+          easing: 'easeOutQuart',
+          duration: 1000,
+          from: NaN
+        },
+        y: {
+          type: 'number',
+          easing: 'easeOutQuart',
+          duration: 1200,
+          from: (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(0) : undefined
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
