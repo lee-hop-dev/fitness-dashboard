@@ -544,7 +544,7 @@
         <div class="section-label">04 — Target Architecture</div>
         <div class="section-title">V2 — AWS Serverless</div>
         <p class="section-body">
-          The planned AWS architecture replaces every component of the static pipeline with managed cloud services. Infrastructure is defined as code using <strong>AWS CDK (Python)</strong>, deployed to <strong>eu-west-2 (London)</strong>. The design targets zero operational overhead, sub-500ms API responses, and a post-free-tier cost of under £3/month.
+          The V1 static pipeline proves the concept — V2 is where the cloud engineering skills are demonstrated. The entire data pipeline is migrated from GitHub Actions into a fully serverless AWS stack, designed from the ground up as Infrastructure as Code using <strong>AWS CDK (Python)</strong>. This phase exists primarily as a portfolio exercise in production cloud architecture: applying IAM least-privilege security, secrets management, serverless compute, NoSQL data modelling, REST API design, CDN delivery, and operational observability — all within a real system that genuinely runs and collects data daily. Deployed to <strong>eu-west-2 (London)</strong>, the architecture separates concerns into two distinct pipelines — a scheduled collection pipeline triggered by EventBridge, and a synchronous query pipeline fronted by API Gateway — targeting sub-500ms API responses and a post-free-tier running cost of under £3/month.
         </p>
 
         <div class="diagram-card">
@@ -660,9 +660,9 @@
       <!-- Section 5: AI Coach -->
       <div class="about-section">
         <div class="section-label">05 — AI Coaching Layer</div>
-        <div class="section-title">An Intelligent Training Partner</div>
+        <div class="section-title">Agentic AI — From Data to Decisions</div>
         <p class="section-body">
-          Phase 5 of the project introduces a <strong>Claude-powered AI training coach</strong> — an agentic system that goes beyond displaying data to actively interpreting it. The coach reads real training load, recent activity history, and power curve data from Intervals.icu, then produces contextually-aware recommendations, post-race debriefs, and nutrition guidance. The goal is a coach that feels genuinely informed, not generic.
+          The AI coach is where applied machine learning, prompt engineering, and software architecture converge. Built on the Anthropic Claude API, it demonstrates a set of skills that are hard to fake: designing agentic systems that are <strong>grounded in real data</strong>, engineering prompts that produce <strong>reliably structured outputs</strong> rather than freeform prose, preventing hallucination at the system level rather than by post-processing, and implementing adaptive behaviour (tone, focus, urgency) programmatically rather than hoping the model infers context. Real Intervals.icu metrics — CTL, ATL, TSB, HRV, FTP, W', power curves, and calendar events — are assembled into a structured JSON payload before any prompt is issued. The model never invents numbers; it reasons over data the system has fetched and validated.
         </p>
 
         <!-- AI Architecture diagram -->
@@ -827,27 +827,6 @@
           <strong>Why this matters technically:</strong> All nutrition outputs reference metrics pulled from the Intervals.icu API — <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_weight</code>, <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_training_load</code>, <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_atl</code>, <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_tsb</code>. The AI is never given permission to invent numbers. This is enforced at the prompt level, not by post-processing.
         </div>
 
-        <!-- Dual recommendation section -->
-        <div class="section-title" style="margin-top: 36px;">Dual Workout Recommendations</div>
-        <p class="section-body">
-          A distinctive feature of the coach is producing <strong>two workout variants simultaneously</strong>: a structured intervals session (power targets in watts, duration, rest periods) and an equivalent Zwift race or event that delivers a comparable training stimulus. This reflects the reality of how this athlete trains — outdoor/turbo structured work alongside Zwift competition.
-        </p>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px;">
-          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; border-top: 2px solid var(--accent);">
-            <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">Primary — Structured</div>
-            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
-              Power targets in watts (% of FTP), interval duration, rest periods, and zone targets. Example: <em style="color: var(--text-primary);">"4×8min at 265–275W (98–102% FTP), 4min recovery, targeting Z4 upper. Stop if HR exceeds 178bpm."</em>
-            </div>
-          </div>
-          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; border-top: 2px solid var(--purple);">
-            <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: var(--purple); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">Equivalent — Zwift Race</div>
-            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
-              A WTRL ZRL round or ECRO event that delivers equivalent TSS and IF. Example: <em style="color: var(--text-primary);">"WTRL ZRL Volcano Circuit (Cat B) — ~45min, predicted TSS 68, IF 0.86. Similar sustained threshold demand."</em>
-            </div>
-          </div>
-        </div>
-
         <!-- AI Skills summary -->
         <div class="section-title" style="margin-top: 36px;">AI Skills Demonstrated</div>
         <div class="tech-row" style="margin-top: 12px;">
@@ -868,6 +847,9 @@
       <div class="about-section">
         <div class="section-label">06 — Stack</div>
         <div class="section-title">Technology Stack</div>
+        <p class="section-body">
+          The stack spans three distinct layers — each chosen deliberately rather than by default. The frontend is intentionally vanilla: no framework overhead, no build step, just well-structured HTML, CSS custom properties, and Chart.js doing exactly what it needs to do. The V1 backend replaces a traditional server entirely with a scheduled Python script and static files — a pragmatic architecture that runs at zero cost while demonstrating solid API integration and automation skills. The V2 AWS stack introduces every major serverless primitive: Lambda for compute, DynamoDB for storage, API Gateway for exposure, CloudFront for delivery, Secrets Manager for credentials, EventBridge for scheduling, and CloudWatch for observability — all provisioned through CDK as repeatable, version-controlled infrastructure code.
+        </p>
 
         <p class="section-body" style="margin-bottom: 8px;"><strong>Frontend</strong></p>
         <div class="tech-row" style="margin-bottom: 24px;">
