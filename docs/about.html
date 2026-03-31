@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lee Hopkins — About This Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css?v=20260320-5">
+<script src="assets/js/theme-toggle.js"></script>
+<style>
+/* ── About page specific styles ── */
+.about-hero {
+  padding: 48px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+.about-hero h1 {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+.about-hero h1 span { color: var(--accent); }
+.about-hero p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  max-width: 640px;
+  line-height: 1.7;
+}
+.about-section {
+  margin-bottom: 56px;
+}
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+.section-body {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 720px;
+  margin-bottom: 28px;
+}
+.section-body strong { color: var(--text-primary); font-weight: 600; }
+
+/* ── Architecture diagram container ── */
+.diagram-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin-bottom: 28px;
+  overflow-x: auto;
+}
+.diagram-card h4 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Phase timeline ── */
+.phases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+.phase-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 20px 20px 0;
+  display: flex;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+.phase-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.phase-card.done::before   { background: var(--green); }
+.phase-card.live::before   { background: var(--accent); box-shadow: 0 0 12px rgba(0,229,255,0.5); }
+.phase-card.next::before   { background: var(--yellow); }
+.phase-card.future::before { background: var(--border-bright); }
+
+.phase-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--border-bright);
+  min-width: 64px;
+  padding-left: 20px;
+  line-height: 1;
+  margin-top: 2px;
+}
+.phase-content h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: 0.1px;
+}
+.phase-content p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.phase-badge {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.badge-done   { background: var(--green-dim);   color: var(--green);   border: 1px solid rgba(0,255,135,0.2); }
+.badge-live   { background: var(--accent-dim);  color: var(--accent);  border: 1px solid var(--accent-border); }
+.badge-next   { background: var(--yellow-dim);  color: var(--yellow);  border: 1px solid rgba(255,214,0,0.2); }
+.badge-future { background: var(--bg-hover);    color: var(--text-muted); border: 1px solid var(--border); }
+
+/* ── Tech stack pills ── */
+.tech-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.tech-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: 'DM Mono', monospace;
+}
+.tech-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── API endpoint list ── */
+.endpoint-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.endpoint-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.endpoint-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+.endpoint-table tr:last-child td { border-bottom: none; }
+.endpoint-table code {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.method-get {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--green);
+  background: var(--green-dim);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* ── SVG diagram styles ── */
+.arch-svg text {
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Divider ── */
+.about-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 48px 0;
+}
+
+/* ── Callout ── */
+.callout {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-top: 16px;
+}
+.callout strong { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-initials">LH</span>
+      <span class="brand-text">Training<br>OS</span>
+    </div>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html"><span class="nav-icon">◈</span><span>Overview</span></a></li>
+      <li class="nav-item"><a href="cycling.html"><span class="nav-icon">⬡</span><span>Cycling</span></a></li>
+      <li class="nav-item"><a href="running.html"><span class="nav-icon">▷</span><span>Running</span></a></li>
+      <li class="nav-item"><a href="rowing.html"><span class="nav-icon">⊕</span><span>Rowing</span></a></li>
+      <li class="nav-item"><a href="cardio.html"><span class="nav-icon">◎</span><span>Cardio</span></a></li>
+      <li class="nav-item"><a href="other.html"><span class="nav-icon">○</span><span>Other</span></a></li>
+      <li class="nav-item"><a href="race-stream.html"><span class="nav-icon">📺</span><span>Race Stream</span></a></li>
+      <li class="nav-item active"><a href="about.html"><span class="nav-icon">◉</span><span>About</span></a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="theme-toggle-nav" onclick="toggleTheme()" title="Toggle dark/light mode">
+        <span class="nav-icon theme-icon">☀️</span>
+        <span>Theme</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div style="padding: 0 32px 64px; max-width: 960px;">
+
+      <!-- Hero -->
+      <div class="about-hero">
+        <div class="section-label">Project Documentation</div>
+        <h1>How this<br><span>dashboard works</span></h1>
+        <p>A personal fitness analytics platform built as both a functional training tool and a portfolio project — demonstrating real-world API integration, automated data pipelines, and cloud architecture across its phases of build.</p>
+      </div>
+
+      <!-- Section 1: Overview -->
+      <div class="about-section">
+        <div class="section-label">01 — Architecture</div>
+        <div class="section-title">V1 — Static Pipeline on GitHub Pages</div>
+        <p class="section-body">
+          The current production system uses a <strong>static JSON pipeline</strong>. A Python script runs daily via GitHub Actions, fetches data from the Intervals.icu API, and commits processed JSON files directly to the repository. GitHub Pages serves the static site, which reads those JSON files client-side. This approach avoids CORS issues, requires zero backend infrastructure, and keeps running costs at <strong>$0</strong>.
+        </p>
+
+        <div class="diagram-card">
+          <h4>V1 Data Flow — GitHub Pages Architecture</h4>
+          <svg class="arch-svg" viewBox="0 0 860 220" width="100%" style="max-width:860px; display:block;">
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#00e5ff" opacity="0.7"/>
+              </marker>
+              <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#00ff87" opacity="0.7"/>
+              </marker>
+            </defs>
+
+            <!-- Step boxes -->
+            <!-- Box 1: Trigger -->
+            <rect x="10" y="80" width="130" height="60" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+            <text x="75" y="104" text-anchor="middle" font-size="10" fill="#00e5ff" font-weight="600" letter-spacing="1">SCHEDULE</text>
+            <text x="75" y="120" text-anchor="middle" font-size="10" fill="#b8c0d0">GitHub Actions</text>
+            <text x="75" y="133" text-anchor="middle" font-size="10" fill="#6b7890">Daily 06:00 UTC</text>
+
+            <!-- Arrow 1 -->
+            <line x1="140" y1="110" x2="178" y2="110" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arrow)"/>
+
+            <!-- Box 2: Python -->
+            <rect x="180" y="80" width="130" height="60" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+            <text x="245" y="104" text-anchor="middle" font-size="10" fill="#00e5ff" font-weight="600" letter-spacing="1">COLLECT</text>
+            <text x="245" y="120" text-anchor="middle" font-size="10" fill="#b8c0d0">Python 3.11</text>
+            <text x="245" y="133" text-anchor="middle" font-size="10" fill="#6b7890">collect_data.py</text>
+
+            <!-- Arrow 2 (up to APIs) -->
+            <line x1="300" y1="95" x2="358" y2="55" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+            <line x1="300" y1="125" x2="358" y2="165" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+
+            <!-- Box 3a: Intervals -->
+            <rect x="360" y="20" width="140" height="50" rx="6" fill="#0f1117" stroke="rgba(0,255,135,0.25)" stroke-width="1.5"/>
+            <text x="430" y="42" text-anchor="middle" font-size="10" fill="#00ff87" font-weight="600" letter-spacing="1">INTERVALS.ICU</text>
+            <text x="430" y="57" text-anchor="middle" font-size="10" fill="#b8c0d0">Athlete ID: i5718022</text>
+
+            <!-- Box 3b: Strava -->
+            <rect x="360" y="150" width="140" height="50" rx="6" fill="#0f1117" stroke="rgba(255,107,43,0.25)" stroke-width="1.5"/>
+            <text x="430" y="172" text-anchor="middle" font-size="10" fill="#ff6b2b" font-weight="600" letter-spacing="1">STRAVA API</text>
+            <text x="430" y="187" text-anchor="middle" font-size="10" fill="#b8c0d0">Client ID: 201642</text>
+
+            <!-- Arrows back to Python processor -->
+            <line x1="500" y1="45" x2="544" y2="95" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+            <line x1="500" y1="175" x2="544" y2="130" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+
+            <!-- Box 4: JSON -->
+            <rect x="546" y="80" width="130" height="60" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+            <text x="611" y="104" text-anchor="middle" font-size="10" fill="#00e5ff" font-weight="600" letter-spacing="1">COMMIT</text>
+            <text x="611" y="120" text-anchor="middle" font-size="10" fill="#b8c0d0">JSON files</text>
+            <text x="611" y="133" text-anchor="middle" font-size="10" fill="#6b7890">docs/data/*.json</text>
+
+            <!-- Arrow 4 -->
+            <line x1="676" y1="110" x2="714" y2="110" stroke="#00ff87" stroke-width="1.5" stroke-opacity="0.6" marker-end="url(#arrow-green)"/>
+
+            <!-- Box 5: Pages -->
+            <rect x="716" y="80" width="130" height="60" rx="6" fill="#0f1117" stroke="rgba(0,255,135,0.3)" stroke-width="1.5"/>
+            <text x="781" y="104" text-anchor="middle" font-size="10" fill="#00ff87" font-weight="600" letter-spacing="1">SERVE</text>
+            <text x="781" y="120" text-anchor="middle" font-size="10" fill="#b8c0d0">GitHub Pages</text>
+            <text x="781" y="133" text-anchor="middle" font-size="10" fill="#6b7890">Static HTML/CSS/JS</text>
+
+            <!-- Labels -->
+            <text x="160" y="100" text-anchor="middle" font-size="9" fill="#6b7890">runs</text>
+            <text x="700" y="100" text-anchor="middle" font-size="9" fill="#6b7890">push</text>
+          </svg>
+        </div>
+
+        <div class="callout">
+          <strong>Why static?</strong> The static JSON architecture means no server to manage, no costs, no CORS complexity. GitHub Actions handles scheduling and execution; GitHub Pages handles delivery. Intervals.icu already computes CTL/ATL/TSB, FTP, Critical Power and power curves server-side — these are fetched directly, never recalculated client-side.
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <!-- Section 2: API -->
+      <div class="about-section">
+        <div class="section-label">02 — Data Sources</div>
+        <div class="section-title">Intervals.icu as the Source of Truth</div>
+        <p class="section-body">
+          All fitness metrics are sourced from the <strong>Intervals.icu API</strong> (athlete ID: 5718022). Intervals.icu serves as the primary analytics engine — it ingests activities from Garmin and Zwift, computes training load metrics, and exposes them via a well-structured REST API. Strava data via the integration is treated as secondary; Intervals.icu provides the authoritative, fully-populated activity fields.
+        </p>
+
+        <div class="diagram-card">
+          <h4>Data Source Hierarchy</h4>
+          <svg class="arch-svg" viewBox="0 0 860 180" width="100%" style="max-width:860px; display:block;">
+            <defs>
+              <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#00e5ff" opacity="0.7"/>
+              </marker>
+            </defs>
+
+            <!-- Devices -->
+            <rect x="10" y="30" width="100" height="44" rx="5" fill="#0f1117" stroke="rgba(255,214,0,0.3)" stroke-width="1.5"/>
+            <text x="60" y="51" text-anchor="middle" font-size="10" fill="#ffd600" font-weight="600">GARMIN</text>
+            <text x="60" y="65" text-anchor="middle" font-size="10" fill="#6b7890">GPS / HRM</text>
+
+            <rect x="10" y="100" width="100" height="44" rx="5" fill="#0f1117" stroke="rgba(255,214,0,0.3)" stroke-width="1.5"/>
+            <text x="60" y="121" text-anchor="middle" font-size="10" fill="#ffd600" font-weight="600">ZWIFT</text>
+            <text x="60" y="135" text-anchor="middle" font-size="10" fill="#6b7890">Indoor Cycling</text>
+
+            <!-- Arrows to Intervals -->
+            <line x1="110" y1="52" x2="198" y2="80" stroke="#ffd600" stroke-width="1" stroke-opacity="0.4" marker-end="url(#arrow2)" stroke-dasharray="3,2"/>
+            <line x1="110" y1="122" x2="198" y2="100" stroke="#ffd600" stroke-width="1" stroke-opacity="0.4" marker-end="url(#arrow2)" stroke-dasharray="3,2"/>
+
+            <!-- Intervals.icu box (primary) -->
+            <rect x="200" y="55" width="170" height="70" rx="6" fill="rgba(0,229,255,0.06)" stroke="rgba(0,229,255,0.5)" stroke-width="2"/>
+            <text x="285" y="80" text-anchor="middle" font-size="10" fill="#00e5ff" font-weight="700" letter-spacing="1">INTERVALS.ICU</text>
+            <text x="285" y="95" text-anchor="middle" font-size="10" fill="#b8c0d0">Primary Data Source</text>
+            <text x="285" y="111" text-anchor="middle" font-size="9" fill="#6b7890">CTL · ATL · TSB · FTP · W' · CP</text>
+
+            <!-- Arrow to Python -->
+            <line x1="370" y1="90" x2="428" y2="90" stroke="#00e5ff" stroke-width="2" stroke-opacity="0.6" marker-end="url(#arrow2)"/>
+            <text x="399" y="83" text-anchor="middle" font-size="9" fill="#6b7890">REST API</text>
+
+            <!-- Strava box (secondary) -->
+            <rect x="200" y="145" width="170" height="30" rx="5" fill="#0f1117" stroke="rgba(255,107,43,0.2)" stroke-width="1"/>
+            <text x="285" y="164" text-anchor="middle" font-size="10" fill="#ff6b2b" font-weight="500">STRAVA  <tspan fill="#6b7890" font-size="9">Secondary / stub data</tspan></text>
+
+            <!-- Python -->
+            <rect x="430" y="60" width="130" height="60" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.25)" stroke-width="1.5"/>
+            <text x="495" y="84" text-anchor="middle" font-size="10" fill="#00e5ff" font-weight="600" letter-spacing="1">COLLECTOR</text>
+            <text x="495" y="100" text-anchor="middle" font-size="10" fill="#b8c0d0">Python 3.11</text>
+            <text x="495" y="113" text-anchor="middle" font-size="9" fill="#6b7890">collect_data.py</text>
+
+            <!-- Arrow to JSON -->
+            <line x1="560" y1="90" x2="608" y2="90" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arrow2)"/>
+
+            <!-- JSON files -->
+            <rect x="610" y="40" width="110" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.2)" stroke-width="1"/>
+            <text x="665" y="59" text-anchor="middle" font-size="10" fill="#b8c0d0">activities.json</text>
+            <rect x="610" y="76" width="110" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.2)" stroke-width="1"/>
+            <text x="665" y="95" text-anchor="middle" font-size="10" fill="#b8c0d0">wellness.json</text>
+            <rect x="610" y="112" width="110" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.2)" stroke-width="1"/>
+            <text x="665" y="131" text-anchor="middle" font-size="10" fill="#b8c0d0">power_curves.json</text>
+
+            <!-- Arrow to Dashboard -->
+            <line x1="720" y1="90" x2="768" y2="90" stroke="#00ff87" stroke-width="1.5" stroke-opacity="0.6" marker-end="url(#arrow2)"/>
+
+            <!-- Dashboard -->
+            <rect x="770" y="65" width="80" height="50" rx="6" fill="#0f1117" stroke="rgba(0,255,135,0.3)" stroke-width="1.5"/>
+            <text x="810" y="88" text-anchor="middle" font-size="10" fill="#00ff87" font-weight="600">DASH</text>
+            <text x="810" y="104" text-anchor="middle" font-size="9" fill="#6b7890">Chart.js</text>
+          </svg>
+        </div>
+
+        <div class="section-title" style="margin-top:32px;">Key Data Endpoints</div>
+        <div class="diagram-card" style="padding: 0;">
+          <table class="endpoint-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Data Retrieved</th>
+                <th>JSON File</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="method-get">GET</span></td>
+                <td><code>/api/v1/athlete/{id}/activities</code></td>
+                <td>All activities, sport type, TSS, NP, IF, HR, power</td>
+                <td>activities.json</td>
+              </tr>
+              <tr>
+                <td><span class="method-get">GET</span></td>
+                <td><code>/api/v1/athlete/{id}/wellness</code></td>
+                <td>CTL, ATL, TSB, HRV, sleep, weight — pre-computed</td>
+                <td>wellness.json</td>
+              </tr>
+              <tr>
+                <td><span class="method-get">GET</span></td>
+                <td><code>/api/v1/athlete/{id}</code></td>
+                <td>Current FTP, W'bal, weight, critical power</td>
+                <td>athlete.json</td>
+              </tr>
+              <tr>
+                <td><span class="method-get">GET</span></td>
+                <td><code>/api/v1/athlete/{id}/power-curves</code></td>
+                <td>Best power for each duration (1s → 3600s)</td>
+                <td>power_curves.json</td>
+              </tr>
+              <tr>
+                <td><span class="method-get">GET</span></td>
+                <td><code>/api/v1/athlete/{id}/pace-curves</code></td>
+                <td>Best pace for each distance (running)</td>
+                <td>pace_curves.json</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <!-- Section 3: Build Phases -->
+      <div class="about-section">
+        <div class="section-label">03 — Roadmap</div>
+        <div class="section-title">Phases of Build</div>
+        <p class="section-body">
+          The project is structured in phases, moving from a simple static pipeline toward a full serverless AWS architecture with an AI coaching layer. Each phase is independently valuable and the existing production system remains live throughout.
+        </p>
+
+        <div class="phases-grid">
+          <div class="phase-card done">
+            <div class="phase-num">01</div>
+            <div class="phase-content">
+              <h4>Static Dashboard</h4>
+              <p>GitHub Actions → Python → JSON → GitHub Pages. Daily automated sync, Chart.js visualisations, full Intervals.icu integration.</p>
+              <span class="phase-badge badge-done">Complete</span>
+            </div>
+          </div>
+          <div class="phase-card live">
+            <div class="phase-num">02</div>
+            <div class="phase-content">
+              <h4>AWS Foundation</h4>
+              <p>CDK infrastructure, IAM setup, CLI configuration. Migrate data pipeline from GitHub Actions to Lambda + EventBridge + DynamoDB.</p>
+              <span class="phase-badge badge-live">In Progress</span>
+            </div>
+          </div>
+          <div class="phase-card next">
+            <div class="phase-num">03</div>
+            <div class="phase-content">
+              <h4>API Layer</h4>
+              <p>REST endpoints via API Gateway. Lambda query functions serving DynamoDB. Replace static JSON reads with live API calls.</p>
+              <span class="phase-badge badge-next">Planned</span>
+            </div>
+          </div>
+          <div class="phase-card future">
+            <div class="phase-num">04</div>
+            <div class="phase-content">
+              <h4>S3 + CloudFront</h4>
+              <p>Migrate frontend from GitHub Pages to S3 static hosting behind CloudFront CDN. Custom domain, SSL, global edge delivery.</p>
+              <span class="phase-badge badge-future">Upcoming</span>
+            </div>
+          </div>
+          <div class="phase-card future">
+            <div class="phase-num">05</div>
+            <div class="phase-content">
+              <h4>AI Coaching Layer</h4>
+              <p>Claude-powered training coach. Post-race debriefs, PR detection, adaptive tone, dual workout recommendations (structured + Zwift equivalent).</p>
+              <span class="phase-badge badge-future">Future</span>
+            </div>
+          </div>
+          <div class="phase-card future">
+            <div class="phase-num">06</div>
+            <div class="phase-content">
+              <h4>Multi-user Platform</h4>
+              <p>Athlete auth, per-user data isolation, shareable profiles. Demonstrates production-grade SaaS architecture at portfolio scale.</p>
+              <span class="phase-badge badge-future">Vision</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <!-- Section 4: Target AWS Architecture -->
+      <div class="about-section">
+        <div class="section-label">04 — Target Architecture</div>
+        <div class="section-title">V2 — AWS Serverless</div>
+        <p class="section-body">
+          The planned AWS architecture replaces every component of the static pipeline with managed cloud services. Infrastructure is defined as code using <strong>AWS CDK (Python)</strong>, deployed to <strong>eu-west-2 (London)</strong>. The design targets zero operational overhead, sub-500ms API responses, and a post-free-tier cost of under £3/month.
+        </p>
+
+        <div class="diagram-card">
+          <h4>V2 Target Architecture — AWS Serverless</h4>
+          <svg class="arch-svg" viewBox="0 0 860 280" width="100%" style="max-width:860px; display:block;">
+            <defs>
+              <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#00e5ff" opacity="0.6"/>
+              </marker>
+              <marker id="arr3g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#00ff87" opacity="0.6"/>
+              </marker>
+              <marker id="arr3y" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#ffd600" opacity="0.6"/>
+              </marker>
+            </defs>
+
+            <!-- ─── COLLECTION PIPELINE (top) ─── -->
+            <text x="10" y="18" font-size="9" fill="#6b7890" font-family="DM Mono" letter-spacing="1.5">COLLECTION PIPELINE</text>
+
+            <!-- EventBridge -->
+            <rect x="10" y="26" width="120" height="52" rx="6" fill="#0f1117" stroke="rgba(255,214,0,0.3)" stroke-width="1.5"/>
+            <text x="70" y="47" text-anchor="middle" font-size="9" fill="#ffd600" font-weight="600" letter-spacing="1">EVENTBRIDGE</text>
+            <text x="70" y="61" text-anchor="middle" font-size="9" fill="#b8c0d0">cron(0 6 * * ? *)</text>
+            <text x="70" y="73" text-anchor="middle" font-size="9" fill="#6b7890">Daily trigger</text>
+
+            <line x1="130" y1="52" x2="168" y2="52" stroke="#ffd600" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arr3y)"/>
+
+            <!-- Lambda Collector -->
+            <rect x="170" y="26" width="130" height="52" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+            <text x="235" y="47" text-anchor="middle" font-size="9" fill="#00e5ff" font-weight="600" letter-spacing="1">LAMBDA</text>
+            <text x="235" y="61" text-anchor="middle" font-size="9" fill="#b8c0d0">data_collector.py</text>
+            <text x="235" y="73" text-anchor="middle" font-size="9" fill="#6b7890">Python 3.11 · 512MB</text>
+
+            <!-- Secrets Manager -->
+            <rect x="170" y="100" width="130" height="44" rx="5" fill="#0f1117" stroke="rgba(255,112,67,0.25)" stroke-width="1"/>
+            <text x="235" y="119" text-anchor="middle" font-size="9" fill="#ff7043" font-weight="600" letter-spacing="1">SECRETS MGR</text>
+            <text x="235" y="133" text-anchor="middle" font-size="9" fill="#6b7890">API keys · tokens</text>
+            <line x1="235" y1="78" x2="235" y2="99" stroke="#ff7043" stroke-width="1" stroke-opacity="0.35" stroke-dasharray="3,2" marker-end="url(#arr3)"/>
+
+            <!-- Arrow to Intervals API -->
+            <line x1="300" y1="45" x2="348" y2="45" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arr3)" stroke-dasharray="4,3"/>
+            <line x1="300" y1="60" x2="348" y2="68" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arr3)" stroke-dasharray="4,3"/>
+
+            <!-- External APIs -->
+            <rect x="350" y="26" width="110" height="30" rx="4" fill="#0f1117" stroke="rgba(0,255,135,0.25)" stroke-width="1"/>
+            <text x="405" y="45" text-anchor="middle" font-size="9" fill="#00ff87" font-weight="600">INTERVALS.ICU</text>
+            <rect x="350" y="64" width="110" height="30" rx="4" fill="#0f1117" stroke="rgba(255,107,43,0.2)" stroke-width="1"/>
+            <text x="405" y="83" text-anchor="middle" font-size="9" fill="#ff6b2b" font-weight="600">STRAVA API</text>
+
+            <!-- Arrows back to DynamoDB -->
+            <line x1="460" y1="41" x2="518" y2="52" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arr3)" stroke-dasharray="4,3"/>
+            <line x1="460" y1="79" x2="518" y2="65" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arr3)" stroke-dasharray="4,3"/>
+
+            <!-- DynamoDB -->
+            <rect x="520" y="26" width="130" height="86" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.4)" stroke-width="2"/>
+            <text x="585" y="50" text-anchor="middle" font-size="9" fill="#00e5ff" font-weight="700" letter-spacing="1">DYNAMODB</text>
+            <text x="585" y="66" text-anchor="middle" font-size="8.5" fill="#b8c0d0">fitness-activities</text>
+            <text x="585" y="79" text-anchor="middle" font-size="8.5" fill="#b8c0d0">fitness-wellness</text>
+            <text x="585" y="92" text-anchor="middle" font-size="8.5" fill="#b8c0d0">fitness-curves</text>
+            <text x="585" y="106" text-anchor="middle" font-size="8" fill="#6b7890">eu-west-2 · London</text>
+
+            <!-- ─── QUERY PIPELINE (bottom) ─── -->
+            <text x="10" y="175" font-size="9" fill="#6b7890" font-family="DM Mono" letter-spacing="1.5">QUERY PIPELINE</text>
+
+            <!-- CloudFront -->
+            <rect x="10" y="186" width="120" height="52" rx="6" fill="#0f1117" stroke="rgba(0,255,135,0.35)" stroke-width="1.5"/>
+            <text x="70" y="207" text-anchor="middle" font-size="9" fill="#00ff87" font-weight="600" letter-spacing="1">CLOUDFRONT</text>
+            <text x="70" y="221" text-anchor="middle" font-size="9" fill="#b8c0d0">CDN + S3 origin</text>
+            <text x="70" y="233" text-anchor="middle" font-size="9" fill="#6b7890">Global edge</text>
+
+            <line x1="130" y1="212" x2="168" y2="212" stroke="#00ff87" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arr3g)"/>
+
+            <!-- API Gateway -->
+            <rect x="170" y="186" width="130" height="52" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+            <text x="235" y="207" text-anchor="middle" font-size="9" fill="#00e5ff" font-weight="600" letter-spacing="1">API GATEWAY</text>
+            <text x="235" y="221" text-anchor="middle" font-size="9" fill="#b8c0d0">REST endpoints</text>
+            <text x="235" y="233" text-anchor="middle" font-size="9" fill="#6b7890">GET /wellness etc.</text>
+
+            <line x1="300" y1="212" x2="348" y2="212" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arr3)"/>
+
+            <!-- Lambda Query -->
+            <rect x="350" y="186" width="130" height="52" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+            <text x="415" y="207" text-anchor="middle" font-size="9" fill="#00e5ff" font-weight="600" letter-spacing="1">LAMBDA</text>
+            <text x="415" y="221" text-anchor="middle" font-size="9" fill="#b8c0d0">query functions</text>
+            <text x="415" y="233" text-anchor="middle" font-size="9" fill="#6b7890">&lt; 500ms target</text>
+
+            <line x1="480" y1="212" x2="518" y2="212" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arr3)"/>
+
+            <!-- DynamoDB query arrow -->
+            <line x1="585" y1="186" x2="585" y2="114" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.4" marker-end="url(#arr3)"/>
+
+            <!-- CloudWatch -->
+            <rect x="700" y="26" width="130" height="52" rx="6" fill="#0f1117" stroke="rgba(255,214,0,0.2)" stroke-width="1"/>
+            <text x="765" y="47" text-anchor="middle" font-size="9" fill="#ffd600" font-weight="600" letter-spacing="1">CLOUDWATCH</text>
+            <text x="765" y="61" text-anchor="middle" font-size="9" fill="#b8c0d0">Metrics · Alarms</text>
+            <text x="765" y="73" text-anchor="middle" font-size="9" fill="#6b7890">Lambda · API GW · DB</text>
+
+            <!-- CDK Label -->
+            <rect x="700" y="186" width="130" height="52" rx="6" fill="#0f1117" stroke="rgba(255,112,67,0.25)" stroke-width="1"/>
+            <text x="765" y="207" text-anchor="middle" font-size="9" fill="#ff7043" font-weight="600" letter-spacing="1">AWS CDK</text>
+            <text x="765" y="221" text-anchor="middle" font-size="9" fill="#b8c0d0">Infrastructure as Code</text>
+            <text x="765" y="233" text-anchor="middle" font-size="9" fill="#6b7890">Python · eu-west-2</text>
+
+            <!-- Bracket: Free tier label -->
+            <text x="440" y="265" text-anchor="middle" font-size="8.5" fill="#6b7890" font-family="DM Mono">Est. cost: £0/month (free tier) → £2–3/month thereafter</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <!-- Section 5: Tech Stack -->
+      <div class="about-section">
+        <div class="section-label">05 — Stack</div>
+        <div class="section-title">Technology Stack</div>
+
+        <p class="section-body" style="margin-bottom: 8px;"><strong>Frontend</strong></p>
+        <div class="tech-row" style="margin-bottom: 24px;">
+          <span class="tech-pill"><span class="dot" style="background:#00e5ff"></span>HTML5 / CSS3</span>
+          <span class="tech-pill"><span class="dot" style="background:#00e5ff"></span>Vanilla JavaScript</span>
+          <span class="tech-pill"><span class="dot" style="background:#00e5ff"></span>Chart.js 4.4.1</span>
+          <span class="tech-pill"><span class="dot" style="background:#00e5ff"></span>Syne + DM Mono</span>
+          <span class="tech-pill"><span class="dot" style="background:#00e5ff"></span>GitHub Pages</span>
+        </div>
+
+        <p class="section-body" style="margin-bottom: 8px;"><strong>Backend (V1)</strong></p>
+        <div class="tech-row" style="margin-bottom: 24px;">
+          <span class="tech-pill"><span class="dot" style="background:#00ff87"></span>Python 3.11</span>
+          <span class="tech-pill"><span class="dot" style="background:#00ff87"></span>GitHub Actions</span>
+          <span class="tech-pill"><span class="dot" style="background:#00ff87"></span>requests library</span>
+          <span class="tech-pill"><span class="dot" style="background:#00ff87"></span>Static JSON</span>
+        </div>
+
+        <p class="section-body" style="margin-bottom: 8px;"><strong>Infrastructure (V2 Target)</strong></p>
+        <div class="tech-row" style="margin-bottom: 24px;">
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>AWS CDK (Python)</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Lambda</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>DynamoDB</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>API Gateway</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>S3 + CloudFront</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Secrets Manager</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>EventBridge</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>CloudWatch</span>
+        </div>
+
+        <p class="section-body" style="margin-bottom: 8px;"><strong>Data Sources</strong></p>
+        <div class="tech-row">
+          <span class="tech-pill"><span class="dot" style="background:#ffd600"></span>Intervals.icu API</span>
+          <span class="tech-pill"><span class="dot" style="background:#ffd600"></span>Strava API</span>
+          <span class="tech-pill"><span class="dot" style="background:#ffd600"></span>Concept2 (planned)</span>
+          <span class="tech-pill"><span class="dot" style="background:#ffd600"></span>Athlete ID: i5718022</span>
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <!-- Footer note -->
+      <div style="font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); line-height: 1.8;">
+        <span style="color: var(--accent);">◉</span> &nbsp;Built by Lee Hopkins · <a href="https://github.com/lee-hop-dev/fitness-dashboard" target="_blank" rel="noopener" style="color: var(--text-muted); text-decoration: none; border-bottom: 1px solid var(--border);">github.com/lee-hop-dev/fitness-dashboard</a>
+        &nbsp;·&nbsp; Live at <a href="https://lee-hop-dev.github.io/fitness-dashboard/" target="_blank" rel="noopener" style="color: var(--text-muted); text-decoration: none; border-bottom: 1px solid var(--border);">lee-hop-dev.github.io/fitness-dashboard</a>
+      </div>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>
