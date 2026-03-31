@@ -657,9 +657,216 @@
 
       <div class="about-divider"></div>
 
-      <!-- Section 5: Tech Stack -->
+      <!-- Section 5: AI Coach -->
       <div class="about-section">
-        <div class="section-label">05 — Stack</div>
+        <div class="section-label">05 — AI Coaching Layer</div>
+        <div class="section-title">An Intelligent Training Partner</div>
+        <p class="section-body">
+          Phase 5 of the project introduces a <strong>Claude-powered AI training coach</strong> — an agentic system that goes beyond displaying data to actively interpreting it. The coach reads real training load, recent activity history, and power curve data from Intervals.icu, then produces contextually-aware recommendations, post-race debriefs, and nutrition guidance. The goal is a coach that feels genuinely informed, not generic.
+        </p>
+
+        <!-- AI Architecture diagram -->
+        <div class="diagram-card">
+          <h4>AI Coach — Data Flow &amp; Context Assembly</h4>
+          <svg class="arch-svg" viewBox="0 0 860 200" width="100%" style="max-width:860px; display:block;">
+            <defs>
+              <marker id="arrai" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#00e5ff" opacity="0.6"/>
+              </marker>
+              <marker id="arrai-p" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#ff7043" opacity="0.7"/>
+              </marker>
+            </defs>
+
+            <!-- Context inputs -->
+            <rect x="10" y="20" width="130" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
+            <text x="75" y="39" text-anchor="middle" font-size="9" fill="#b8c0d0">CTL / ATL / TSB · HRV</text>
+
+            <rect x="10" y="58" width="130" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
+            <text x="75" y="77" text-anchor="middle" font-size="9" fill="#b8c0d0">Recent activities (14d)</text>
+
+            <rect x="10" y="96" width="130" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
+            <text x="75" y="115" text-anchor="middle" font-size="9" fill="#b8c0d0">Power curve · FTP · W'bal</text>
+
+            <rect x="10" y="134" width="130" height="30" rx="4" fill="#0f1117" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
+            <text x="75" y="153" text-anchor="middle" font-size="9" fill="#b8c0d0">Upcoming races / events</text>
+
+            <!-- Arrows to context assembler -->
+            <line x1="140" y1="35"  x2="198" y2="85"  stroke="#00e5ff" stroke-width="1" stroke-opacity="0.35" marker-end="url(#arrai)" stroke-dasharray="3,2"/>
+            <line x1="140" y1="73"  x2="198" y2="90"  stroke="#00e5ff" stroke-width="1" stroke-opacity="0.35" marker-end="url(#arrai)" stroke-dasharray="3,2"/>
+            <line x1="140" y1="111" x2="198" y2="100" stroke="#00e5ff" stroke-width="1" stroke-opacity="0.35" marker-end="url(#arrai)" stroke-dasharray="3,2"/>
+            <line x1="140" y1="149" x2="198" y2="110" stroke="#00e5ff" stroke-width="1" stroke-opacity="0.35" marker-end="url(#arrai)" stroke-dasharray="3,2"/>
+
+            <!-- Context Assembler (Lambda) -->
+            <rect x="200" y="65" width="130" height="60" rx="6" fill="#0f1117" stroke="rgba(0,229,255,0.4)" stroke-width="1.5"/>
+            <text x="265" y="88" text-anchor="middle" font-size="9" fill="#00e5ff" font-weight="700" letter-spacing="1">CONTEXT</text>
+            <text x="265" y="101" text-anchor="middle" font-size="9" fill="#b8c0d0">Lambda assembler</text>
+            <text x="265" y="115" text-anchor="middle" font-size="9" fill="#6b7890">Structured JSON payload</text>
+
+            <line x1="330" y1="95" x2="378" y2="95" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arrai)"/>
+
+            <!-- Prompt Engine -->
+            <rect x="380" y="55" width="140" height="80" rx="6" fill="rgba(255,112,67,0.06)" stroke="rgba(255,112,67,0.5)" stroke-width="2"/>
+            <text x="450" y="78" text-anchor="middle" font-size="9" fill="#ff7043" font-weight="700" letter-spacing="1">PROMPT ENGINE</text>
+            <text x="450" y="93" text-anchor="middle" font-size="9" fill="#b8c0d0">System + user template</text>
+            <text x="450" y="107" text-anchor="middle" font-size="9" fill="#6b7890">Adaptive tone selector</text>
+            <text x="450" y="121" text-anchor="middle" font-size="9" fill="#6b7890">Role + constraints</text>
+
+            <line x1="520" y1="95" x2="568" y2="95" stroke="#ff7043" stroke-width="1.5" stroke-opacity="0.6" marker-end="url(#arrai-p)"/>
+
+            <!-- Claude API -->
+            <rect x="570" y="65" width="130" height="60" rx="6" fill="rgba(255,112,67,0.08)" stroke="rgba(255,112,67,0.5)" stroke-width="2"/>
+            <text x="635" y="88" text-anchor="middle" font-size="9" fill="#ff7043" font-weight="700" letter-spacing="1">CLAUDE API</text>
+            <text x="635" y="101" text-anchor="middle" font-size="9" fill="#b8c0d0">claude-sonnet-4</text>
+            <text x="635" y="115" text-anchor="middle" font-size="9" fill="#6b7890">Structured JSON output</text>
+
+            <line x1="700" y1="95" x2="748" y2="95" stroke="#ff7043" stroke-width="1.5" stroke-opacity="0.5" marker-end="url(#arrai-p)"/>
+
+            <!-- Output -->
+            <rect x="750" y="20"  width="100" height="30" rx="4" fill="#0f1117" stroke="rgba(0,255,135,0.3)" stroke-width="1"/>
+            <text x="800" y="39" text-anchor="middle" font-size="9" fill="#00ff87">Workout rec.</text>
+            <rect x="750" y="58"  width="100" height="30" rx="4" fill="#0f1117" stroke="rgba(0,255,135,0.3)" stroke-width="1"/>
+            <text x="800" y="77" text-anchor="middle" font-size="9" fill="#00ff87">Race debrief</text>
+            <rect x="750" y="96"  width="100" height="30" rx="4" fill="#0f1117" stroke="rgba(0,255,135,0.3)" stroke-width="1"/>
+            <text x="800" y="115" text-anchor="middle" font-size="9" fill="#00ff87">Nutrition plan</text>
+            <rect x="750" y="134" width="100" height="30" rx="4" fill="#0f1117" stroke="rgba(0,255,135,0.3)" stroke-width="1"/>
+            <text x="800" y="153" text-anchor="middle" font-size="9" fill="#00ff87">PR / alert flags</text>
+
+            <!-- Arrows from Claude to outputs -->
+            <line x1="850" y1="88" x2="850" y2="35"  stroke="#00ff87" stroke-width="1" stroke-opacity="0.4" marker-end="url(#arrai)"/>
+            <line x1="850" y1="95" x2="850" y2="73"  stroke="#00ff87" stroke-width="1" stroke-opacity="0.4"/>
+            <line x1="850" y1="102" x2="850" y2="111" stroke="#00ff87" stroke-width="1" stroke-opacity="0.4"/>
+            <line x1="850" y1="102" x2="850" y2="149" stroke="#00ff87" stroke-width="1" stroke-opacity="0.4" marker-end="url(#arrai)"/>
+          </svg>
+        </div>
+
+        <!-- Prompt Engineering -->
+        <div class="section-title" style="margin-top: 36px;">Prompt Engineering Approach</div>
+        <p class="section-body">
+          The quality of AI coaching output is entirely a function of prompt design. Rather than asking Claude a vague question, the system assembles a <strong>richly structured context payload</strong> from Intervals.icu before any prompt is sent. The prompt engineering follows several key principles:
+        </p>
+
+        <div class="diagram-card" style="padding: 28px 28px 20px;">
+          <h4>Prompt Architecture — Layers</h4>
+
+          <!-- Prompt layer stack visual -->
+          <div style="display: flex; flex-direction: column; gap: 10px; max-width: 680px;">
+
+            <div style="background: rgba(255,112,67,0.08); border: 1px solid rgba(255,112,67,0.35); border-radius: 6px; padding: 14px 18px; position: relative;">
+              <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: #ff7043; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">Layer 1 — Role &amp; Constraints</div>
+              <div style="font-size: 12px; color: #b8c0d0; line-height: 1.7;">
+                The system prompt establishes Claude as a <strong style="color:#f4f6fa">data-driven endurance coach</strong> with specific constraints: never invent metrics, always cite source data, flag when TSB is dangerously low, distinguish between "should train" and "could train." This prevents hallucination of fitness values.
+              </div>
+            </div>
+
+            <div style="background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.25); border-radius: 6px; padding: 14px 18px;">
+              <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: #00e5ff; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">Layer 2 — Athlete Context</div>
+              <div style="font-size: 12px; color: #b8c0d0; line-height: 1.7;">
+                A structured JSON block injects real metrics: <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff; background:rgba(0,229,255,0.08); padding:1px 5px; border-radius:3px;">ctl, atl, tsb, hrv, ftp, w_prime, cp_5min, cp_20min</code>, recent activity list (sport, TSS, NP, IF, duration), and upcoming events from the Intervals.icu calendar. No value is computed client-side — all pulled directly from the API.
+              </div>
+            </div>
+
+            <div style="background: rgba(0,255,135,0.05); border: 1px solid rgba(0,255,135,0.2); border-radius: 6px; padding: 14px 18px;">
+              <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: #00ff87; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">Layer 3 — Adaptive Tone Selector</div>
+              <div style="font-size: 12px; color: #b8c0d0; line-height: 1.7;">
+                Tone is programmatically selected before the prompt is sent. A <strong style="color:#f4f6fa">negative TSB + declining HRV</strong> triggers a recovery-focused, cautious tone. A <strong style="color:#f4f6fa">positive TSB + upcoming race</strong> triggers a sharp, performance-focused tone. The model receives the tone as an instruction, not as something it must infer.
+              </div>
+            </div>
+
+            <div style="background: rgba(255,214,0,0.05); border: 1px solid rgba(255,214,0,0.2); border-radius: 6px; padding: 14px 18px;">
+              <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: #ffd600; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">Layer 4 — Structured Output Schema</div>
+              <div style="font-size: 12px; color: #b8c0d0; line-height: 1.7;">
+                Claude is instructed to respond only with a specific JSON schema: <code style="font-family:'DM Mono',monospace; font-size:11px; color:#ffd600; background:rgba(255,214,0,0.08); padding:1px 5px; border-radius:3px;">summary, workout_primary, workout_zwift_equivalent, nutrition, flags[]</code>. This makes the output reliably parseable and renderable in the dashboard — turning a language model into a structured data source.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Nutrition section -->
+        <div class="section-title" style="margin-top: 36px;">Nutrition Guidance</div>
+        <p class="section-body">
+          Nutrition recommendations are generated <strong>contextually</strong> — they vary based on training load, upcoming race proximity, and current TSB. The coach doesn't issue generic meal plans; it reasons about the athlete's energy state and what the next 48 hours of training demand.
+        </p>
+
+        <div class="diagram-card" style="padding: 0; overflow: hidden;">
+          <table class="endpoint-table">
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Input Signals</th>
+                <th>Nutrition Output</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color: var(--accent);">High Load Day</strong></td>
+                <td>TSS &gt; 80, IF &gt; 0.85, race &lt; 48h</td>
+                <td>High-carb pre-load, 60–90g/hr during, rapid glycogen replenishment post. Specific gram targets based on body weight from athlete.json.</td>
+              </tr>
+              <tr>
+                <td><strong style="color: var(--green);">Recovery Phase</strong></td>
+                <td>TSB negative, HRV suppressed, CTL declining</td>
+                <td>Anti-inflammatory focus, protein priority (&gt;1.8g/kg), lower carb until TSB recovers. Flags excessive training stress.</td>
+              </tr>
+              <tr>
+                <td><strong style="color: var(--yellow);">Base / Adaptation</strong></td>
+                <td>Moderate TSS, stable CTL build, no race &lt;7d</td>
+                <td>Periodised carb intake matching session intensity. Fat-adaptation windows on Z1/Z2 days. Fuelling windows calculated from planned workout IF.</td>
+              </tr>
+              <tr>
+                <td><strong style="color: var(--orange);">Race Week</strong></td>
+                <td>Event on calendar, TSB rising, taper in progress</td>
+                <td>Carb-load protocol, hydration strategy, pre-race meal timing relative to start time. Zwift race-specific (no physical warm-up cost factored).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout" style="margin-top: 20px;">
+          <strong>Why this matters technically:</strong> All nutrition outputs reference metrics pulled from the Intervals.icu API — <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_weight</code>, <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_training_load</code>, <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_atl</code>, <code style="font-family:'DM Mono',monospace; font-size:11px; color:#00e5ff;">icu_tsb</code>. The AI is never given permission to invent numbers. This is enforced at the prompt level, not by post-processing.
+        </div>
+
+        <!-- Dual recommendation section -->
+        <div class="section-title" style="margin-top: 36px;">Dual Workout Recommendations</div>
+        <p class="section-body">
+          A distinctive feature of the coach is producing <strong>two workout variants simultaneously</strong>: a structured intervals session (power targets in watts, duration, rest periods) and an equivalent Zwift race or event that delivers a comparable training stimulus. This reflects the reality of how this athlete trains — outdoor/turbo structured work alongside Zwift competition.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px;">
+          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; border-top: 2px solid var(--accent);">
+            <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">Primary — Structured</div>
+            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
+              Power targets in watts (% of FTP), interval duration, rest periods, and zone targets. Example: <em style="color: var(--text-primary);">"4×8min at 265–275W (98–102% FTP), 4min recovery, targeting Z4 upper. Stop if HR exceeds 178bpm."</em>
+            </div>
+          </div>
+          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; border-top: 2px solid var(--purple);">
+            <div style="font-family: 'DM Mono', monospace; font-size: 9px; color: var(--purple); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">Equivalent — Zwift Race</div>
+            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
+              A WTRL ZRL round or ECRO event that delivers equivalent TSS and IF. Example: <em style="color: var(--text-primary);">"WTRL ZRL Volcano Circuit (Cat B) — ~45min, predicted TSS 68, IF 0.86. Similar sustained threshold demand."</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Skills summary -->
+        <div class="section-title" style="margin-top: 36px;">AI Skills Demonstrated</div>
+        <div class="tech-row" style="margin-top: 12px;">
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Agentic AI Design</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Prompt Engineering</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Structured LLM Outputs</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Context-Aware AI</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Adaptive Tone Systems</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>Hallucination Prevention</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>RLHF Pattern</span>
+          <span class="tech-pill"><span class="dot" style="background:#ff7043"></span>MLOps</span>
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <!-- Section 6: Tech Stack -->
+      <div class="about-section">
+        <div class="section-label">06 — Stack</div>
         <div class="section-title">Technology Stack</div>
 
         <p class="section-body" style="margin-bottom: 8px;"><strong>Frontend</strong></p>
