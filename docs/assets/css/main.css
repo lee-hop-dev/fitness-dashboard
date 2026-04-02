@@ -3,19 +3,19 @@
    ============================================ */
 
 :root {
-  /* Dark mode (default) - Anthracite & Yellow */
-  --bg-base:       #1a1d23;
-  --bg-surface:    #252931;
-  --bg-elevated:   #2d323c;
-  --bg-hover:      #363c48;
-  --bg-active:     #3d4450;
-  --border:        rgba(255,214,0,0.12);
-  --border-bright: rgba(255,214,0,0.25);
+  /* Dark mode (default) */
+  --bg-base:       #080a0d;
+  --bg-surface:    #0f1117;
+  --bg-elevated:   #161920;
+  --bg-hover:      #1c2028;
+  --bg-active:     #1a2a2e;
+  --border:        rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.15);
 
-  --accent:        #ffd600;
-  --accent-dim:    rgba(255,214,0,0.12);
-  --accent-glow:   0 0 24px rgba(255,214,0,0.35);
-  --accent-border: rgba(255,214,0,0.3);
+  --accent:        #00e5ff;
+  --accent-dim:    rgba(0,229,255,0.1);
+  --accent-glow:   0 0 24px rgba(0,229,255,0.35);
+  --accent-border: rgba(0,229,255,0.3);
 
   --green:         #00ff87;
   --green-dim:     rgba(0,255,135,0.1);
@@ -34,8 +34,8 @@
   /* Improved text contrast */
   --text-primary:  #f4f6fa;
   --text-secondary:#b8c0d0;
-  --text-muted:    #8a8f9e;
-  --text-faint:    #4a4f5e;
+  --text-muted:    #c5cdd8;
+  --text-faint:    #3d4560;
 
   --font-display:  'Syne', sans-serif;
   --font-mono:     'DM Mono', monospace;
